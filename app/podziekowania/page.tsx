@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import Link from "next/link"
+import { supabase } from "../../lib/supabase"
 
 type Thank = {
   id: string
@@ -12,16 +12,24 @@ type Thank = {
   deleted: boolean
 }
 
-const STORAGE_KEY = "thanksList"
-const ADMIN_EMAIL = "michal.radziwill@radosnanowina.pl"
+type ThankRow = {
+  id: string
+  author: string
+  person: string
+  message: string
+  created_at: string
+  deleted: boolean
+}
 
-function getFirstNameFromEmail(email: string) {
-  const loginPart = email.split("@")[0]
-  const firstName = loginPart.split(".")[0]
-
-  if (!firstName) return "Uczeń"
-
-  return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase()
+function mapRowToThank(row: ThankRow): Thank {
+  return {
+    id: row.id,
+    author: row.author,
+    person: row.person,
+    message: row.message,
+    date: row.created_at,
+    deleted: row.deleted,
+  }
 }
 
 function normalizeMessage(message: string) {
@@ -99,7 +107,7 @@ const students = [
   "Hubert",
   "Julia",
   "Kamila",
-  "Karyna",
+  "Karina",
   "Kinga",
   "Laura",
   "Liliana",
@@ -130,7 +138,7 @@ const profileImages: Record<string, string> = {
   Hubert: "/profiles/hubert.jpg",
   Julia: "/profiles/julia.jpg",
   Kamila: "/profiles/kamila.jpg",
-  Karyna: "/profiles/karyna.jpg",
+  Karina: "/profiles/karina.jpg",
   Kinga: "/profiles/kinga.jpg",
   Laura: "/profiles/laura.jpg",
   Liliana: "/profiles/liliana.jpg",
@@ -242,7 +250,8 @@ function RankingCard({
               padding: "12px",
               borderRadius: "14px",
               backgroundColor: index === 0 ? "#eff6ff" : "#f9fafb",
-              border: index === 0 ? "2px solid #60a5fa" : "1px solid transparent",
+              border:
+                index === 0 ? "2px solid #60a5fa" : "1px solid transparent",
             }}
           >
             <div
@@ -265,8 +274,8 @@ function RankingCard({
                 {item.count === 1
                   ? "punkt"
                   : item.count < 5
-                  ? "punkty"
-                  : "punktów"}
+                    ? "punkty"
+                    : "punktów"}
               </div>
             </div>
           </div>
@@ -308,10 +317,8 @@ function FilterButton({
 }
 
 export default function PodziekowaniaPage() {
-  const currentUserEmail = "jan.kowalski@radosnanowina.pl"
-  const currentUser = getFirstNameFromEmail(currentUserEmail)
-  const isAdmin = currentUserEmail === ADMIN_EMAIL
-  const now = new Date()
+  const [currentUser, setCurrentUser] = useState("")
+  const [userLoaded, setUserLoaded] = useState(false)
 
   const [person, setPerson] = useState("")
   const [message, setMessage] = useState("")
@@ -322,64 +329,45 @@ export default function PodziekowaniaPage() {
   const [newEntryId, setNewEntryId] = useState("")
   const [feedFilter, setFeedFilter] = useState<"all" | "mine" | "forme">("all")
   const [selectedPersonFilter, setSelectedPersonFilter] = useState("")
-
   const [thanksList, setThanksList] = useState<Thank[]>([])
 
+  const isAdmin = currentUser === "ks. Michał"
+
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY)
-
-    if (saved) {
-      try {
-        setThanksList(JSON.parse(saved))
-      } catch {
-        localStorage.removeItem(STORAGE_KEY)
-      }
-    } else {
-      const starterData: Thank[] = [
-        {
-          id: "1",
-          author: "Jan",
-          person: "Kinga",
-          message: "za taniec",
-          date: new Date().toISOString(),
-          deleted: false,
-        },
-        {
-          id: "2",
-          author: "Ola",
-          person: "Anna",
-          message: "za pożyczenie notatek z biologii",
-          date: new Date().toISOString(),
-          deleted: false,
-        },
-        {
-          id: "3",
-          author: "Bartek",
-          person: "Hubert",
-          message: "za pomoc po matematyce",
-          date: new Date().toISOString(),
-          deleted: false,
-        },
-        {
-          id: "4",
-          author: "Jan",
-          person: "Kinga",
-          message: "za wsparcie na próbie",
-          date: new Date().toISOString(),
-          deleted: false,
-        },
-      ]
-
-      setThanksList(starterData)
-    }
-
-    setIsLoaded(true)
+    fetch("/api/me")
+      .then((res) => res.json())
+      .then((data) => {
+        setCurrentUser(data.name || "")
+        setUserLoaded(true)
+      })
+      .catch(() => {
+        setUserLoaded(true)
+      })
   }, [])
 
   useEffect(() => {
-    if (!isLoaded) return
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(thanksList))
-  }, [thanksList, isLoaded])
+    async function loadThanks() {
+      try {
+        const { data, error } = await supabase
+          .from("thanks")
+          .select("*")
+          .order("created_at", { ascending: false })
+
+        if (error) {
+          console.error("Błąd pobierania Bohaterów:", error)
+          return
+        }
+
+        setThanksList((data as ThankRow[]).map(mapRowToThank))
+      } catch (e) {
+        console.error("Błąd pobierania Bohaterów:", e)
+      } finally {
+        setIsLoaded(true)
+      }
+    }
+
+    loadThanks()
+  }, [])
 
   useEffect(() => {
     if (!success) return
@@ -392,80 +380,6 @@ export default function PodziekowaniaPage() {
     const timer = setTimeout(() => setNewEntryId(""), 2200)
     return () => clearTimeout(timer)
   }, [newEntryId])
-
-  function resetForm() {
-    setPerson("")
-    setMessage("")
-    setError("")
-  }
-
-  function openModal() {
-    resetForm()
-    setIsModalOpen(true)
-  }
-
-  function closeModal() {
-    resetForm()
-    setIsModalOpen(false)
-  }
-
-  function addThank() {
-    setError("")
-    setSuccess("")
-
-    if (!person.trim() || !message.trim()) {
-      setError("Wybierz osobę i wpisz treść podziękowania.")
-      return
-    }
-
-    if (person === currentUser) {
-      setError("Nie możesz podziękować samemu sobie.")
-      return
-    }
-
-    const monthlyThanksByAuthor = thanksList.filter(
-      (item) => item.author === currentUser && isSameMonth(item.date, now)
-    )
-
-    if (monthlyThanksByAuthor.length >= 7) {
-      setError("W tym miesiącu możesz dodać maksymalnie 7 podziękowań.")
-      return
-    }
-
-    const monthlyThanksForThisPerson = monthlyThanksByAuthor.filter(
-      (item) => item.person === person
-    )
-
-    if (monthlyThanksForThisPerson.length >= 2) {
-      setError("W tym miesiącu możesz podziękować tej osobie maksymalnie 2 razy.")
-      return
-    }
-
-    const newThank: Thank = {
-      id: crypto.randomUUID(),
-      author: currentUser,
-      person: person.trim(),
-      message: message.trim(),
-      date: new Date().toISOString(),
-      deleted: false,
-    }
-
-    setThanksList((prev) => [newThank, ...prev])
-    setNewEntryId(newThank.id)
-    setSuccess("Podziękowanie dodane")
-    closeModal()
-  }
-
-  function deleteThank(id: string) {
-    const confirmed = window.confirm("Czy na pewno chcesz usunąć to podziękowanie?")
-    if (!confirmed) return
-
-    setThanksList((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, deleted: true } : item
-      )
-    )
-  }
 
   const visibleThanks = useMemo(() => {
     let items = thanksList
@@ -487,31 +401,155 @@ export default function PodziekowaniaPage() {
     return items
   }, [thanksList, feedFilter, selectedPersonFilter, currentUser])
 
-  const monthlyHelpfulRanking = useMemo(
-    () => buildRanking(thanksList, "received", "month", now),
-    [thanksList]
-  )
+  const monthlyHelpfulRanking = useMemo(() => {
+    return buildRanking(thanksList, "received", "month", new Date())
+  }, [thanksList])
 
-  const monthlyGratefulRanking = useMemo(
-    () => buildRanking(thanksList, "given", "month", now),
-    [thanksList]
-  )
+  const monthlyGratefulRanking = useMemo(() => {
+    return buildRanking(thanksList, "given", "month", new Date())
+  }, [thanksList])
 
-  const yearlyHelpfulRanking = useMemo(
-    () => buildRanking(thanksList, "received", "year", now),
-    [thanksList]
-  )
+  const yearlyHelpfulRanking = useMemo(() => {
+    return buildRanking(thanksList, "received", "year", new Date())
+  }, [thanksList])
 
-  const yearlyGratefulRanking = useMemo(
-    () => buildRanking(thanksList, "given", "year", now),
-    [thanksList]
-  )
+  const yearlyGratefulRanking = useMemo(() => {
+    return buildRanking(thanksList, "given", "year", new Date())
+  }, [thanksList])
 
-  const currentUserMonthlyCount = thanksList.filter(
-    (item) => item.author === currentUser && isSameMonth(item.date, now)
-  ).length
+  const currentUserMonthlyCount = useMemo(() => {
+    const now = new Date()
+    return thanksList.filter(
+      (item) => !item.deleted && item.author === currentUser && isSameMonth(item.date, now)
+    ).length
+  }, [thanksList, currentUser])
 
   const monthlyPercent = Math.min((currentUserMonthlyCount / 7) * 100, 100)
+
+  function resetForm() {
+    setPerson("")
+    setMessage("")
+    setError("")
+  }
+
+  function openModal() {
+    resetForm()
+    setIsModalOpen(true)
+  }
+
+  function closeModal() {
+    resetForm()
+    setIsModalOpen(false)
+  }
+
+  async function addThank() {
+    setError("")
+    setSuccess("")
+
+    if (!person.trim() || !message.trim()) {
+      setError("Wybierz osobę i wpisz treść podziękowania.")
+      return
+    }
+
+    if (person === currentUser) {
+      setError("Nie możesz podziękować samemu sobie.")
+      return
+    }
+
+    const now = new Date()
+
+    const monthlyThanksByAuthor = thanksList.filter(
+      (item) =>
+        !item.deleted &&
+        item.author === currentUser &&
+        isSameMonth(item.date, now)
+    )
+
+    if (monthlyThanksByAuthor.length >= 7) {
+      setError("W tym miesiącu możesz dodać maksymalnie 7 podziękowań.")
+      return
+    }
+
+    const monthlyThanksForThisPerson = monthlyThanksByAuthor.filter(
+      (item) => item.person === person
+    )
+
+    if (monthlyThanksForThisPerson.length >= 2) {
+      setError(
+        "W tym miesiącu możesz podziękować tej osobie maksymalnie 2 razy."
+      )
+      return
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("thanks")
+        .insert({
+          author: currentUser,
+          person: person.trim(),
+          message: message.trim(),
+          deleted: false,
+        })
+        .select()
+        .single()
+
+      if (error) {
+        console.error(error)
+        setError("Nie udało się dodać wpisu.")
+        return
+      }
+
+      const newThank = mapRowToThank(data as ThankRow)
+
+      setThanksList((prev) => [newThank, ...prev])
+      setNewEntryId(newThank.id)
+      setSuccess("Podziękowanie dodane")
+      closeModal()
+    } catch (e) {
+      console.error(e)
+      setError("Nie udało się dodać wpisu.")
+    }
+  }
+
+  async function deleteThank(id: string) {
+    const confirmed = window.confirm(
+      "Czy na pewno chcesz usunąć to podziękowanie?"
+    )
+    if (!confirmed) return
+
+    try {
+      const { error } = await supabase
+        .from("thanks")
+        .update({ deleted: true })
+        .eq("id", id)
+
+      if (error) {
+        console.error(error)
+        return
+      }
+
+      setThanksList((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, deleted: true } : item
+        )
+      )
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  if (!userLoaded) {
+    return null
+  }
+
+  if (!currentUser) {
+    return (
+      <main style={{ padding: "40px", textAlign: "center" }}>
+        <h1>Musisz się zalogować</h1>
+        <a href="/login">Przejdź do logowania</a>
+      </main>
+    )
+  }
 
   return (
     <main
@@ -523,19 +561,6 @@ export default function PodziekowaniaPage() {
       }}
     >
       <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-        <Link
-          href="/"
-          style={{
-            textDecoration: "none",
-            color: "#2563eb",
-            display: "inline-block",
-            marginBottom: "20px",
-            fontWeight: 600,
-          }}
-        >
-          ← Powrót na stronę główną
-        </Link>
-
         <section
           style={{
             background: "rgba(255,255,255,0.75)",
@@ -565,7 +590,7 @@ export default function PodziekowaniaPage() {
                   color: "#111827",
                 }}
               >
-                Podziękowania
+                Bohaterowie
               </h1>
 
               <p
@@ -577,8 +602,7 @@ export default function PodziekowaniaPage() {
                   color: "#4b5563",
                 }}
               >
-                Klasowy feed dobra - miejsce, w którym widać wdzięczność, pomoc i
-                małe rzeczy, które naprawdę robią różnicę.
+                Nikt na nich nie zasługuje, ale wszyscy ich potrzebujemy. Ale to dzięki Budowniczym zmienia się atmosfera Strefy B, bo dobre rzeczy zostają z nami na dłużej. 
               </p>
 
               <div
@@ -588,27 +612,10 @@ export default function PodziekowaniaPage() {
                   flexWrap: "wrap",
                   color: "#374151",
                   fontSize: "14px",
-                  marginBottom: "14px",
+                  marginBottom: "1px",
                 }}
               >
-                <span
-                  style={{
-                    backgroundColor: "#ffffff",
-                    padding: "8px 12px",
-                    borderRadius: "999px",
-                    fontWeight: 600,
-                  }}
-                >
-                </span>
-                <span
-                  style={{
-                    backgroundColor: "#ffffff",
-                    padding: "8px 12px",
-                    borderRadius: "999px",
-                    fontWeight: 600,
-                  }}
-                >
-                </span>
+                
               </div>
 
               <div style={{ maxWidth: "360px" }}>
@@ -723,154 +730,193 @@ export default function PodziekowaniaPage() {
           </select>
         </section>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            gap: "24px",
-            alignItems: "start",
-          }}
-        >
-          <section style={{ display: "grid", gap: "16px" }}>
-            {visibleThanks.length === 0 && (
-              <div
-                style={{
-                  backgroundColor: "rgba(255,255,255,0.85)",
-                  borderRadius: "22px",
-                  padding: "34px 26px",
-                  color: "#6b7280",
-                  textAlign: "center",
-                  boxShadow: "0 12px 30px rgba(0,0,0,0.06)",
-                }}
-              >
-                <div style={{ fontSize: "34px", marginBottom: "10px" }}>💙</div>
-                <div style={{ fontWeight: 700, color: "#374151", marginBottom: "6px" }}>
-                  Nie ma jeszcze podziękowań w tym widoku
-                </div>
-                <div style={{ fontSize: "14px" }}>
-                  Dodaj pierwsze podziękowanie albo zmień filtry.
-                </div>
-              </div>
-            )}
-
-            {visibleThanks.map((item) => (
-              <article
-                key={item.id}
-                style={{
-                  background: "linear-gradient(135deg, #ffffff 0%, #eff6ff 100%)",
-                  border: item.id === newEntryId ? "2px solid #60a5fa" : "1px solid #e5e7eb",
-                  borderRadius: "22px",
-                  padding: "18px",
-                  boxShadow:
-                    item.id === newEntryId
-                      ? "0 14px 30px rgba(96,165,250,0.28)"
-                      : "0 10px 26px rgba(0,0,0,0.06)",
-                  position: "relative",
-                  transition: "all 0.3s ease",
-                }}
-              >
+        {!isLoaded ? (
+          <div
+            style={{
+              backgroundColor: "rgba(255,255,255,0.85)",
+              borderRadius: "22px",
+              padding: "34px 26px",
+              color: "#6b7280",
+              textAlign: "center",
+              boxShadow: "0 12px 30px rgba(0,0,0,0.06)",
+            }}
+          >
+            Ładowanie Bohaterów...
+          </div>
+        ) : (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              gap: "24px",
+              alignItems: "start",
+            }}
+          >
+            <section style={{ display: "grid", gap: "16px" }}>
+              {visibleThanks.length === 0 && (
                 <div
                   style={{
-                    display: "flex",
-                    gap: "16px",
-                    alignItems: "flex-start",
-                    paddingRight:
-                      (item.author === currentUser && canDeleteThank(item.date)) || isAdmin
-                        ? "90px"
-                        : "0",
+                    backgroundColor: "rgba(255,255,255,0.85)",
+                    borderRadius: "22px",
+                    padding: "34px 26px",
+                    color: "#6b7280",
+                    textAlign: "center",
+                    boxShadow: "0 12px 30px rgba(0,0,0,0.06)",
                   }}
                 >
-                  <Avatar person={item.person} />
-
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        flexWrap: "wrap",
-                        marginBottom: "8px",
-                      }}
-                    >
-                      <span style={{ fontSize: "18px" }}>💙</span>
-
-                      <span
-                        style={{
-                          fontWeight: 800,
-                          fontSize: "22px",
-                          lineHeight: 1.35,
-                          color: "#111827",
-                        }}
-                      >
-                        {item.person} - {normalizeMessage(item.message)}
-                      </span>
-
-                      {isNewThank(item.date) && (
-                        <span
-                          style={{
-                            background:
-                              "linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)",
-                            color: "white",
-                            borderRadius: "999px",
-                            padding: "4px 10px",
-                            fontSize: "12px",
-                            fontWeight: 800,
-                          }}
-                        >
-                          Nowe
-                        </span>
-                      )}
-                    </div>
-
-                    <div
-                      style={{
-                        color: "#6b7280",
-                        fontStyle: "italic",
-                        fontSize: "16px",
-                        marginBottom: "4px",
-                      }}
-                    >
-                      {item.author}
-                    </div>
-
-                    <div style={{ color: "#9ca3af", fontSize: "13px" }}>
-                      {formatDate(item.date)}
-                    </div>
+                  <div style={{ fontSize: "34px", marginBottom: "10px" }}>
+                    💙
                   </div>
-                </div>
-
-                {((item.author === currentUser && canDeleteThank(item.date)) || isAdmin) && (
-                  <button
-                    onClick={() => deleteThank(item.id)}
+                  <div
                     style={{
-                      position: "absolute",
-                      right: "16px",
-                      bottom: "16px",
-                      backgroundColor: "#fee2e2",
-                      color: "#991b1b",
-                      border: "none",
-                      borderRadius: "12px",
-                      padding: "10px 14px",
-                      cursor: "pointer",
-                      fontSize: "14px",
-                      minWidth: "80px",
-                      fontWeight: 600,
+                      fontWeight: 700,
+                      color: "#374151",
+                      marginBottom: "6px",
                     }}
                   >
-                    Usuń
-                  </button>
-                )}
-              </article>
-            ))}
-          </section>
+                    Nie ma jeszcze bohaterów w tym widoku
+                  </div>
+                  <div style={{ fontSize: "14px" }}>
+                    Dodaj pierwsze podziękowanie albo zmień filtry.
+                  </div>
+                </div>
+              )}
 
-          <div style={{ display: "grid", gap: "20px" }}>
-            <RankingCard title="Pomocni miesiąca" items={monthlyHelpfulRanking} />
-            <RankingCard title="Wdzięczni miesiąca" items={monthlyGratefulRanking} />
-            <RankingCard title="Pomocni roku" items={yearlyHelpfulRanking} />
-            <RankingCard title="Wdzięczni roku" items={yearlyGratefulRanking} />
+              {visibleThanks.map((item) => (
+                <article
+                  key={item.id}
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #ffffff 0%, #eff6ff 100%)",
+                    border:
+                      item.id === newEntryId
+                        ? "2px solid #60a5fa"
+                        : "1px solid #e5e7eb",
+                    borderRadius: "22px",
+                    padding: "18px",
+                    boxShadow:
+                      item.id === newEntryId
+                        ? "0 14px 30px rgba(96,165,250,0.28)"
+                        : "0 10px 26px rgba(0,0,0,0.06)",
+                    position: "relative",
+                    transition: "all 0.3s ease",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "16px",
+                      alignItems: "flex-start",
+                      paddingRight:
+                        (item.author === currentUser &&
+                          canDeleteThank(item.date)) ||
+                        isAdmin
+                          ? "90px"
+                          : "0",
+                    }}
+                  >
+                    <Avatar person={item.person} />
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          flexWrap: "wrap",
+                          marginBottom: "8px",
+                        }}
+                      >
+                        <span style={{ fontSize: "18px" }}>💙</span>
+
+                        <span
+                          style={{
+                            fontWeight: 800,
+                            fontSize: "22px",
+                            lineHeight: 1.35,
+                            color: "#111827",
+                          }}
+                        >
+                          {item.person} - {normalizeMessage(item.message)}
+                        </span>
+
+                        {isNewThank(item.date) && (
+                          <span
+                            style={{
+                              background:
+                                "linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)",
+                              color: "white",
+                              borderRadius: "999px",
+                              padding: "4px 10px",
+                              fontSize: "12px",
+                              fontWeight: 800,
+                            }}
+                          >
+                            Nowe
+                          </span>
+                        )}
+                      </div>
+
+                      <div
+                        style={{
+                          color: "#6b7280",
+                          fontStyle: "italic",
+                          fontSize: "16px",
+                          marginBottom: "4px",
+                        }}
+                      >
+                        {item.author}
+                      </div>
+
+                      <div style={{ color: "#9ca3af", fontSize: "13px" }}>
+                        {formatDate(item.date)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {((item.author === currentUser && canDeleteThank(item.date)) ||
+                    isAdmin) && (
+                    <button
+                      onClick={() => deleteThank(item.id)}
+                      style={{
+                        position: "absolute",
+                        right: "16px",
+                        bottom: "16px",
+                        backgroundColor: "#fee2e2",
+                        color: "#991b1b",
+                        border: "none",
+                        borderRadius: "12px",
+                        padding: "10px 14px",
+                        cursor: "pointer",
+                        fontSize: "14px",
+                        minWidth: "80px",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Usuń
+                    </button>
+                  )}
+                </article>
+              ))}
+            </section>
+
+            <div style={{ display: "grid", gap: "20px" }}>
+              <RankingCard
+                title="Bohaterowie miesiąca"
+                items={monthlyHelpfulRanking}
+              />
+              <RankingCard
+                title="Budowniczowie miesiąca"
+                items={monthlyGratefulRanking}
+              />
+              <RankingCard title="Bohaterowie roku" items={yearlyHelpfulRanking} />
+              <RankingCard
+                title="Budowniczowie roku"
+                items={yearlyGratefulRanking}
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {isModalOpen && (
@@ -906,7 +952,7 @@ export default function PodziekowaniaPage() {
               }}
             >
               <h2 style={{ margin: 0, fontSize: "30px", color: "#111827" }}>
-                Dodaj podziękowanie
+                Dodaj bohatera
               </h2>
 
               <button
@@ -1040,7 +1086,7 @@ export default function PodziekowaniaPage() {
                     fontWeight: 800,
                   }}
                 >
-                  Dodaj podziękowanie
+                  Dodaj bohatera
                 </button>
               </div>
             </div>

@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useRef, useState } from "react"
+import { supabase } from "../../lib/supabase"
 
 type GalleryItem = {
   id: string
@@ -11,21 +12,34 @@ type GalleryItem = {
   image: string
   author: string
   date: string
+  takenAt: string
   deleted: boolean
 }
 
-const DB_NAME = "class-gallery-db"
-const STORE_NAME = "galleryItems"
-const DB_VERSION = 1
-const ADMIN_EMAIL = "michal.radziwill@radosnanowina.pl"
+type GalleryRow = {
+  id: string
+  title: string
+  description: string | null
+  event: string | null
+  image: string
+  author: string
+  created_at: string
+  taken_at: string | null
+  deleted: boolean
+}
 
-function getFirstNameFromEmail(email: string) {
-  const login = email.split("@")[0]
-  const first = login.split(".")[0]
-
-  if (!first) return "Uczeń"
-
-  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase()
+function mapRowToGalleryItem(row: GalleryRow): GalleryItem {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description ?? "",
+    event: row.event ?? "",
+    image: row.image,
+    author: row.author,
+    date: row.created_at,
+    takenAt: row.taken_at ?? row.created_at.slice(0, 10),
+    deleted: row.deleted,
+  }
 }
 
 function canDelete(date: string) {
@@ -50,122 +64,14 @@ function isSameDay(date: string) {
   )
 }
 
-function formatDateTime(date: string) {
-  return new Date(date).toLocaleString("pl-PL")
-}
-
-function openGalleryDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION)
-
-    request.onupgradeneeded = () => {
-      const db = request.result
-
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: "id" })
-      }
-    }
-
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () => reject(request.error)
-  })
-}
-
-function getAllGalleryItems(): Promise<GalleryItem[]> {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const db = await openGalleryDb()
-      const tx = db.transaction(STORE_NAME, "readonly")
-      const store = tx.objectStore(STORE_NAME)
-      const request = store.getAll()
-
-      request.onsuccess = () => resolve(request.result as GalleryItem[])
-      request.onerror = () => reject(request.error)
-    } catch (error) {
-      reject(error)
-    }
-  })
-}
-
-function putGalleryItem(item: GalleryItem): Promise<void> {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const db = await openGalleryDb()
-      const tx = db.transaction(STORE_NAME, "readwrite")
-      const store = tx.objectStore(STORE_NAME)
-
-      store.put(item)
-
-      tx.oncomplete = () => resolve()
-      tx.onerror = () => reject(tx.error)
-    } catch (error) {
-      reject(error)
-    }
-  })
-}
-
-function seedGalleryIfEmpty(): Promise<void> {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const items = await getAllGalleryItems()
-
-      if (items.length > 0) {
-        resolve()
-        return
-      }
-
-      const starterItems: GalleryItem[] = [
-        {
-          id: "seed-1",
-          title: "Nasza klasa - wspólny moment",
-          description: "Pierwsze zdjęcie w klasowej galerii.",
-          event: "Start galerii",
-          image:
-            "data:image/svg+xml;utf8," +
-            encodeURIComponent(`
-              <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900">
-                <defs>
-                  <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
-                    <stop offset="0%" stop-color="#dbeafe"/>
-                    <stop offset="50%" stop-color="#ede9fe"/>
-                    <stop offset="100%" stop-color="#dcfce7"/>
-                  </linearGradient>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#g1)"/>
-                <circle cx="230" cy="190" r="90" fill="#ffffff" opacity="0.55"/>
-                <circle cx="1000" cy="160" r="70" fill="#ffffff" opacity="0.45"/>
-                <circle cx="940" cy="760" r="100" fill="#ffffff" opacity="0.35"/>
-                <text x="50%" y="44%" dominant-baseline="middle" text-anchor="middle"
-                  font-family="Arial" font-size="92" font-weight="700" fill="#1f2937">
-                  Galeria klasy
-                </text>
-                <text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle"
-                  font-family="Arial" font-size="42" fill="#4b5563">
-                  Tu pojawią się Wasze zdjęcia i wspomnienia
-                </text>
-              </svg>
-            `),
-          author: "Jan",
-          date: new Date().toISOString(),
-          deleted: false,
-        },
-      ]
-
-      for (const item of starterItems) {
-        await putGalleryItem(item)
-      }
-
-      resolve()
-    } catch (error) {
-      reject(error)
-    }
-  })
+function formatDateOnly(date: string) {
+  return new Date(date).toLocaleDateString("pl-PL")
 }
 
 export default function GaleriaPage() {
-  const currentUserEmail = "jan.kowalski@radosnanowina.pl"
-  const currentUser = getFirstNameFromEmail(currentUserEmail)
-  const isAdmin = currentUserEmail === ADMIN_EMAIL
+  const [currentUser, setCurrentUser] = useState("")
+  const [userLoaded, setUserLoaded] = useState(false)
+  const isAdmin = currentUser === "ks. Michał"
 
   const [items, setItems] = useState<GalleryItem[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
@@ -177,29 +83,51 @@ export default function GaleriaPage() {
   const [description, setDescription] = useState("")
   const [event, setEvent] = useState("")
   const [image, setImage] = useState("")
+  const [takenAt, setTakenAt] = useState("")
   const [selectedFileName, setSelectedFileName] = useState("")
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [newEntryId, setNewEntryId] = useState("")
 
   const [feedFilter, setFeedFilter] = useState<"all" | "mine">("all")
+  const [sortMode, setSortMode] = useState<"added" | "taken">("added")
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
-    async function load() {
+    fetch("/api/me")
+      .then((res) => res.json())
+      .then((data) => {
+        setCurrentUser(data.name || "")
+        setUserLoaded(true)
+      })
+      .catch(() => {
+        setUserLoaded(true)
+      })
+  }, [])
+
+  useEffect(() => {
+    async function loadGallery() {
       try {
-        await seedGalleryIfEmpty()
-        const loadedItems = await getAllGalleryItems()
-        setItems(loadedItems)
+        const { data, error } = await supabase
+          .from("gallery_items")
+          .select("*")
+          .order("created_at", { ascending: false })
+
+        if (error) {
+          console.error("Błąd ładowania Bajek:", error)
+          return
+        }
+
+        setItems((data as GalleryRow[]).map(mapRowToGalleryItem))
       } catch (e) {
-        console.error("Błąd ładowania galerii:", e)
+        console.error("Błąd ładowania Bajek:", e)
       } finally {
         setIsLoaded(true)
       }
     }
 
-    load()
+    loadGallery()
   }, [])
 
   useEffect(() => {
@@ -215,15 +143,26 @@ export default function GaleriaPage() {
   }, [newEntryId])
 
   const visibleItems = useMemo(() => {
-    return items
-      .filter((i) => !i.deleted)
-      .filter((i) => (feedFilter === "mine" ? i.author === currentUser : true))
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  }, [items, feedFilter, currentUser])
+  const filtered = items
+    .filter((i) => !i.deleted)
+    .filter((i) => (feedFilter === "mine" ? i.author === currentUser : true))
 
-  const todaysUploadsCount = items.filter(
-    (i) => !i.deleted && i.author === currentUser && isSameDay(i.date)
-  ).length
+  if (sortMode === "taken") {
+    return [...filtered].sort(
+      (a, b) => new Date(b.takenAt).getTime() - new Date(a.takenAt).getTime()
+    )
+  }
+
+  return [...filtered].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  )
+}, [items, feedFilter, currentUser, sortMode])
+
+  const todaysUploadsCount = useMemo(() => {
+    return items.filter(
+      (i) => !i.deleted && i.author === currentUser && isSameDay(i.date)
+    ).length
+  }, [items, currentUser])
 
   const dailyPercent = Math.min((todaysUploadsCount / 3) * 100, 100)
 
@@ -232,6 +171,7 @@ export default function GaleriaPage() {
     setDescription("")
     setEvent("")
     setImage("")
+    setTakenAt("")
     setSelectedFileName("")
     setError("")
     if (fileInputRef.current) {
@@ -276,24 +216,39 @@ export default function GaleriaPage() {
       return
     }
 
+    if (!takenAt) {
+      setError("Wybierz datę zrobienia zdjęcia.")
+      return
+    }
+
     if (todaysUploadsCount >= 3) {
       setError("Możesz dodać maksymalnie 3 zdjęcia dziennie.")
       return
     }
 
-    const newItem: GalleryItem = {
-      id: crypto.randomUUID(),
-      title: title.trim(),
-      description: description.trim(),
-      event: event.trim(),
-      image,
-      author: currentUser,
-      date: new Date().toISOString(),
-      deleted: false,
-    }
-
     try {
-      await putGalleryItem(newItem)
+      const { data, error } = await supabase
+        .from("gallery_items")
+        .insert({
+          title: title.trim(),
+          description: description.trim() || null,
+          event: event.trim() || null,
+          image,
+          author: currentUser,
+          taken_at: takenAt,
+          deleted: false,
+        })
+        .select()
+        .single()
+
+      if (error) {
+        console.error(error)
+        setError("Nie udało się zapisać zdjęcia.")
+        return
+      }
+
+      const newItem = mapRowToGalleryItem(data as GalleryRow)
+
       setItems((prev) => [newItem, ...prev])
       setNewEntryId(newItem.id)
       setSuccess("Zdjęcie dodane")
@@ -308,14 +263,21 @@ export default function GaleriaPage() {
     const confirmed = window.confirm("Czy na pewno chcesz usunąć ten wpis?")
     if (!confirmed) return
 
-    const found = items.find((i) => i.id === id)
-    if (!found) return
-
-    const updated = { ...found, deleted: true }
-
     try {
-      await putGalleryItem(updated)
-      setItems((prev) => prev.map((i) => (i.id === id ? updated : i)))
+      const { error } = await supabase
+        .from("gallery_items")
+        .update({ deleted: true })
+        .eq("id", id)
+
+      if (error) {
+        console.error(error)
+        return
+      }
+
+      setItems((prev) =>
+        prev.map((i) => (i.id === id ? { ...i, deleted: true } : i))
+      )
+
       if (previewIndex !== null) {
         setPreviewIndex(null)
       }
@@ -341,11 +303,25 @@ export default function GaleriaPage() {
 
   function goNext() {
     if (previewIndex === null) return
-    const next = previewIndex === visibleItems.length - 1 ? 0 : previewIndex + 1
+    const next =
+      previewIndex === visibleItems.length - 1 ? 0 : previewIndex + 1
     setPreviewIndex(next)
   }
 
   const previewItem = previewIndex !== null ? visibleItems[previewIndex] : null
+
+  if (!userLoaded) {
+    return null
+  }
+
+  if (!currentUser) {
+    return (
+      <main style={{ padding: "40px", textAlign: "center" }}>
+        <h1>Musisz się zalogować</h1>
+        <a href="/login">Przejdź do logowania</a>
+      </main>
+    )
+  }
 
   return (
     <main
@@ -357,19 +333,6 @@ export default function GaleriaPage() {
       }}
     >
       <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-        <Link
-          href="/"
-          style={{
-            color: "#2563eb",
-            textDecoration: "none",
-            fontWeight: 600,
-            display: "inline-block",
-            marginBottom: "20px",
-          }}
-        >
-          ← Powrót
-        </Link>
-
         <section
           style={{
             background: "rgba(255,255,255,0.75)",
@@ -399,7 +362,7 @@ export default function GaleriaPage() {
                   color: "#111827",
                 }}
               >
-                Galeria
+                Bajki
               </h1>
 
               <p
@@ -411,8 +374,7 @@ export default function GaleriaPage() {
                   color: "#4b5563",
                 }}
               >
-                Wspomnienia i ważne chwile klasy - w formie nowoczesnej,
-                młodzieżowej galerii zdjęć i grafik.
+                Podobno życie to nie bajka... ale jak nazwać nasze przygody?
               </p>
 
               <div
@@ -422,10 +384,10 @@ export default function GaleriaPage() {
                   flexWrap: "wrap",
                   color: "#374151",
                   fontSize: "14px",
-                  marginBottom: "14px",
+                  marginBottom: "1px",
                 }}
               >
-
+                
               </div>
 
               <div style={{ maxWidth: "360px" }}>
@@ -547,6 +509,53 @@ export default function GaleriaPage() {
           >
             Moje
           </button>
+
+          <button
+  onClick={() => setSortMode("added")}
+  style={{
+    border: sortMode === "added" ? "none" : "1px solid #d1d5db",
+    background:
+      sortMode === "added"
+        ? "linear-gradient(135deg, #111827 0%, #374151 100%)"
+        : "white",
+    color: sortMode === "added" ? "white" : "#374151",
+    borderRadius: "999px",
+    padding: "10px 16px",
+    cursor: "pointer",
+    fontWeight: 700,
+    fontSize: "14px",
+    boxShadow:
+      sortMode === "added"
+        ? "0 8px 20px rgba(17,24,39,0.18)"
+        : "none",
+  }}
+>
+  Ostatnio dodane
+</button>
+
+<button
+  onClick={() => setSortMode("taken")}
+  style={{
+    border: sortMode === "taken" ? "none" : "1px solid #d1d5db",
+    background:
+      sortMode === "taken"
+        ? "linear-gradient(135deg, #111827 0%, #374151 100%)"
+        : "white",
+    color: sortMode === "taken" ? "white" : "#374151",
+    borderRadius: "999px",
+    padding: "10px 16px",
+    cursor: "pointer",
+    fontWeight: 700,
+    fontSize: "14px",
+    boxShadow:
+      sortMode === "taken"
+        ? "0 8px 20px rgba(17,24,39,0.18)"
+        : "none",
+  }}
+>
+  Według daty
+</button>
+
         </section>
 
         {!isLoaded ? (
@@ -560,7 +569,7 @@ export default function GaleriaPage() {
               boxShadow: "0 12px 30px rgba(0,0,0,0.06)",
             }}
           >
-            Ładowanie galerii...
+            Ładowanie bajek...
           </div>
         ) : visibleItems.length === 0 ? (
           <div
@@ -582,7 +591,7 @@ export default function GaleriaPage() {
                 fontSize: "18px",
               }}
             >
-              Galeria jest jeszcze pusta
+              Bajki są jeszcze puste
             </div>
             <div style={{ fontSize: "14px" }}>
               Dodaj pierwsze zdjęcie albo grafikę klasy.
@@ -694,7 +703,7 @@ export default function GaleriaPage() {
                     </div>
 
                     <div style={{ fontSize: "13px", opacity: 0.92 }}>
-                      {item.author} • {formatDateTime(item.date)}
+                      {item.author} • {formatDateOnly(item.takenAt)}
                     </div>
                   </div>
                 </div>
@@ -710,7 +719,8 @@ export default function GaleriaPage() {
                           fontSize: "14px",
                           lineHeight: 1.55,
                           marginBottom:
-                            (item.author === currentUser && canDelete(item.date)) ||
+                            (item.author === currentUser &&
+                              canDelete(item.date)) ||
                             isAdmin
                               ? "12px"
                               : "0",
@@ -722,7 +732,9 @@ export default function GaleriaPage() {
 
                     {((item.author === currentUser && canDelete(item.date)) ||
                       isAdmin) && (
-                      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                      <div
+                        style={{ display: "flex", justifyContent: "flex-end" }}
+                      >
                         <button
                           onClick={() => deleteItem(item.id)}
                           style={{
@@ -891,6 +903,34 @@ export default function GaleriaPage() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Np. Wycieczka do Krakowa"
+                  style={{
+                    width: "100%",
+                    padding: "14px",
+                    borderRadius: "16px",
+                    border: "1px solid #d1d5db",
+                    fontSize: "16px",
+                    boxSizing: "border-box",
+                    backgroundColor: "white",
+                  }}
+                />
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "8px",
+                    fontWeight: 700,
+                    color: "#374151",
+                  }}
+                >
+                  Data zrobienia zdjęcia
+                </label>
+
+                <input
+                  type="date"
+                  value={takenAt}
+                  onChange={(e) => setTakenAt(e.target.value)}
                   style={{
                     width: "100%",
                     padding: "14px",
@@ -1166,7 +1206,7 @@ export default function GaleriaPage() {
               )}
 
               <div style={{ color: "#d1d5db", fontSize: "14px" }}>
-                {previewItem.author} • {formatDateTime(previewItem.date)}
+                {previewItem.author} • {formatDateOnly(previewItem.takenAt)}
               </div>
             </div>
           </div>
