@@ -24,3 +24,18 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* --- FIX MOBILE INPUT COLORS --- */
+input,
+select,
+textarea {
+  color: #111827;
+  background-color: #ffffff;
+  opacity: 1;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #6b7280;
+  opacity: 1;
+}

@@ -81,18 +81,20 @@ export default function LoginPage() {
           
 
             <select
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "14px",
-                borderRadius: "16px",
-                border: "1px solid #d1d5db",
-                fontSize: "16px",
-                backgroundColor: "white",
-                boxSizing: "border-box",
-              }}
-            >
+  value={name}
+  onChange={(e) => setName(e.target.value)}
+  style={{
+    width: "100%",
+    padding: "14px",
+    borderRadius: "16px",
+    border: "1px solid #d1d5db",
+    fontSize: "16px",
+    boxSizing: "border-box",
+    backgroundColor: "white",
+    color: "#111827",
+    opacity: 1,
+  }}
+>
               <option value="">Wybierz swoje imię</option>
               {sortedStudents.map((student) => (
                 <option key={student} value={student}>
@@ -111,14 +113,16 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Wpisz hasło"
               style={{
-                width: "100%",
-                padding: "14px",
-                borderRadius: "16px",
-                border: "1px solid #d1d5db",
-                fontSize: "16px",
-                backgroundColor: "white",
-                boxSizing: "border-box",
-              }}
+  width: "100%",
+  padding: "14px",
+  borderRadius: "16px",
+  border: "1px solid #d1d5db",
+  fontSize: "16px",
+  boxSizing: "border-box",
+  backgroundColor: "white",
+  color: "#111827",
+  opacity: 1,
+}}
             />
           </div>
 
