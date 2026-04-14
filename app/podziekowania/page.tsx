@@ -222,7 +222,15 @@ function RankingCard({
         boxShadow: "0 10px 26px rgba(0,0,0,0.06)",
       }}
     >
-      <h2 style={{ marginTop: 0, marginBottom: "16px", fontSize: "22px" }}>
+      <h2
+        style={{
+        marginTop: 0,
+        marginBottom: "16px",
+        fontSize: "22px",
+        color: "#111827",
+        fontWeight: 800,
+        }}
+        >
         {title}
       </h2>
 
