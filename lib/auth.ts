@@ -1,14 +1,8 @@
 import "server-only"
 import { cookies } from "next/headers"
-import { scrypt as scryptCallback, timingSafeEqual } from "node:crypto"
-import { promisify } from "node:util"
 import { students, type StudentName } from "./students"
 import { SESSION_COOKIE, SESSION_TTL_SECONDS, createSession, verifySession, type SessionMode } from "./session"
 import { getStoredCredential, verifyPasswordHash } from "./password-store"
-
-const scrypt = promisify(scryptCallback)
-const dummySalt = "not-a-real-user-salt"
-const dummyHash = "00".repeat(64)
 
 function credentials(): Record<string, string> | null {
   const value = process.env.STREFA_B_PASSWORD_HASHES
