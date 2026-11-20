@@ -1,3 +1,4 @@
+import { isActiveStudent } from "../../lib/active-students"
 "use client"
 
 import Link from "next/link"
@@ -119,7 +120,7 @@ export default function GaleriaPage() {
           return
         }
 
-        setItems((data as GalleryRow[]).map(mapRowToGalleryItem))
+        setItems((data as GalleryRow[]).filter(item => isActiveStudent(item.author)).map(mapRowToGalleryItem))
       } catch (e) {
         console.error("Błąd ładowania Bajek:", e)
       } finally {
