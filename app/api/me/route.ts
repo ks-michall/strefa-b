@@ -3,9 +3,8 @@ import { getLoggedInUser } from "../../../lib/auth"
 
 export async function GET() {
   const user = await getLoggedInUser()
-
-  return NextResponse.json({
-    loggedIn: Boolean(user),
-    name: user || null,
-  })
+  return NextResponse.json(
+    { loggedIn: Boolean(user), name: user },
+    { headers: { "Cache-Control": "no-store" } }
+  )
 }
