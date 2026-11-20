@@ -1,5 +1,7 @@
 "use client"
 
+import { isActiveStudent } from "../../lib/active-students"
+
 import Link from "next/link"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { supabase } from "../../lib/supabase"
@@ -119,7 +121,7 @@ export default function GaleriaPage() {
           return
         }
 
-        setItems((data as GalleryRow[]).map(mapRowToGalleryItem))
+        setItems((data as GalleryRow[]).filter(item => isActiveStudent(item.author)).map(mapRowToGalleryItem))
       } catch (e) {
         console.error("Błąd ładowania Bajek:", e)
       } finally {

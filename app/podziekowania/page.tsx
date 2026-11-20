@@ -1,5 +1,8 @@
 "use client"
 
+import { students as activeStudents } from "../../lib/students"
+import { isActiveStudent } from "../../lib/active-students"
+
 import { useEffect, useMemo, useState } from "react"
 import { supabase } from "../../lib/supabase"
 
@@ -96,31 +99,7 @@ function formatDate(dateString: string) {
   return new Date(dateString).toLocaleDateString("pl-PL")
 }
 
-const students = [
-  "Ada",
-  "Amelia",
-  "Anna",
-  "Ewa",
-  "Gabriela",
-  "Hanna",
-  "Hubert",
-  "Julia",
-  "Kamila",
-  "Karina",
-  "Kinga",
-  "Laura",
-  "Liliana",
-  "Miłosz",
-  "Natalia",
-  "Nikola",
-  "Oleksandr",
-  "Stanisław",
-  "Szczepan",
-  "Weronika",
-  "Zuzanna",
-  "ks. Michał",
-]
-
+const students = [...activeStudents]
 const sortedStudents = [...students].sort((a, b) => {
   if (a === "ks. Michał") return 1
   if (b === "ks. Michał") return -1
@@ -130,8 +109,6 @@ const sortedStudents = [...students].sort((a, b) => {
 const profileImages: Record<string, string> = {
   Ada: "/profiles/ada.jpg",
   Amelia: "/profiles/amelia.jpg",
-  Anna: "/profiles/anna.jpg",
-  Ewa: "/profiles/ewa.jpg",
   Gabriela: "/profiles/gabriela.jpg",
   Hanna: "/profiles/hanna.jpg",
   Hubert: "/profiles/hubert.jpg",
@@ -148,7 +125,6 @@ const profileImages: Record<string, string> = {
   Stanisław: "/profiles/stanislaw.jpg",
   Szczepan: "/profiles/szczepan.jpg",
   Weronika: "/profiles/weronika.jpg",
-  Zuzanna: "/profiles/zuzanna.jpg",
   "ks. Michał": "/profiles/ks-michal.jpg",
 }
 
@@ -391,7 +367,7 @@ export default function PodziekowaniaPage() {
 
   const visibleThanks = useMemo(() => {
     let items = thanksList
-      .filter((item) => !item.deleted)
+      .filter((item) => !item.deleted && isActiveStudent(item.author) && isActiveStudent(item.person))
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
     if (feedFilter === "mine") {
@@ -410,19 +386,19 @@ export default function PodziekowaniaPage() {
   }, [thanksList, feedFilter, selectedPersonFilter, currentUser])
 
   const monthlyHelpfulRanking = useMemo(() => {
-    return buildRanking(thanksList, "received", "month", new Date())
+    return buildRanking(thanksList.filter(item => isActiveStudent(item.author) && isActiveStudent(item.person)), "received", "month", new Date())
   }, [thanksList])
 
   const monthlyBuildersRanking = useMemo(() => {
-    return buildRanking(thanksList, "given", "month", new Date())
+    return buildRanking(thanksList.filter(item => isActiveStudent(item.author) && isActiveStudent(item.person)), "given", "month", new Date())
   }, [thanksList])
 
   const yearlyHelpfulRanking = useMemo(() => {
-    return buildRanking(thanksList, "received", "year", new Date())
+    return buildRanking(thanksList.filter(item => isActiveStudent(item.author) && isActiveStudent(item.person)), "received", "year", new Date())
   }, [thanksList])
 
   const yearlyBuildersRanking = useMemo(() => {
-    return buildRanking(thanksList, "given", "year", new Date())
+    return buildRanking(thanksList.filter(item => isActiveStudent(item.author) && isActiveStudent(item.person)), "given", "year", new Date())
   }, [thanksList])
 
   const currentUserMonthlyCount = useMemo(() => {
@@ -457,7 +433,7 @@ export default function PodziekowaniaPage() {
     setError("")
     setSuccess("")
 
-    if (!person.trim() || !message.trim()) {
+    if (!person.trim() || !message.trim() || !isActiveStudent(person)) {
       setError("Wybierz osobę i wpisz treść podziękowania.")
       return
     }
