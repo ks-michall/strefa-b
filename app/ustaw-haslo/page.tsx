@@ -12,8 +12,8 @@ export default function SetPasswordPage() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError("")
-    if (password.length < 12 || password.length > 128) {
-      setError("Hasło musi mieć od 12 do 128 znaków.")
+    if (password.length < 7 || password.length > 128) {
+      setError("Hasło musi mieć od 7 do 128 znaków.")
       return
     }
     if (password !== confirm) {
@@ -59,12 +59,12 @@ export default function SetPasswordPage() {
         <form onSubmit={handleSubmit} style={{ display: "grid", gap: 14 }}>
           <label htmlFor="newPassword" style={{ fontWeight: 700 }}>Nowe hasło</label>
           <input id="newPassword" type={show ? "text" : "password"} value={password}
-            minLength={12} maxLength={128} required autoComplete="new-password"
-            onChange={e => setPassword(e.target.value)} placeholder="Minimum 12 znaków"
+            minLength={7} maxLength={128} required autoComplete="new-password"
+            onChange={e => setPassword(e.target.value)} placeholder="Minimum 7 znaków"
             style={{ border: "1px solid #cbd5e1", borderRadius: 14, fontSize: 16, padding: 14, width: "100%", boxSizing: "border-box" }}/>
           <label htmlFor="confirmPassword" style={{ fontWeight: 700 }}>Powtórz hasło</label>
           <input id="confirmPassword" type={show ? "text" : "password"} value={confirm}
-            minLength={12} maxLength={128} required autoComplete="new-password"
+            minLength={7} maxLength={128} required autoComplete="new-password"
             onChange={e => setConfirm(e.target.value)} placeholder="Wpisz ponownie"
             style={{ border: "1px solid #cbd5e1", borderRadius: 14, fontSize: 16, padding: 14, width: "100%", boxSizing: "border-box" }}/>
           <label style={{ fontSize: 14, color: "#334155", display: "flex", alignItems: "center", gap: 10 }}>
@@ -72,10 +72,10 @@ export default function SetPasswordPage() {
             Pokaż hasło
           </label>
           <p style={{ color: "#64748b", fontSize: 13, lineHeight: 1.6, margin: 0 }}>
-            Nie udostępniaj hasła kolegom. Możesz użyć całego długiego zdania jako hasła.
+            Nie udostępniaj hasła kolegom. Dłuższe hasło jest bezpieczniejsze — możesz użyć całego zdania.
           </p>
           {error && <p role="alert" style={{ padding: 12, borderRadius: 12, background: "#fee2e2", color: "#991b1b", margin: 0 }}>{error}</p>}
-          <button disabled={loading || password.length < 12 || password !== confirm}
+          <button disabled={loading || password.length < 7 || password !== confirm}
             style={{
               background: "#246b49", color: "white", border: "none", borderRadius: 14,
               padding: "15px 16px", fontSize: 16, fontWeight: 700,
