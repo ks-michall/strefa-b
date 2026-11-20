@@ -1,6 +1,7 @@
+"use client"
+
 import { students as activeStudents } from "../../lib/students"
 import { isActiveStudent } from "../../lib/active-students"
-"use client"
 
 import { useEffect, useMemo, useState } from "react"
 import { supabase } from "../../lib/supabase"
