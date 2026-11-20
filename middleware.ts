@@ -28,6 +28,11 @@ export async function middleware(request: NextRequest) {
   }
 
 
+  if ((pathname === "/b-boss" || pathname.startsWith("/b-boss/")) &&
+      user?.name !== "ks. Michał") {
+    return NextResponse.redirect(new URL("/", request.url))
+  }
+
   if (user?.mode === "setup") {
     const allowed =
       pathname === "/ustaw-haslo" ||
