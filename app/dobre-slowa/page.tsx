@@ -1,3 +1,4 @@
+import { isActiveStudent } from "../../lib/active-students"
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
@@ -31,8 +32,6 @@ const QUOTE_MAX_LENGTH = 300
 const students = [
   "Ada",
   "Amelia",
-  "Anna",
-  "Ewa",
   "Gabriela",
   "Hanna",
   "Hubert",
@@ -49,7 +48,6 @@ const students = [
   "Stanisław",
   "Szczepan",
   "Weronika",
-  "Zuzanna",
 ]
 
 const dedicationOptions = [...students, "ks. Michał"]
@@ -562,8 +560,6 @@ function getAddedLabel(author: string) {
   const femaleNames = [
     "Ada",
     "Amelia",
-    "Anna",
-    "Ewa",
     "Gabriela",
     "Hanna",
     "Julia",
@@ -575,7 +571,6 @@ function getAddedLabel(author: string) {
     "Natalia",
     "Nikola",
     "Weronika",
-    "Zuzanna",
   ]
 
   return femaleNames.includes(author) ? "dodała" : "dodał"
@@ -677,7 +672,7 @@ export default function DobreSlowaPage() {
 
   const visibleEntries = useMemo(() => {
     const activeEntries = entries
-      .filter((entry) => !entry.deleted)
+      .filter((entry) => !entry.deleted && isActiveStudent(entry.author) && (!entry.dedication || isActiveStudent(entry.dedication)))
       .sort(
         (a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
