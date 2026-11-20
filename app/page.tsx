@@ -180,7 +180,7 @@ export default function HomePage() {
               fontSize: "28px", marginBottom: "16px",
             }}>🕵️</div>
             <h2 style={{ fontSize: "28px", marginTop: 0, marginBottom: "10px" }}>
-              B-Boss
+              Boss
             </h2>
             <p style={{ color: "#4b5563", lineHeight: 1.7, margin: 0, fontSize: "17px" }}>
               Podgląd drzewek Bonsai i małych kroków Twoich uczniów.

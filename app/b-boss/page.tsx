@@ -16,15 +16,15 @@ function TreeIcon({count}:{count:number}) {
   const emoji = count===0?"🌰":count<4?"🌱":count<10?"🌿":count<20?"🪴":"🌳"
   return <span role="img" aria-label="Stan wzrostu Bonsai" style={{fontSize:64,lineHeight:1}}>{emoji}</span>
 }
-function Calendar({tree}:{tree:Tree}) {
+function Calendar({tree,cutoff}:{tree:Tree;cutoff:string}) {
   return <div aria-label="Kalendarz 28 dni" style={{display:"grid",gridTemplateColumns:"repeat(7,minmax(0,1fr))",gap:7}}>
     {Array.from({length:28},(_,index)=>{
-      const day=addDays(tree.started,index),checked=tree.checks.includes(day)
+      const day=addDays(tree.started,index),checked=tree.checks.includes(day),missed=!checked && Boolean(cutoff) && day<cutoff
       return <div key={day} title={readableDate(day)} style={{
         padding:"10px 0",textAlign:"center",borderRadius:10,
         background:checked?"#bee5c7":"#eef2f5",
         color:checked?"#235d39":"#64748b",fontWeight:700,
-      }}>{checked?"✓":index+1}</div>
+      }}>{checked?"✓":missed?"0":index+1}</div>
     })}
   </div>
 }
@@ -34,6 +34,12 @@ export default function BBossPage() {
   const [loading,setLoading]=useState(false)
   const [error,setError]=useState("")
   const [asOf,setAsOf]=useState("")
+  useEffect(()=>{
+    const update=()=>setAsOf(currentPlantingDay(new Date()))
+    update()
+    const timer=window.setInterval(update,30000)
+    return ()=>window.clearInterval(timer)
+  },[])
   useEffect(()=>{
     if(!student){setTrees([]);setError("");return}
     let active=true
@@ -66,7 +72,7 @@ export default function BBossPage() {
     <div style={{maxWidth:820,margin:"0 auto"}}>
       <Link href="/" style={{color:"#376277",textDecoration:"none"}}>← Strefa B</Link>
       <header style={{margin:"22px 0 24px"}}>
-        <h1 style={{margin:"0 0 8px",fontSize:38}}>🕵️ B-Boss</h1>
+        <h1 style={{margin:"0 0 8px",fontSize:38}}>🕵️ Boss</h1>
         <p style={{color:"#617887",fontSize:17,lineHeight:1.65,margin:0}}>
           Twój dyskretny punkt obserwacyjny Bonsai. Postępy bez rankingów i porównywania uczniów.
         </p>
@@ -131,7 +137,7 @@ export default function BBossPage() {
               <div style={{height:10,background:"#e3ebe8",borderRadius:99,overflow:"hidden",marginBottom:20}}>
                 <div style={{height:"100%",width:(tree.checks.length/28*100)+"%",background:"#60ab78",borderRadius:99}}/>
               </div>
-              <Calendar tree={tree}/>
+              <Calendar tree={tree} cutoff={asOf}/>
             </section>
           })}
         </div>}
