@@ -88,7 +88,7 @@ Deno.serve(async (req: Request) => {
 
     if (action === "plant") {
       if (typeof habitIndex !== "number" || !Number.isInteger(habitIndex) ||
-          habitIndex < 0 || habitIndex > 29 || typeof cue !== "string" || !CUES.includes(cue)) {
+          habitIndex < 0 || habitIndex > 29 || [6, 8, 21, 26].includes(habitIndex) || typeof cue !== "string" || !CUES.includes(cue)) {
         return reply({error:"Nieprawidłowy nawyk"},400)
       }
       const { data:previous,error:readError } = await db.from("bonsai_trees")
