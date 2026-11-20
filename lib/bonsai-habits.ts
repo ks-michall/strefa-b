@@ -32,3 +32,8 @@ export const habits: Habit[] = [
   { title: "Przygotowanie do snu", action: "Ustaw przypomnienie o wieczornym wyciszeniu.", category: "Samodyscyplina" },
 ]
 
+// These habits remain indexed for historical trees, but can no longer be selected.
+// Do not delete or renumber items: saved trees reference their original indices.
+export const retiredHabitIndices = new Set([6, 8, 21, 26])
+export const availableHabits = habits.map((habit, index) => ({...habit, index}))
+  .filter(item => !retiredHabitIndices.has(item.index))
