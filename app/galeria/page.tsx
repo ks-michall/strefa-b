@@ -1,5 +1,6 @@
-import { isActiveStudent } from "../../lib/active-students"
 "use client"
+
+import { isActiveStudent } from "../../lib/active-students"
 
 import Link from "next/link"
 import { useEffect, useMemo, useRef, useState } from "react"
