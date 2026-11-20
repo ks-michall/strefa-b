@@ -3,6 +3,8 @@
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { habits } from "../../lib/bonsai-habits"
+import { BonsaiGrowth } from "../../components/bonsai-growth"
+import { harvestBadges, RECOGNITION_THRESHOLD } from "../../lib/bonsai-rewards"
 import { addDays, currentPlantingDay, daysBetween, readableDate } from "../../lib/bonsai-time"
 import { sortedStudents } from "../../lib/students"
 
@@ -11,10 +13,6 @@ const pupils = sortedStudents.filter(name => name !== "ks. Michał")
 const surface: React.CSSProperties = {
   background: "white", borderRadius: 22, padding: 22,
   border: "1px solid #dce7ee", boxShadow: "0 8px 26px rgba(30,52,72,.04)",
-}
-function TreeIcon({count}:{count:number}) {
-  const emoji = count===0?"🌰":count<4?"🌱":count<10?"🌿":count<20?"🪴":"🌳"
-  return <span role="img" aria-label="Stan wzrostu Bonsai" style={{fontSize:64,lineHeight:1}}>{emoji}</span>
 }
 function Calendar({tree,cutoff}:{tree:Tree;cutoff:string}) {
   return <div aria-label="Kalendarz 28 dni" style={{display:"grid",gridTemplateColumns:"repeat(7,minmax(0,1fr))",gap:7}}>
@@ -126,7 +124,7 @@ export default function BBossPage() {
                   <p style={{margin:"0 0 7px",color:"#546c7c",lineHeight:1.6}}>{habit?.action||""}</p>
                   <p style={{margin:0,fontSize:13,color:"#648273"}}>Sygnał: {tree.cue}</p>
                 </div>
-                <TreeIcon count={tree.checks.length}/>
+                <BonsaiGrowth count={tree.checks.length} compact/>
               </div>
               <div style={{margin:"18px 0 12px",display:"flex",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
                 <strong>{tree.checks.length} / 28 dni</strong>
@@ -138,6 +136,16 @@ export default function BBossPage() {
                 <div style={{height:"100%",width:(tree.checks.length/28*100)+"%",background:"#60ab78",borderRadius:99}}/>
               </div>
               <Calendar tree={tree} cutoff={asOf}/>
+              {done && <div style={{marginTop:17,padding:14,background:"#eaf5ee",borderRadius:14,color:"#315e43"}}>
+                <strong>🌾 Zbiory Bonsai: {tree.checks.length}/28 dni</strong>
+                {harvestBadges(tree,trees.filter(other=>other.id!==tree.id && other.started<=tree.started),asOf).map(badge=>
+                  <div key={badge.id} style={{fontSize:13,marginTop:7}}>{badge.icon} {badge.title}</div>)}
+                {tree.checks.length>=RECOGNITION_THRESHOLD &&
+                  <p style={{fontWeight:700,fontSize:13,marginBottom:0}}>
+                    🏅 Próg 21/28 osiągnięty — warto zaprosić ucznia na rozmowę o efektach pracy nad sobą.
+                    Po rozmowie możesz rozważyć pozytywną uwagę z zachowania.
+                  </p>}
+              </div>}
             </section>
           })}
         </div>}

@@ -2,6 +2,9 @@
 
 import Link from "next/link"
 import { habits, availableHabits } from "../../lib/bonsai-habits"
+import { BonsaiGrowth } from "../../components/bonsai-growth"
+import { BonsaiHarvest } from "../../components/bonsai-harvest"
+import { RECOGNITION_THRESHOLD } from "../../lib/bonsai-rewards"
 import { useEffect, useMemo, useState } from "react"
 import {
   addDays, countdown, currentCheckInDay, currentPlantingDay, daysBetween,
@@ -46,11 +49,6 @@ function parseForest(value: string | null): BonsaiTree[] {
     }).map(tree => ({ ...tree, checks: cleanChecks(tree.checks, tree.started) }))
       .sort((a, b) => a.started.localeCompare(b.started))
   } catch { return [] }
-}
-
-function Tree({ count }: { count: number }) {
-  const stage = count === 0 ? "🌰" : count < 4 ? "🌱" : count < 10 ? "🌿" : count < 20 ? "🪴" : "🌳"
-  return <div aria-label={`Bonsai: ${count} wykonanych dni`} style={{ fontSize: 82, textAlign: "center", lineHeight: 1.2, padding: "8px 0" }}>{stage}</div>
 }
 
 function ProgressCalendar({ tree, cutoff }: { tree: BonsaiTree; cutoff: string }) {
@@ -197,6 +195,18 @@ export default function BonsaiPage() {
   const activeTrees = trees.filter(tree => plantingDay >= tree.started &&
     daysBetween(tree.started, plantingDay) < GROWTH_DAYS)
   const completedTrees = trees.filter(tree => plantingDay >= addDays(tree.started, GROWTH_DAYS))
+  const latestFinished = completedTrees.length ? completedTrees[completedTrees.length-1] : null
+  const recentlyFinished = latestFinished &&
+    daysBetween(latestFinished.started, plantingDay) < GROWTH_DAYS + 14
+  function repeatHabit(habitIndex: number) {
+    setChosen(habitIndex)
+    setCategory("Wszystkie")
+    setTab("catalog")
+  }
+  function chooseNextHabit() {
+    setCategory("Wszystkie")
+    setTab("catalog")
+  }
   const filtered = useMemo(() => availableHabits
     .filter(habit => category === "Wszystkie" || habit.category === category), [category])
 
@@ -263,10 +273,18 @@ export default function BonsaiPage() {
       </nav>
 
       {tab === "today" && <div style={{ display: "grid", gap: 16 }}>
+        {recentlyFinished && latestFinished && <BonsaiHarvest
+          tree={latestFinished}
+          earlier={trees.filter(tree=>tree.id!==latestFinished.id && tree.started<=latestFinished.started)}
+          today={plantingDay}
+          canPlant={canPlant}
+          onRepeat={()=>repeatHabit(latestFinished.habitIndex)}
+          onNew={chooseNextHabit}
+        />}
         {trees.length === 0 && <section style={surface}>
           <h2 style={{ marginTop: 0 }}>Zasadź swoje pierwsze drzewko</h2>
           <p>Wybierz nawyk z biblioteki. Wieczorem sprawdzisz, czy udało Ci się go wykonać.</p>
-          <Tree count={0}/>
+          <BonsaiGrowth count={0}/>
           <button style={button} onClick={() => setTab("catalog")}>Przejdź do biblioteki</button>
         </section>}
         {trees.length > 0 && activeTrees.length === 0 && <section style={surface}>
@@ -284,7 +302,7 @@ export default function BonsaiPage() {
               <strong>Drzewko {trees.indexOf(tree) + 1}</strong>
               <span>Dzień {Math.min(GROWTH_DAYS, dayIndex)} z {GROWTH_DAYS}</span>
             </div>
-            <Tree count={tree.checks.length}/>
+            <BonsaiGrowth count={tree.checks.length}/>
             <h2 style={{ textAlign: "center", margin: "2px 0 10px" }}>{habits[tree.habitIndex].title}</h2>
             <p style={{ textAlign: "center", lineHeight: 1.65 }}>{habits[tree.habitIndex].action}</p>
             <p style={{ textAlign: "center", color: "#5e7969" }}>Mój sygnał: {tree.cue.toLowerCase()}</p>
@@ -353,6 +371,10 @@ export default function BonsaiPage() {
       {tab === "progress" && <div style={{ display: "grid", gap: 16 }}>
         <section style={surface}>
           <h2 style={{ marginTop: 0 }}>Twój mały las</h2>
+          <p style={{color:"#567765",fontSize:14,lineHeight:1.6}}>
+            Po 28 dniach każde drzewko trafia do Twojego ogrodu osiągnięć — nawet jeśli nie wszystkie dni zostały potwierdzone.
+            Przy wyniku co najmniej {RECOGNITION_THRESHOLD}/28 pojawi się zaproszenie na rozmowę z ks. Michałem.
+          </p>
           <p style={{ marginBottom: 0 }}><strong>{trees.length}</strong> zasadzonych drzewek • <strong>{completedTrees.length}</strong> zakończonych wyzwań • <strong>{trees.reduce((sum, tree) => sum + tree.checks.length, 0)}</strong> potwierdzonych dni łącznie.</p>
         </section>
         {trees.length === 0 && <section style={surface}>Zasadź pierwsze drzewko, żeby zobaczyć swój bilans.</section>}
@@ -370,9 +392,19 @@ export default function BonsaiPage() {
                 {finished ? "Zakończone" : "W trakcie"}
               </span>
             </div>
-            <Tree count={tree.checks.length}/>
+            <BonsaiGrowth count={tree.checks.length}/>
             <p style={{ textAlign: "center" }}><strong>{tree.checks.length}</strong> z {GROWTH_DAYS} dni</p>
             <ProgressCalendar tree={tree} cutoff={plantingDay}/>
+            {finished && <div style={{marginTop:18}}>
+              <BonsaiHarvest
+                tree={tree}
+                earlier={trees.filter(other=>other.id!==tree.id && other.started<=tree.started)}
+                today={plantingDay}
+                canPlant={canPlant}
+                onRepeat={()=>repeatHabit(tree.habitIndex)}
+                onNew={chooseNextHabit}
+              />
+            </div>}
           </section>
         })}
         <p style={{ color: "#5c7966", fontSize: 13 }}>Nie musisz mieć idealnego wyniku. Ważne, że wracasz do swoich nawyków.</p>
