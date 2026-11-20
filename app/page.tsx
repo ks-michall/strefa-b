@@ -231,6 +231,39 @@ export default function HomePage() {
               Podobno życie to nie bajka... ale jak nazwać nasze przygody?
             </p>
           </Link>
+          <Link
+            href="/bonsai"
+            style={{
+              borderRadius: "28px",
+              padding: "26px",
+              boxShadow: "0 14px 34px rgba(0,0,0,0.07)",
+              display: "block",
+              textDecoration: "none",
+              color: "#193a2b",
+              background: "linear-gradient(135deg, #ffffff 0%, #e7f8ed 100%)",
+              border: "1px solid #bbdfc7",
+            }}
+          >
+            <div
+              style={{
+                width: "54px",
+                height: "54px",
+                borderRadius: "18px",
+                background: "linear-gradient(135deg, #c4efd0 0%, #98d8aa 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "28px",
+                marginBottom: "16px",
+              }}
+            >
+              🌱
+            </div>
+            <h2 style={{ fontSize: "28px", marginTop: 0, marginBottom: "10px" }}>Bonsai</h2>
+            <p style={{ color: "#4b5563", lineHeight: 1.7, margin: 0, fontSize: "17px" }}>
+              Wielkie zmiany wyrastają z małych nawyków.
+            </p>
+          </Link>
         </section>
       </div>
     </main>
