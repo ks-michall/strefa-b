@@ -1,82 +1,61 @@
+import "server-only"
 import { cookies } from "next/headers"
-import { createHash } from "crypto"
-import type { StudentName } from "./students"
+import { scrypt as scryptCallback, timingSafeEqual } from "node:crypto"
+import { promisify } from "node:util"
+import { students, type StudentName } from "./students"
+import { SESSION_COOKIE, SESSION_TTL_SECONDS, createSession, verifySession } from "./session"
 
-const SESSION_COOKIE = "strefa_b_user"
+const scrypt = promisify(scryptCallback)
+const dummySalt = "not-a-real-user-salt"
+const dummyHash = "00".repeat(64)
 
-function hashPassword(password: string) {
-  return createHash("sha256").update(password).digest("hex")
+function credentials(): Record<string, string> | null {
+  const value = process.env.STREFA_B_PASSWORD_HASHES
+  if (!value) return null
+  try {
+    const parsed: unknown = JSON.parse(value)
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null
+    return parsed as Record<string, string>
+  } catch { return null }
 }
 
-/*
-  TU USTAWISZ HASŁA.
-  Po lewej imię z listy, po prawej zwykłe hasło.
-*/
-const plainPasswords: Record<StudentName, string> = {
-  Ada: "baranek321",
-  Amelia: "barometr123",
-  Anna: "batyskaf321",
-  Ewa: "biologia123",
-  Gabriela: "brokat321",
-  Hanna: "bursztyn123",
-  Hubert: "bombonierka321",
-  Julia: "borowina123",
-  Kamila: "bonus321",
-  Karina: "bombradilo123",
-  Kinga: "bingo321",
-  Laura: "burza123",
-  Liliana: "bazarek321",
-  Miłosz: "bohater123",
-  Natalia: "brylant321",
-  Nikola: "burmistrz123",
-  Oleksandr: "bazylika321",
-  Stanisław: "bojownik123",
-  Szczepan: "batalion321",
-  Weronika: "bukiet123",
-  Zuzanna: "balustrada321",
-  "ks. Michał": "bingo123",
+export function areCredentialsConfigured(): boolean {
+  const entries = credentials()
+  return !!entries && students.every(s => typeof entries[s] === "string" && /^scrypt:[a-f0-9]{32}:[a-f0-9]{128}$/.test(entries[s]))
 }
 
-const passwordHashes: Record<StudentName, string> = Object.fromEntries(
-  Object.entries(plainPasswords).map(([name, password]) => [
-    name,
-    hashPassword(password),
-  ])
-) as Record<StudentName, string>
-
-export function verifyLogin(name: string, password: string) {
-  const expectedHash = passwordHashes[name as StudentName]
-  if (!expectedHash) return false
-
-  const providedHash = hashPassword(password)
-  return expectedHash === providedHash
+export async function verifyLogin(name: string, password: string): Promise<boolean> {
+  const entries = credentials()
+  const account = students.find(s => s === name)
+  const encoded = account ? entries?.[account] : undefined
+  const validFormat = typeof encoded === "string" && /^scrypt:[a-f0-9]{32}:[a-f0-9]{128}$/.test(encoded)
+  const parts = validFormat ? encoded.split(":") : ["scrypt", dummySalt, dummyHash]
+  const salt = parts[1]
+  const expected = Buffer.from(parts[2], "hex")
+  const derived = (await scrypt(password, salt, 64)) as Buffer
+  return Boolean(account && validFormat && timingSafeEqual(derived, expected))
 }
 
 export async function setLoggedInUser(name: StudentName) {
+  const token = await createSession(name)
   const cookieStore = await cookies()
-
-  cookieStore.set(SESSION_COOKIE, name, {
+  cookieStore.set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: false,
+    secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: SESSION_TTL_SECONDS,
   })
 }
 
 export async function clearLoggedInUser() {
   const cookieStore = await cookies()
-
-  cookieStore.set(SESSION_COOKIE, "", {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: false,
-    path: "/",
-    maxAge: 0,
-  })
+  cookieStore.delete(SESSION_COOKIE)
+  // Remove the legacy cookie during migration.
+  cookieStore.delete("strefa_b_user")
 }
 
-export async function getLoggedInUser() {
+export async function getLoggedInUser(): Promise<StudentName | null> {
   const cookieStore = await cookies()
-  return cookieStore.get(SESSION_COOKIE)?.value ?? ""
+  return verifySession(cookieStore.get(SESSION_COOKIE)?.value)
 }
