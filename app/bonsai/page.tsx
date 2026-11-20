@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { habits } from "../../lib/bonsai-habits"
+import { habits, availableHabits } from "../../lib/bonsai-habits"
 import { useEffect, useMemo, useState } from "react"
 import {
   addDays, countdown, currentCheckInDay, currentPlantingDay, daysBetween,
@@ -86,7 +86,7 @@ export default function BonsaiPage() {
   const [storageWarning, setStorageWarning] = useState(false)
   const [cloudError, setCloudError] = useState("")
   const [busy, setBusy] = useState(false)
-  const [chosen, setChosen] = useState(6)
+  const [chosen, setChosen] = useState(1)
   const [cue, setCue] = useState("Po kolacji")
   const [category, setCategory] = useState("Wszystkie")
   const [tab, setTab] = useState<"today" | "catalog" | "progress">("today")
@@ -196,7 +196,7 @@ export default function BonsaiPage() {
   const activeTrees = trees.filter(tree => plantingDay >= tree.started &&
     daysBetween(tree.started, plantingDay) < GROWTH_DAYS)
   const completedTrees = trees.filter(tree => plantingDay >= addDays(tree.started, GROWTH_DAYS))
-  const filtered = useMemo(() => habits.map((habit, index) => ({ ...habit, index }))
+  const filtered = useMemo(() => availableHabits
     .filter(habit => category === "Wszystkie" || habit.category === category), [category])
 
   async function plantTree() {
@@ -231,7 +231,6 @@ export default function BonsaiPage() {
         <p style={{ lineHeight: 1.7, margin: "10px 0" }}>
           Wybierasz mały nawyk i realizujesz go codziennie przez <strong>28 dni</strong>.
           Każdego wieczoru <strong>od 20:00</strong> możesz potwierdzić, że udało Ci się go wykonać.
-          Jeden dzień = jedno nieodwracalne potwierdzenie dla każdego drzewka.
           Co <strong>14 dni</strong> możesz zasadzić następne drzewko, nie kończąc poprzedniego.
         </p>
         <div style={{ padding: "13px 16px", background: "white", borderRadius: 14 }}>
