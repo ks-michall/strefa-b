@@ -1,8 +1,6 @@
 export const students = [
   "Ada",
   "Amelia",
-  "Anna",
-  "Ewa",
   "Gabriela",
   "Hanna",
   "Hubert",
@@ -19,7 +17,6 @@ export const students = [
   "Stanisław",
   "Szczepan",
   "Weronika",
-  "Zuzanna",
   "ks. Michał",
 ] as const
 
