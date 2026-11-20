@@ -5,10 +5,10 @@ import { randomBytes, scryptSync } from "node:crypto"
 import { writeFileSync, existsSync } from "node:fs"
 
 const names = [
-  "Ada", "Amelia", "Anna", "Ewa", "Gabriela", "Hanna", "Hubert",
+  "Ada", "Amelia", "Gabriela", "Hanna", "Hubert",
   "Julia", "Kamila", "Karina", "Kinga", "Laura", "Liliana", "Miłosz",
   "Natalia", "Nikola", "Oleksandr", "Stanisław", "Szczepan", "Weronika",
-  "Zuzanna", "ks. Michał"
+  "ks. Michał"
 ]
 if (existsSync(".env.local") && !process.argv.includes("--overwrite")) {
   console.error("Plik .env.local już istnieje. Nie nadpisuję go. Użyj --overwrite świadomie.")
