@@ -53,18 +53,19 @@ function Tree({ count }: { count: number }) {
   return <div aria-label={`Bonsai: ${count} wykonanych dni`} style={{ fontSize: 82, textAlign: "center", lineHeight: 1.2, padding: "8px 0" }}>{stage}</div>
 }
 
-function ProgressCalendar({ tree }: { tree: BonsaiTree }) {
+function ProgressCalendar({ tree, cutoff }: { tree: BonsaiTree; cutoff: string }) {
   return <div aria-label="Kalendarz 28 dni" style={{
     display: "grid", gridTemplateColumns: "repeat(7,minmax(0,1fr))", gap: 7,
   }}>
     {Array.from({ length: GROWTH_DAYS }, (_, index) => {
       const day = addDays(tree.started, index)
       const marked = tree.checks.includes(day)
+      const missed = !marked && Boolean(cutoff) && day < cutoff
       return <div key={day} title={readableDate(day)} style={{
         borderRadius: 10, padding: "11px 0", textAlign: "center", fontWeight: 700,
         background: marked ? "#bbdfc6" : "#eef3ef",
         color: marked ? "#205636" : "#6d8575",
-      }}>{marked ? "✓" : index + 1}</div>
+      }}>{marked ? "✓" : missed ? "0" : index + 1}</div>
     })}
   </div>
 }
@@ -371,7 +372,7 @@ export default function BonsaiPage() {
             </div>
             <Tree count={tree.checks.length}/>
             <p style={{ textAlign: "center" }}><strong>{tree.checks.length}</strong> z {GROWTH_DAYS} dni</p>
-            <ProgressCalendar tree={tree}/>
+            <ProgressCalendar tree={tree} cutoff={plantingDay}/>
           </section>
         })}
         <p style={{ color: "#5c7966", fontSize: 13 }}>Nie musisz mieć idealnego wyniku. Ważne, że wracasz do swoich nawyków.</p>
