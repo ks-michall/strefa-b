@@ -158,6 +158,36 @@ export default function HomePage() {
             </p>
         </Link>
 
+        {currentUser === "ks. Michał" && (
+          <Link
+            href="/b-boss"
+            style={{
+              borderRadius: "28px",
+              padding: "26px",
+              marginBottom: "22px",
+              boxShadow: "0 14px 34px rgba(0,0,0,0.07)",
+              display: "block",
+              textDecoration: "none",
+              color: "#1e3444",
+              background: "linear-gradient(135deg, #ffffff 0%, #e6f2f9 100%)",
+              border: "1px solid #bbd9ea",
+            }}
+          >
+            <div style={{
+              width: "54px", height: "54px", borderRadius: "18px",
+              background: "linear-gradient(135deg, #d0e8f6, #b0d9ed)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "28px", marginBottom: "16px",
+            }}>🕵️</div>
+            <h2 style={{ fontSize: "28px", marginTop: 0, marginBottom: "10px" }}>
+              B-Boss
+            </h2>
+            <p style={{ color: "#4b5563", lineHeight: 1.7, margin: 0, fontSize: "17px" }}>
+              Podgląd drzewek Bonsai i małych kroków Twoich uczniów.
+            </p>
+          </Link>
+        )}
+
         <section
           style={{
             display: "grid",
