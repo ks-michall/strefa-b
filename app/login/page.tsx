@@ -31,7 +31,7 @@ export default function LoginPage() {
         return
       }
 
-      window.location.href = "/"
+      window.location.href = data.mustChangePassword ? "/ustaw-haslo" : "/"
     } catch {
       setError("Wystąpił błąd połączenia.")
       setLoading(false)

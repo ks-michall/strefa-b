@@ -27,8 +27,27 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url))
   }
 
-  if (user && pathname === "/login") {
+
+  if (user?.mode === "setup") {
+    const allowed =
+      pathname === "/ustaw-haslo" ||
+      pathname === "/api/change-password" ||
+      pathname === "/api/me" ||
+      pathname === "/api/logout"
+    if (!allowed) {
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "Najpierw ustaw własne hasło." }, { status: 403 })
+      }
+      return NextResponse.redirect(new URL("/ustaw-haslo", request.url))
+    }
+  }
+
+  if (user?.mode === "full" && pathname === "/ustaw-haslo") {
     return NextResponse.redirect(new URL("/", request.url))
+  }
+
+  if (user && pathname === "/login") {
+    return NextResponse.redirect(new URL(user.mode === "setup" ? "/ustaw-haslo" : "/", request.url))
   }
 
   return NextResponse.next()
