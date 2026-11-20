@@ -1,45 +1,12 @@
 "use client"
 
 import Link from "next/link"
+import { habits } from "../../lib/bonsai-habits"
 import { useEffect, useMemo, useState } from "react"
 import {
   addDays, countdown, currentCheckInDay, currentPlantingDay, daysBetween,
   isValidDay, readableDate, remainingUntilNextOpening,
 } from "../../lib/bonsai-time"
-
-type Habit = { title: string; action: string; category: string }
-const habits: Habit[] = [
-  { title: "Zasada dwóch minut", action: "Otwórz zeszyt na dwie minuty.", category: "Rozpoczynanie" },
-  { title: "Telefon poza zasięgiem", action: "Odłóż telefon poza zasięg ręki przed nauką.", category: "Rozpoczynanie" },
-  { title: "Jedno zadanie na start", action: "Zapisz jedno konkretne zadanie do zrobienia.", category: "Rozpoczynanie" },
-  { title: "Stały sygnał", action: "Zacznij naukę od tego samego małego rytuału.", category: "Rozpoczynanie" },
-  { title: "Przygotowanie wieczorem", action: "Połóż materiały na jutro na biurku.", category: "Rozpoczynanie" },
-  { title: "Jeden przykład", action: "Gdy nie masz ochoty, rozwiąż jeden przykład.", category: "Rozpoczynanie" },
-  { title: "Pytanie z pamięci", action: "Zamknij zeszyt i odpowiedz na jedno pytanie.", category: "Skuteczna nauka" },
-  { title: "Powtórka tego samego dnia", action: "Przypomnij sobie jedną rzecz z dzisiejszej lekcji.", category: "Skuteczna nauka" },
-  { title: "Jedna fiszka", action: "Zapisz jedną fiszkę: pytanie i odpowiedź.", category: "Skuteczna nauka" },
-  { title: "Wytłumacz na głos", action: "Wyjaśnij jedno pojęcie własnymi słowami.", category: "Skuteczna nauka" },
-  { title: "Zeszyt błędów", action: "Zapisz jeden błąd i poprawne rozwiązanie.", category: "Skuteczna nauka" },
-  { title: "Przed nowym tematem", action: "Przypomnij sobie jedną rzecz z poprzedniego tematu.", category: "Skuteczna nauka" },
-  { title: "Jedno pytanie", action: "Zapisz pytanie, które przyszło Ci do głowy.", category: "Ciekawość" },
-  { title: "Dwie strony książki", action: "Przeczytaj dwie strony wybranej książki.", category: "Ciekawość" },
-  { title: "Słowo dnia", action: "Zapisz jedno poznane dziś słowo lub pojęcie.", category: "Ciekawość" },
-  { title: "Sprawdź, zamiast zgadywać", action: "Znajdź wyjaśnienie jednej nieznanej rzeczy.", category: "Ciekawość" },
-  { title: "Połączenie z życiem", action: "Znajdź praktyczny przykład tematu z lekcji.", category: "Ciekawość" },
-  { title: "Codzienne dlaczego", action: "Zadaj jedno pytanie: dlaczego tak jest?", category: "Ciekawość" },
-  { title: "Minuta pomocy", action: "Poświęć chwilę, by pomóc koledze coś zrozumieć.", category: "Wspólnota" },
-  { title: "Docenianie wysiłku", action: "Doceń konkretny wysiłek drugiej osoby.", category: "Wspólnota" },
-  { title: "Podziel się odkryciem", action: "Opowiedz komuś jedną ciekawostkę.", category: "Wspólnota" },
-  { title: "Pytanie zamiast odpowiedzi", action: "Pomagając, zadaj pytanie naprowadzające.", category: "Wspólnota" },
-  { title: "Szanuj pytania", action: "Potraktuj poważnie czyjeś proste pytanie.", category: "Wspólnota" },
-  { title: "Sprawdźcie się nawzajem", action: "Zadaj koledze pytanie powtórkowe.", category: "Wspólnota" },
-  { title: "Małe zwycięstwo", action: "Zapisz jedną rzecz, której się nauczyłeś.", category: "Samodyscyplina" },
-  { title: "Zaznaczony dzień", action: "Zaznacz wykonanie wybranego nawyku.", category: "Samodyscyplina" },
-  { title: "Powrót po przerwie", action: "Wróć do nawyku po dniu przerwy.", category: "Samodyscyplina" },
-  { title: "Jedna poprawka", action: "Nazwij jedną zmianę, która pomoże Ci się uczyć.", category: "Samodyscyplina" },
-  { title: "Plan na jutro", action: "Zapisz jeden priorytet na następny dzień.", category: "Samodyscyplina" },
-  { title: "Przygotowanie do snu", action: "Ustaw przypomnienie o wieczornym wyciszeniu.", category: "Samodyscyplina" },
-]
 
 type BonsaiTree = { id: string; habitIndex: number; cue: string; started: string; checks: string[] }
 type LegacyTree = Omit<BonsaiTree, "id">
@@ -117,6 +84,8 @@ export default function BonsaiPage() {
   const [trees, setTrees] = useState<BonsaiTree[]>([])
   const [legacyAvailable, setLegacyAvailable] = useState(false)
   const [storageWarning, setStorageWarning] = useState(false)
+  const [cloudError, setCloudError] = useState("")
+  const [busy, setBusy] = useState(false)
   const [chosen, setChosen] = useState(6)
   const [cue, setCue] = useState("Po kolacji")
   const [category, setCategory] = useState("Wszystkie")
@@ -134,7 +103,7 @@ export default function BonsaiPage() {
     async function load() {
       try {
         const response = await fetch("/api/me", { cache: "no-store" })
-        if (!response.ok) throw new Error("Session unavailable")
+        if (!response.ok) throw new Error("Sesja wygasła")
         const data = await response.json()
         if (!data.name) { window.location.replace("/login"); return }
         if (data.mustChangePassword) { window.location.replace("/ustaw-haslo"); return }
@@ -142,56 +111,77 @@ export default function BonsaiPage() {
         const name = String(data.name)
         setUser(name)
         try {
-          const saved = localStorage.getItem(storageKey(name))
-          const forest = parseForest(saved)
+          const result = await fetch("/api/bonsai", { cache: "no-store" })
+          const cloud = await result.json()
+          if (!result.ok) throw new Error(cloud.error || "Nie udało się pobrać drzewek.")
+          if (cancelled) return
+          const forest = Array.isArray(cloud.trees) ? cloud.trees as BonsaiTree[] : []
           setTrees(forest)
           if (forest.length === 0) {
-            const legacy = localStorage.getItem(LEGACY_KEY)
-            setLegacyAvailable(Boolean(legacy && validLegacy(JSON.parse(legacy))))
+            let old = parseForest(localStorage.getItem(storageKey(name)))
+            if (old.length === 0) {
+              const legacy: unknown = JSON.parse(localStorage.getItem(LEGACY_KEY) || "null")
+              if (validLegacy(legacy)) old = [{ ...legacy,
+                id: crypto.randomUUID(), checks: cleanChecks(legacy.checks, legacy.started) }]
+            }
+            setLegacyAvailable(old.length > 0)
           }
-        } catch { setStorageWarning(true) }
+        } catch(error) {
+          if (!cancelled) setCloudError(error instanceof Error ? error.message : "Błąd synchronizacji Bonsai.")
+        }
       } catch {
         if (!cancelled) window.location.replace("/login")
-      } finally { if (!cancelled) setLoaded(true) }
+      } finally {
+        if (!cancelled) setLoaded(true)
+      }
     }
     void load()
     return () => { cancelled = true }
   }, [])
 
-  useEffect(() => {
-    if (!user) return
-    const sync = (event: StorageEvent) => {
-      if (event.key === storageKey(user)) setTrees(parseForest(event.newValue))
-    }
-    window.addEventListener("storage", sync)
-    return () => window.removeEventListener("storage", sync)
-  }, [user])
-
-  function save(next: BonsaiTree[]): boolean {
-    if (!user) return false
-    try {
-      localStorage.setItem(storageKey(user), JSON.stringify(next))
-      setTrees(next)
-      return true
-    } catch {
-      setStorageWarning(true)
-      return false
-    }
+  async function refresh() {
+    const response = await fetch("/api/bonsai", { cache: "no-store" })
+    const data = await response.json()
+    if (!response.ok) throw new Error(data.error || "Nie udało się odświeżyć drzewek.")
+    setTrees(Array.isArray(data.trees) ? data.trees as BonsaiTree[] : [])
+    setCloudError("")
   }
 
-  function importLegacy() {
-    if (!user || trees.length !== 0) return
+  async function post(action: "plant" | "check" | "import", payload: Record<string,unknown>) {
+    setBusy(true)
+    setCloudError("")
     try {
-      const raw = localStorage.getItem(LEGACY_KEY)
-      const parsed: unknown = JSON.parse(raw || "null")
-      if (!validLegacy(parsed)) return
-      const converted: BonsaiTree = {
-        id: crypto.randomUUID(), habitIndex: parsed.habitIndex, cue: parsed.cue,
-        started: parsed.started, checks: cleanChecks(parsed.checks, parsed.started),
+      const response = await fetch("/api/bonsai", {
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({action,...payload}),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || "Nie udało się zapisać postępu.")
+      await refresh()
+      return true
+    } catch(error) {
+      setCloudError(error instanceof Error ? error.message : "Nie udało się zapisać postępu.")
+      return false
+    } finally { setBusy(false) }
+  }
+
+  async function importLegacy() {
+    if (!user || trees.length || busy) return
+    try {
+      let old = parseForest(localStorage.getItem(storageKey(user)))
+      let fromOldKey = false
+      if (!old.length) {
+        const legacy: unknown = JSON.parse(localStorage.getItem(LEGACY_KEY) || "null")
+        if (!validLegacy(legacy)) return
+        old = [{...legacy,id:crypto.randomUUID(),checks:cleanChecks(legacy.checks,legacy.started)}]
+        fromOldKey = true
       }
-      if (save([converted])) {
-        localStorage.removeItem(LEGACY_KEY)
+      const success = await post("import",{trees:old.map(tree=>({
+        habitIndex:tree.habitIndex,cue:tree.cue,started:tree.started,checks:tree.checks,
+      }))})
+      if (success) {
         setLegacyAvailable(false)
+        if (fromOldKey) localStorage.removeItem(LEGACY_KEY)
       }
     } catch { setStorageWarning(true) }
   }
@@ -209,34 +199,15 @@ export default function BonsaiPage() {
   const filtered = useMemo(() => habits.map((habit, index) => ({ ...habit, index }))
     .filter(habit => category === "Wszystkie" || habit.category === category), [category])
 
-  function plantTree() {
-    if (!user) return
-    const current = new Date()
-    const day = currentPlantingDay(current)
-    let stored: BonsaiTree[] = trees
-    try { stored = parseForest(localStorage.getItem(storageKey(user))) } catch { setStorageWarning(true); return }
-    const last = stored[stored.length - 1]
-    if (last && day < addDays(last.started, PLANTING_INTERVAL)) return
-    const next: BonsaiTree = { id: crypto.randomUUID(), habitIndex: chosen, cue, started: day, checks: [] }
-    if (save([...stored, next])) {
-      setTab("today")
-      setCategory("Wszystkie")
-    }
+  async function plantTree() {
+    if (!user || busy || !canPlant) return
+    const success = await post("plant",{habitIndex:chosen,cue})
+    if (success) { setTab("today"); setCategory("Wszystkie") }
   }
 
-  function markDone(treeId: string) {
-    if (!user) return
-    const current = new Date()
-    const day = currentCheckInDay(current)
-    if (!day) return
-    let stored: BonsaiTree[] = trees
-    try { stored = parseForest(localStorage.getItem(storageKey(user))) } catch { setStorageWarning(true); return }
-    const target = stored.find(tree => tree.id === treeId)
-    if (!target || daysBetween(target.started, day) < 0 ||
-      daysBetween(target.started, day) >= GROWTH_DAYS || target.checks.includes(day)) return
-    save(stored.map(tree => tree.id === treeId
-      ? { ...tree, checks: [...tree.checks, day].sort() }
-      : tree))
+  async function markDone(treeId: string) {
+    if (!user || busy || !windowDay) return
+    await post("check",{treeId})
   }
 
   if (!loaded || !nowMs) return <main style={{ padding: 30 }}>Ładowanie Bonsai…</main>
@@ -273,12 +244,14 @@ export default function BonsaiPage() {
 
       {storageWarning && <p role="alert" style={{
         padding: 14, background: "#fff2d7", borderRadius: 12, color: "#71470c",
-      }}>Przeglądarka blokuje zapis postępów. Sprawdź ustawienia pamięci przeglądarki.</p>}
+      }}>Nie udało się odczytać wcześniejszych lokalnych postępów.</p>}
+
+      {cloudError && <p role="alert" style={{padding:14,background:"#fee2e2",color:"#991b1b",borderRadius:12}}>{cloudError}</p>}
 
       {legacyAvailable && trees.length === 0 && <section style={{ ...surface, marginBottom: 18 }}>
         <h2 style={{ marginTop: 0, fontSize: 20 }}>Masz zapisane wcześniejsze drzewko</h2>
-        <p>Na tym urządzeniu znaleziono postępy ze starszej wersji Bonsai. Jeśli są Twoje, możesz je przenieść do tego konta. Stare wyzwanie zostanie skrócone do 28 dni.</p>
-        <button style={button} onClick={importLegacy}>Przenieś moje wcześniejsze drzewko</button>
+        <p>Na tym urządzeniu są starsze postępy. Jeśli należą do Ciebie, przenieś je do swojego konta. Będą widoczne dla wychowawcy.</p>
+        <button style={{...button,opacity:busy?.6:1}} disabled={busy} onClick={importLegacy}>{busy?"Przenoszenie…":"Przenieś moje drzewka do konta"}</button>
       </section>}
 
       <nav aria-label="Zakładki Bonsai" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
@@ -321,7 +294,7 @@ export default function BonsaiPage() {
                   <div style={{ fontSize: 20, marginTop: 5, fontVariantNumeric: "tabular-nums" }}>{countdown(nextOpening)}</div>
                 </div>
               : eligible
-                ? <button onClick={() => markDone(tree.id)} style={{ ...button, width: "100%" }}>
+                ? <button onClick={() => markDone(tree.id)} disabled={busy} style={{ ...button, width: "100%", opacity:busy?.6:1 }}>
                     ✓ Wykonałem dziś swój nawyk
                   </button>
                 : <div style={{ textAlign: "center", padding: 14, borderRadius: 14, background: "#f1f5f2" }}>
@@ -372,7 +345,7 @@ export default function BonsaiPage() {
           {cues.map(value => <option key={value} value={value}>{value}</option>)}
         </select>
         <p style={{ color: "#537565", fontSize: 13 }}>Nawyk możesz wykonać o dowolnej porze. Potwierdzasz go dopiero wieczorem.</p>
-        <button disabled={!canPlant} style={{ ...button, opacity: canPlant ? 1 : .55, cursor: canPlant ? "pointer" : "not-allowed" }}
+        <button disabled={!canPlant || busy} style={{ ...button, opacity: canPlant && !busy ? 1 : .55, cursor: canPlant && !busy ? "pointer" : "not-allowed" }}
           onClick={plantTree}>{trees.length === 0 ? "Zasadzam pierwsze Bonsai" : "Zasadzam kolejne Bonsai"}</button>
         {!canPlant && newTreeDay && <p style={{ color: "#527460" }}>Możesz zasadzić następne drzewko od {readableDate(newTreeDay)}.</p>}
       </section>}
@@ -406,8 +379,9 @@ export default function BonsaiPage() {
       </div>}
 
       <p style={{ color: "#688574", fontSize: 12, lineHeight: 1.6, marginTop: 20 }}>
-        Postępy są zapisywane tylko w tej przeglądarce, osobno dla każdego zalogowanego imienia.
-        Nie synchronizują się między urządzeniami. Zmiana zegara urządzenia lub usunięcie danych przeglądarki może wpłynąć na zapisane wyniki.
+        Drzewka i potwierdzenia zapisują się na Twoim koncie i synchronizują między urządzeniami.
+        Wychowawca może zobaczyć wybrane nawyki i dni ich wykonania.
+        O godzinie potwierdzenia decyduje zegar serwera.
       </p>
     </div>
   </main>
