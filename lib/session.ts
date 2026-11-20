@@ -10,7 +10,7 @@ function encodeBase64Url(input: Uint8Array): string {
   // Available in Node.js and the Next.js middleware runtime.
   let binary = ""
   for (const byte of input) binary += String.fromCharCode(byte)
-  return btoa(binary).replace(/\\+/g, "-").replace(/\\//g, "_").replace(/=+$/g, "")
+  return btoa(binary).split("+").join("-").split("/").join("_").replace(/=+$/g, "")
 }
 
 function decodeBase64Url(value: string): Uint8Array | null {
