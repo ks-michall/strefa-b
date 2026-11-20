@@ -27,8 +27,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Wprowadź nowe hasło." }, { status: 400 })
     }
     const { password } = body as Record<string, unknown>
-    if (typeof password !== "string" || password.length < 12 || password.length > 128 || password.trim().length < 12) {
-      return NextResponse.json({ error: "Hasło powinno mieć od 12 do 128 znaków." }, { status: 400 })
+    if (typeof password !== "string" || password.length < 7 || password.length > 128 || password.trim().length < 7) {
+      return NextResponse.json({ error: "Hasło powinno mieć od 7 do 128 znaków." }, { status: 400 })
     }
     if (await getStoredCredential(session.name)) {
       return NextResponse.json({ error: "Hasło zostało już zmienione. Zaloguj się ponownie." }, { status: 409 })
