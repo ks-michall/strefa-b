@@ -1,6 +1,7 @@
 "use client"
 
 import { isActiveStudent } from "../../lib/active-students"
+import { AvatarFace, type AvatarEntry } from "../../components/avatar-face"
 
 import Link from "next/link"
 import { useEffect, useMemo, useRef, useState } from "react"
@@ -72,6 +73,7 @@ function formatDateOnly(date: string) {
 
 export default function GaleriaPage() {
   const [currentUser, setCurrentUser] = useState("")
+  const [avatars, setAvatars] = useState<Record<string, AvatarEntry>>({})
   const [userLoaded, setUserLoaded] = useState(false)
   const isAdmin = currentUser === "ks. Michał"
 
@@ -106,6 +108,25 @@ export default function GaleriaPage() {
       .catch(() => {
         setUserLoaded(true)
       })
+  }, [])
+
+  useEffect(() => {
+    let active = true
+    async function loadAvatars() {
+      try {
+        const response = await fetch("/api/avatars", { cache: "no-store" })
+        if (!response.ok) return
+        const data = await response.json()
+        if (!active || !Array.isArray(data.avatars)) return
+        const entries: Record<string, AvatarEntry> = {}
+        for (const avatar of data.avatars as AvatarEntry[]) {
+          if (typeof avatar.student_name === "string") entries[avatar.student_name] = avatar
+        }
+        setAvatars(entries)
+      } catch { /* Fallback emoji is always available */ }
+    }
+    void loadAvatars()
+    return () => { active = false }
   }, [])
 
   useEffect(() => {
@@ -704,8 +725,9 @@ export default function GaleriaPage() {
                       {item.title}
                     </div>
 
-                    <div style={{ fontSize: "13px", opacity: 0.92 }}>
-                      {item.author} • {formatDateOnly(item.takenAt)}
+                    <div style={{ fontSize: "13px", opacity: 0.92, display: "flex", alignItems: "center", gap: 5 }}>
+                      <AvatarFace name={item.author} avatar={avatars[item.author]} size={14}/>
+                      <span>{item.author} • {formatDateOnly(item.takenAt)}</span>
                     </div>
                   </div>
                 </div>
@@ -1207,8 +1229,9 @@ export default function GaleriaPage() {
                 </div>
               )}
 
-              <div style={{ color: "#d1d5db", fontSize: "14px" }}>
-                {previewItem.author} • {formatDateOnly(previewItem.takenAt)}
+              <div style={{ color: "#d1d5db", fontSize: "14px", display: "flex", alignItems: "center", gap: 5 }}>
+                <AvatarFace name={previewItem.author} avatar={avatars[previewItem.author]} size={15}/>
+                <span>{previewItem.author} • {formatDateOnly(previewItem.takenAt)}</span>
               </div>
             </div>
           </div>
