@@ -89,7 +89,7 @@ export default function ProfilePage(){
         (json.avatars as AvatarEntry[]).find(item=>item.student_name===user):null
       setCurrent(avatar||null)
       setPhoto(null)
-      setMessage("✓ Awatar zapisany. Jest już widoczny w Bohaterach.")
+      setMessage("✓ Awatar zmieniono.")
     }catch(e){setError(e instanceof Error?e.message:"Nie udało się zapisać awatara.")}
     finally{setBusy(false)}
   }
@@ -110,7 +110,7 @@ export default function ProfilePage(){
       <Link href="/" style={{color:"#386e67",textDecoration:"none"}}>← Strefa B</Link>
       <h1 style={{fontSize:32,margin:"22px 0 8px"}}>Mój profil</h1>
       <p style={{color:"#607286",lineHeight:1.65,margin:"0 0 24px"}}>
-        Ustaw, jak inni uczniowie zobaczą Cię w Bohaterach.
+        Wybierz swój awatar w Strefie B.
       </p>
       {loading?<div style={card}>Wczytywanie ustawień…</div>:<section id="awatar" style={card}>
         <div style={{display:"flex",alignItems:"center",gap:17,marginBottom:24}}>
@@ -144,7 +144,7 @@ export default function ProfilePage(){
           <p style={{color:"#607286",fontSize:14,lineHeight:1.65}}>
             Wybierz zdjęcie z telefonu. Zostanie automatycznie przycięte do kwadratu,
             zmniejszone do maksymalnie 256 × 256 pikseli i zapisane bez danych EXIF.
-            W Bohaterach będą je widzieć zalogowani użytkownicy Strefy B.
+            Awatar będzie widoczny dla zalogowanych użytkowników Strefy B.
           </p>
           <label style={{display:"inline-block",padding:"12px 16px",background:"#eef5ff",
             border:"1px solid #c3d8ea",borderRadius:12,cursor:"pointer",fontWeight:700}}>
