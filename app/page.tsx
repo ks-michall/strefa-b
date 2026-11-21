@@ -125,7 +125,7 @@ export default function HomePage() {
 
         {currentUser === "ks. Michał" && (
           <Link
-            href="/b-boss"
+            href="/busola"
             style={{
               borderRadius: "28px",
               padding: "26px",
@@ -143,12 +143,12 @@ export default function HomePage() {
               background: "linear-gradient(135deg, #d0e8f6, #b0d9ed)",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: "28px", marginBottom: "16px",
-            }}>🕵️</div>
+            }}>🧭</div>
             <h2 style={{ fontSize: "28px", marginTop: 0, marginBottom: "10px" }}>
-              Boss
+              Busola
             </h2>
             <p style={{ color: "#4b5563", lineHeight: 1.7, margin: 0, fontSize: "17px" }}>
-              Podgląd drzewek Bonsai i małych kroków Twoich uczniów.
+              Twoja busola wychowawcza — nawyki, postępy i rozmowy z uczniami.
             </p>
           </Link>
         )}
