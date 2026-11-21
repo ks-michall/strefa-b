@@ -58,8 +58,8 @@ Deno.serve(async (req: Request) => {
     if (Number(req.headers.get("content-length")||"0") > 50000) return reply({error:"Too large"},413)
     const input: unknown = await req.json()
     if (!input || typeof input !== "object" || Array.isArray(input)) return reply({error:"Bad input"},400)
-    const { action, name, habitIndex, cue, treeId, trees } = input as Record<string,unknown>
-    if (!validName(name) || !["read","plant","check","import"].includes(String(action))) return reply({error:"Bad input"},400)
+    const { action, name, habitIndex, cue, treeId, trees, helped, nextTime } = input as Record<string,unknown>
+    if (!validName(name) || !["read","plant","check","import","readReflection","saveReflection"].includes(String(action))) return reply({error:"Bad input"},400)
     const dbUrl = Deno.env.get("SUPABASE_URL")
     const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
     if (!dbUrl || !secret) throw new Error("Supabase runtime is not configured")
@@ -86,6 +86,31 @@ Deno.serve(async (req: Request) => {
       }))})
     }
 
+    if (action === "readReflection" || action === "saveReflection") {
+      if (!validUuid(treeId)) return reply({error:"Nieprawidłowe drzewko."},400)
+      const { data:tree,error:treeError } = await db.from("bonsai_trees")
+        .select("started").eq("id",treeId).eq("student_name",name).maybeSingle()
+      if (treeError) throw treeError
+      if (!tree) return reply({error:"Nie znaleziono drzewka."},404)
+      if (daysBetween(tree.started,current.planting) < 28) {
+        return reply({error:"Refleksja jest dostępna po zakończeniu 28 dni."},409)
+      }
+      if (action === "readReflection") {
+        const { data,error } = await db.from("bonsai_reflections")
+          .select("helped,next_time").eq("tree_id",treeId).eq("student_name",name).maybeSingle()
+        if (error) throw error
+        return reply({reflection: data ? {helped:data.helped,nextTime:data.next_time} : null})
+      }
+      if (typeof helped !== "string" || typeof nextTime !== "string" ||
+          helped.length > 500 || nextTime.length > 500) return reply({error:"Zbyt długa odpowiedź."},400)
+      const {error} = await db.from("bonsai_reflections").upsert({
+        tree_id:treeId,student_name:name,
+        helped:helped.trim(),next_time:nextTime.trim(),updated_at:new Date().toISOString(),
+      },{onConflict:"tree_id"})
+      if (error) throw error
+      return reply({ok:true})
+    }
+
     if (action === "plant") {
       if (typeof habitIndex !== "number" || !Number.isInteger(habitIndex) ||
           habitIndex < 0 || habitIndex > 29 || [6, 8, 21, 26].includes(habitIndex) || typeof cue !== "string" || !CUES.includes(cue)) {
@@ -94,6 +119,11 @@ Deno.serve(async (req: Request) => {
       const { data:previous,error:readError } = await db.from("bonsai_trees")
         .select("started").eq("student_name",name).order("started",{ascending:false}).limit(1).maybeSingle()
       if (readError) throw readError
+      const { count:activeCount,error:activeError } = await db.from("bonsai_trees")
+        .select("id",{count:"exact",head:true}).eq("student_name",name)
+        .lte("started",current.planting).gt("started",addDays(current.planting,-28))
+      if (activeError) throw activeError
+      if ((activeCount??0)>=2) return reply({error:"Możesz pielęgnować maksymalnie dwa drzewka równocześnie."},409)
       if (previous && daysBetween(previous.started,current.planting) < 14) {
         return reply({error:"Kolejne drzewko można zasadzić po 14 dniach."},409)
       }
