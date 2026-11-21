@@ -61,7 +61,8 @@ export default function BBossPage() {
   const stats=useMemo(()=>{
     const dates=trees.flatMap(tree=>tree.checks)
     return {checks:dates.length,latest:dates.length?[...dates].sort().at(-1):null,
-      active:trees.filter(tree=>asOf && daysBetween(tree.started,asOf)>=0 && daysBetween(tree.started,asOf)<28).length}
+      active:trees.filter(tree=>asOf && daysBetween(tree.started,asOf)>=0 && daysBetween(tree.started,asOf)<28).length,
+      ready:trees.filter(tree=>asOf && asOf>=addDays(tree.started,28) && tree.checks.length>=RECOGNITION_THRESHOLD).length}
   },[trees,asOf])
   return <main style={{
     background:"linear-gradient(180deg,#f4f8fb,#edf6f4)",minHeight:"100vh",
@@ -72,7 +73,7 @@ export default function BBossPage() {
       <header style={{margin:"22px 0 24px"}}>
         <h1 style={{margin:"0 0 8px",fontSize:38}}>🕵️ Boss</h1>
         <p style={{color:"#617887",fontSize:17,lineHeight:1.65,margin:0}}>
-          Twój dyskretny punkt obserwacyjny Bonsai. Postępy bez rankingów i porównywania uczniów.
+          Wybierz ucznia: zobaczysz jego aktualne nawyki, regularność i zakończone wyzwania wymagające rozmowy.
         </p>
       </header>
       <section style={{...surface,marginBottom:18}}>
@@ -94,9 +95,9 @@ export default function BBossPage() {
           <h2 style={{marginTop:0,fontSize:23}}>{student} – podsumowanie Bonsai</h2>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:12}}>
             {[
-              {label:"Posadzone drzewka",value:trees.length},
-              {label:"Teraz hodowane",value:stats.active},
+              {label:"Aktywne nawyki",value:stats.active},
               {label:"Potwierdzone dni",value:stats.checks},
+              {label:"Do rozmowy (21/28)",value:stats.ready},
             ].map(item=><div key={item.label} style={{padding:14,background:"#eef6f3",borderRadius:14}}>
               <strong style={{fontSize:26,display:"block"}}>{item.value}</strong>
               <span style={{color:"#557267",fontSize:13}}>{item.label}</span>
@@ -113,13 +114,17 @@ export default function BBossPage() {
             Sam brak danych nie oznacza, że nie korzystał z aplikacji.
           </p>
         </section> : <div style={{display:"grid",gap:16}}>
-          {trees.map((tree,index)=>{
+          {[...trees].sort((a,b)=>{
+            const aActive=asOf && daysBetween(a.started,asOf)>=0 && daysBetween(a.started,asOf)<28
+            const bActive=asOf && daysBetween(b.started,asOf)>=0 && daysBetween(b.started,asOf)<28
+            return Number(bActive)-Number(aActive) || b.started.localeCompare(a.started)
+          }).map(tree=>{
             const done=asOf && asOf>=addDays(tree.started,28)
             const habit=habits[tree.habitIndex]
             return <section key={tree.id} style={surface}>
               <div style={{display:"flex",justifyContent:"space-between",gap:16,alignItems:"start",flexWrap:"wrap"}}>
                 <div>
-                  <p style={{fontSize:13,color:"#607786",margin:"0 0 7px"}}>Drzewko {index+1} • {done?"Zakończone":"W trakcie"}</p>
+                  <p style={{fontSize:13,color:"#607786",margin:"0 0 7px"}}>{done?"Zakończone wyzwanie":"Aktywny nawyk"}</p>
                   <h3 style={{margin:"0 0 7px",fontSize:21}}>{habit?.title||"Nieznany nawyk"}</h3>
                   <p style={{margin:"0 0 7px",color:"#546c7c",lineHeight:1.6}}>{habit?.action||""}</p>
                   <p style={{margin:0,fontSize:13,color:"#648273"}}>Sygnał: {tree.cue}</p>
@@ -135,6 +140,9 @@ export default function BBossPage() {
               <div style={{height:10,background:"#e3ebe8",borderRadius:99,overflow:"hidden",marginBottom:20}}>
                 <div style={{height:"100%",width:(tree.checks.length/28*100)+"%",background:"#60ab78",borderRadius:99}}/>
               </div>
+              <div style={{fontSize:13,color:"#607786",margin:"0 0 12px"}}>
+                  {done ? "Wynik końcowy" : `Dzień ${Math.min(28,daysBetween(tree.started,asOf)+1)} z 28`} · {tree.checks.length} wykonanych dni
+                </div>
               <Calendar tree={tree} cutoff={asOf}/>
               {done && <div style={{marginTop:17,padding:14,background:"#eaf5ee",borderRadius:14,color:"#315e43"}}>
                 <strong>🌾 Zbiory Bonsai: {tree.checks.length}/28 dni</strong>
