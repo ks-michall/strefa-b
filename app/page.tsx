@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import {ProfileMenu} from "../components/profile-menu"
 import { useEffect, useState } from "react"
 
 export default function HomePage() {
@@ -83,44 +84,8 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              gap: "12px",
-              flexWrap: "wrap",
-              alignItems: "center",
-            }}
-          >
-            <span
-              style={{
-                backgroundColor: "white",
-                padding: "10px 14px",
-                borderRadius: "999px",
-                fontWeight: 700,
-                color: "#374151",
-                boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
-              }}
-            >
-              Witaj {currentUser}
-            </span>
+          <ProfileMenu name={currentUser} onLogout={handleLogout} loggingOut={loggingOut}/>
 
-            <button
-              onClick={handleLogout}
-              disabled={loggingOut}
-              style={{
-                border: "none",
-                background: "#111827",
-                color: "white",
-                borderRadius: "999px",
-                padding: "10px 16px",
-                fontWeight: 700,
-                cursor: loggingOut ? "default" : "pointer",
-                opacity: loggingOut ? 0.7 : 1,
-              }}
-            >
-              {loggingOut ? "Wylogowanie..." : "Wyloguj"}
-            </button>
-          </div>
         </header>
 
         <Link
