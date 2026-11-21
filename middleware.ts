@@ -28,9 +28,13 @@ export async function middleware(request: NextRequest) {
   }
 
 
-  if ((pathname === "/b-boss" || pathname.startsWith("/b-boss/")) &&
+  if ((pathname === "/busola" || pathname.startsWith("/busola/") || pathname === "/b-boss" || pathname.startsWith("/b-boss/")) &&
       user?.name !== "ks. Michał") {
     return NextResponse.redirect(new URL("/", request.url))
+  }
+
+  if (pathname === "/b-boss" || pathname.startsWith("/b-boss/")) {
+    return NextResponse.redirect(new URL("/busola", request.url))
   }
 
   if (user?.mode === "setup") {
