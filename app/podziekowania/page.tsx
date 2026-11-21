@@ -2,6 +2,7 @@
 
 import { students as activeStudents } from "../../lib/students"
 import { isActiveStudent } from "../../lib/active-students"
+import {AvatarFace,type AvatarEntry} from "../../components/avatar-face"
 
 import { useEffect, useMemo, useState } from "react"
 import { supabase } from "../../lib/supabase"
@@ -106,86 +107,14 @@ const sortedStudents = [...students].sort((a, b) => {
   return a.localeCompare(b, "pl")
 })
 
-const profileImages: Record<string, string> = {
-  Ada: "/profiles/ada.jpg",
-  Amelia: "/profiles/amelia.jpg",
-  Gabriela: "/profiles/gabriela.jpg",
-  Hanna: "/profiles/hanna.jpg",
-  Hubert: "/profiles/hubert.jpg",
-  Julia: "/profiles/julia.jpg",
-  Kamila: "/profiles/kamila.jpg",
-  Karina: "/profiles/karina.jpg",
-  Kinga: "/profiles/kinga.jpg",
-  Laura: "/profiles/laura.jpg",
-  Liliana: "/profiles/liliana.jpg",
-  Miłosz: "/profiles/milosz.jpg",
-  Natalia: "/profiles/natalia.jpg",
-  Nikola: "/profiles/nikola.jpg",
-  Oleksandr: "/profiles/oleksandr.jpg",
-  Stanisław: "/profiles/stanislaw.jpg",
-  Szczepan: "/profiles/szczepan.jpg",
-  Weronika: "/profiles/weronika.jpg",
-  "ks. Michał": "/profiles/ks-michal.jpg",
-}
-
-function Avatar({
-  person,
-  size = 64,
-}: {
-  person: string
-  size?: number
-}) {
-  const [imageError, setImageError] = useState(false)
-  const imageSrc = profileImages[person]
-
-  if (!imageSrc || imageError) {
-    return (
-      <div
-        style={{
-          width: size,
-          height: size,
-          minWidth: size,
-          borderRadius: "50%",
-          background: "linear-gradient(135deg, #dbeafe 0%, #e9d5ff 100%)",
-          color: "#1e3a8a",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontWeight: 700,
-          fontSize: size * 0.28,
-          border: "2px solid #ffffff",
-          boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
-        }}
-      >
-        {person.slice(0, 2).toUpperCase()}
-      </div>
-    )
-  }
-
-  return (
-    <img
-      src={imageSrc}
-      alt={person}
-      onError={() => setImageError(true)}
-      style={{
-        width: size,
-        height: size,
-        minWidth: size,
-        borderRadius: "50%",
-        objectFit: "cover",
-        border: "2px solid #ffffff",
-        boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
-      }}
-    />
-  )
-}
-
 function RankingCard({
   title,
   items,
+  avatars,
 }: {
   title: string
   items: { name: string; count: number }[]
+  avatars: Record<string,AvatarEntry>
 }) {
   return (
     <div
@@ -249,7 +178,7 @@ function RankingCard({
               {index + 1}.
             </div>
 
-            <Avatar person={item.name} size={42} />
+            <AvatarFace name={item.name} avatar={avatars[item.name]} size={42} />
 
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 700 }}>{item.name}</div>
@@ -302,6 +231,7 @@ function FilterButton({
 
 export default function PodziekowaniaPage() {
   const [currentUser, setCurrentUser] = useState("")
+  const [avatars, setAvatars] = useState<Record<string,AvatarEntry>>({})
   const [userLoaded, setUserLoaded] = useState(false)
 
   const [person, setPerson] = useState("")
@@ -327,6 +257,24 @@ export default function PodziekowaniaPage() {
       .catch(() => {
         setUserLoaded(true)
       })
+  }, [])
+
+  useEffect(() => {
+    let active=true
+    async function loadAvatars(){
+      try{
+        const response=await fetch("/api/avatars",{cache:"no-store"})
+        if(!response.ok)return
+        const data=await response.json()
+        if(active&&Array.isArray(data.avatars)){
+          const values:Record<string,AvatarEntry>={}
+          for(const row of data.avatars as AvatarEntry[])values[row.student_name]=row
+          setAvatars(values)
+        }
+      }catch{ /* Default smile avatar remains available */ }
+    }
+    void loadAvatars()
+    return()=>{active=false}
   }, [])
 
   useEffect(() => {
@@ -815,7 +763,7 @@ export default function PodziekowaniaPage() {
                           : "0",
                     }}
                   >
-                    <Avatar person={item.person} />
+                    <AvatarFace name={item.person} avatar={avatars[item.person]} size={64}/>
 
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div
@@ -904,18 +852,22 @@ export default function PodziekowaniaPage() {
               <RankingCard
                 title="Bohaterowie miesiąca"
                 items={monthlyHelpfulRanking}
+                avatars={avatars}
               />
               <RankingCard
                 title="Budowniczowie miesiąca"
                 items={monthlyBuildersRanking}
+                avatars={avatars}
               />
               <RankingCard
                 title="Bohaterowie roku"
                 items={yearlyHelpfulRanking}
+                avatars={avatars}
               />
               <RankingCard
                 title="Budowniczowie roku"
                 items={yearlyBuildersRanking}
+                avatars={avatars}
               />
             </div>
           </div>
