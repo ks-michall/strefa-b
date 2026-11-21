@@ -7,7 +7,7 @@ export type AvatarEntry={
   emoji:string|null
   updated_at:string
 }
-export const emojiChoices=["🦊","🐱","🐼","🦁","🐸","🐧","🦋","🐢","🦄","🐻","🌻","⭐","🚀","⚡","🍀","🎸","🐶","🐨","🐯","🐰","🌈","🌙","🎨","🏀"]
+export const emojiChoices=["🦊","🐱","🐼","🦁","🐸","🐧","🦋","🐢","🦄","🐻","🌻","⭐","🚀","⚡","🍀","🎸","🐶","🐨","🐯","🐰","🌵","🌙","🎨","🏀"]
 export function AvatarFace({name,avatar,size=44}:{name:string;avatar?:AvatarEntry|null;size?:number}){
   const [failed,setFailed]=useState(false)
   const emoji=avatar?.kind==="emoji"?avatar.emoji:null
