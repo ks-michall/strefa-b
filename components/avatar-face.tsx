@@ -14,8 +14,8 @@ export function AvatarFace({name,avatar,size=44}:{name:string;avatar?:AvatarEntr
   const image=avatar?.kind==="photo"&&!failed?
     "/api/avatars?photo="+encodeURIComponent(name)+"&v="+encodeURIComponent(avatar.updated_at):null
   const shared:React.CSSProperties={
-    width:size,height:size,minWidth:size,borderRadius:"50%",objectFit:"cover",
-    border:"2px solid #fff",boxShadow:"0 3px 11px rgba(0,0,0,.09)",
+    width:size,height:size,minWidth:size,boxSizing:"border-box",borderRadius:"50%",objectFit:"cover",
+    border:size<=18?"none":"2px solid #fff",boxShadow:size<=18?"none":"0 3px 11px rgba(0,0,0,.09)",
   }
   if(image)return <img key={image} src={image} alt={`Awatar: ${name}`}
     onError={()=>setFailed(true)} style={shared}/>
