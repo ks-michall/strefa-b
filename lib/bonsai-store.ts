@@ -10,10 +10,10 @@ export type BonsaiTree = {
 }
 
 export async function bonsaiRequest(
-  action: "read" | "plant" | "check" | "import",
+  action: "read" | "plant" | "check" | "import" | "readReflection" | "saveReflection",
   name: StudentName,
   payload: Record<string, unknown> = {}
-): Promise<{trees?: BonsaiTree[]; ok?: boolean}> {
+): Promise<{trees?: BonsaiTree[]; ok?: boolean; reflection?: {helped:string;nextTime:string}|null}> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const secret = process.env.STREFA_B_PASSWORD_API_SECRET
   if (!url || !secret) throw new Error("Bonsai storage is not configured")
@@ -36,5 +36,5 @@ export async function bonsaiRequest(
     throw error
   }
   if (!data || typeof data !== "object") throw new Error("Invalid Bonsai response")
-  return data as {trees?: BonsaiTree[]; ok?: boolean}
+  return data as {trees?: BonsaiTree[]; ok?: boolean; reflection?: {helped:string;nextTime:string}|null}
 }
