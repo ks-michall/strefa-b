@@ -4,7 +4,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.103.0"
 const EXPECTED_SECRET_SHA256="5be6c1b74805a1e91ae9680aeaed6b348b9251e079e31647803ab016341b0471"
 const enc=new TextEncoder()
 const bucket="strefa-b-avatars"
-const emojis=["🦊","🐱","🐼","🦁","🐸","🐧","🦋","🐢","🦄","🐻","🌻","⭐","🚀","⚡","🍀","🎸","🐶","🐨","🐯","🐰","🌈","🌙","🎨","🏀"]
+const emojis=["🦊","🐱","🐼","🦁","🐸","🐧","🦋","🐢","🦄","🐻","🌻","⭐","🚀","⚡","🍀","🎸","🐶","🐨","🐯","🐰","🌵","🌙","🎨","🏀"]
 function reply(data:unknown,status=200) {
   return Response.json(data,{status,headers:{"Cache-Control":"private, no-store"}})
 }
