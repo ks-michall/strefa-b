@@ -4,6 +4,7 @@ import Link from "next/link"
 import { habits, availableHabits } from "../../lib/bonsai-habits"
 import { BonsaiGrowth } from "../../components/bonsai-growth"
 import { BonsaiHarvest } from "../../components/bonsai-harvest"
+import { BonsaiReflection } from "../../components/bonsai-reflection"
 import { RECOGNITION_THRESHOLD } from "../../lib/bonsai-rewards"
 import { useEffect, useMemo, useState } from "react"
 import {
@@ -191,9 +192,10 @@ export default function BonsaiPage() {
   const nextOpening = nowMs ? remainingUntilNextOpening(now) : 0
   const latest = trees[trees.length - 1]
   const newTreeDay = latest ? addDays(latest.started, PLANTING_INTERVAL) : null
-  const canPlant = !!nowMs && (!newTreeDay || plantingDay >= newTreeDay)
+  const canPlantByDate = !!nowMs && (!newTreeDay || plantingDay >= newTreeDay)
   const activeTrees = trees.filter(tree => plantingDay >= tree.started &&
     daysBetween(tree.started, plantingDay) < GROWTH_DAYS)
+  const canPlant = canPlantByDate && activeTrees.length < 2
   const completedTrees = trees.filter(tree => plantingDay >= addDays(tree.started, GROWTH_DAYS))
   const latestFinished = completedTrees.length ? completedTrees[completedTrees.length-1] : null
   const recentlyFinished = latestFinished &&
@@ -237,18 +239,17 @@ export default function BonsaiPage() {
         </p>
       </header>
 
-      <section style={{ ...surface, marginBottom: 18, background: "#edf8ef" }}>
-        <strong style={{ fontSize: 17 }}>Jak działa Bonsai?</strong>
-        <p style={{ lineHeight: 1.7, margin: "10px 0" }}>
-          Wybierasz mały nawyk i realizujesz go codziennie przez <strong>28 dni</strong>.
-          Każdego wieczoru <strong>od 20:00</strong> możesz potwierdzić, że udało Ci się go wykonać.
-          Co <strong>14 dni</strong> możesz zasadzić następne drzewko, nie kończąc poprzedniego.
+      <section style={{ ...surface, marginBottom: 18, background: "#edf8ef", padding: 16 }}>
+        <strong style={{ fontSize: 16 }}>Co mam zrobić dzisiaj?</strong>
+        <p style={{ fontSize: 14, color:"#4e7059",lineHeight:1.6,margin:"7px 0 10px" }}>
+          Wykonaj swój mały nawyk. Wieczorem od 20:00 potwierdź jego realizację.
+          Jedno drzewko trwa 28 dni, a nowe możesz posadzić po 14 dniach — maksymalnie dwa jednocześnie.
         </p>
-        <div style={{ padding: "13px 16px", background: "white", borderRadius: 14 }}>
-          {windowDay
-            ? <strong style={{ color: "#246b49" }}>✓ Wieczorne potwierdzanie jest już dostępne!</strong>
-            : <><span style={{ display: "block", color: "#527460", fontSize: 13 }}>Do kolejnego potwierdzania od 20:00 pozostało:</span>
-              <strong aria-live="off" style={{ fontSize: 27, fontVariantNumeric: "tabular-nums" }}>{countdown(nextOpening)}</strong></>}
+        <div style={{ background:"white", borderRadius:12, padding:12 }}>
+          {windowDay ? <strong style={{ color:"#276a43" }}>✓ Możesz już potwierdzić dzisiejszy nawyk!</strong> :
+            <div><span style={{display:"block",fontSize:12,color:"#648070"}}>Potwierdzanie dostępne od 20:00 za:</span>
+              <strong style={{fontVariantNumeric:"tabular-nums",fontSize:24}}>{countdown(nextOpening)}</strong>
+            </div>}
         </div>
       </section>
 
@@ -265,7 +266,7 @@ export default function BonsaiPage() {
       </section>}
 
       <nav aria-label="Zakładki Bonsai" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
-        {([["today", "Moje drzewka"], ["catalog", "Biblioteka"], ["progress", "Bilans"]] as const)
+        {([["today", "Dzisiaj"], ["progress", "Mój ogród"], ["catalog", "Biblioteka"]] as const)
           .map(([id, label]) => <button key={id} onClick={() => setTab(id)}
             aria-current={tab === id ? "page" : undefined}
             style={{ ...button, background: tab === id ? "#246b49" : "#e0eee4",
@@ -287,7 +288,7 @@ export default function BonsaiPage() {
           <BonsaiGrowth count={0}/>
           <button style={button} onClick={() => setTab("catalog")}>Przejdź do biblioteki</button>
         </section>}
-        {trees.length > 0 && activeTrees.length === 0 && <section style={surface}>
+        {trees.length > 0 && activeTrees.length === 0 && !recentlyFinished && <section style={surface}>
           <h2 style={{ marginTop: 0 }}>Twoje dotychczasowe drzewka zakończyły wzrost</h2>
           <p>Wszystkie znajdziesz w Bilansie. Możesz wybrać kolejne wyzwanie, gdy miną dwa tygodnie od ostatniego sadzenia.</p>
         </section>}
@@ -300,7 +301,7 @@ export default function BonsaiPage() {
           return <section key={tree.id} style={surface}>
             <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 10, color: "#527460" }}>
               <strong>Drzewko {trees.indexOf(tree) + 1}</strong>
-              <span>Dzień {Math.min(GROWTH_DAYS, dayIndex)} z {GROWTH_DAYS}</span>
+              <span><strong>Dzień {Math.min(GROWTH_DAYS, dayIndex)} z {GROWTH_DAYS}</strong> · {tree.checks.length} wykonanych dni</span>
             </div>
             <BonsaiGrowth count={tree.checks.length}/>
             <h2 style={{ textAlign: "center", margin: "2px 0 10px" }}>{habits[tree.habitIndex].title}</h2>
@@ -319,9 +320,7 @@ export default function BonsaiPage() {
                     <div>Potwierdzenie dostępne od 20:00 za:</div>
                     <strong style={{ fontSize: 23, fontVariantNumeric: "tabular-nums" }}>{countdown(nextOpening)}</strong>
                   </div>}
-            <p style={{ textAlign: "center", color: "#5e7969", fontSize: 13, marginBottom: 0 }}>
-              Wykonane dni: {tree.checks.length} / {GROWTH_DAYS}. Raz potwierdzonego dnia nie można odkliknąć.
-            </p>
+            <p style={{ textAlign: "center", color: "#5e7969", fontSize: 13, marginBottom: 0 }}>Każde potwierdzenie to kolejny mały krok. Przerwa nie przekreśla postępu.</p>
           </section>
         })}
         {canPlant && trees.length > 0 && <section style={{ ...surface, background: "#e6f5e9" }}>
@@ -329,7 +328,7 @@ export default function BonsaiPage() {
           <p>Od ostatniego sadzenia minęły dwa tygodnie. Możesz rozpocząć kolejny nawyk, a poprzedni nadal pielęgnować.</p>
           <button style={button} onClick={() => setTab("catalog")}>Zasadź następne Bonsai</button>
         </section>}
-        {!canPlant && newTreeDay && <section style={surface}>
+        {!canPlant && newTreeDay && activeTrees.length < 2 && <section style={surface}>
           <strong>Kolejne drzewko od {readableDate(newTreeDay)}</strong>
           <p style={{ color: "#527460", marginBottom: 0 }}>
             Jeszcze {daysBetween(plantingDay, newTreeDay)} {daysBetween(plantingDay, newTreeDay) === 1 ? "dzień" : "dni"} do kolejnego sadzenia.
@@ -339,7 +338,7 @@ export default function BonsaiPage() {
 
       {tab === "catalog" && <section style={surface}>
         <h2 style={{ marginTop: 0 }}>Biblioteka nawyków</h2>
-        <p>Jedno drzewko rośnie przez 28 dni. Po 14 dniach możesz zasadzić kolejne.
+        <p>Jedno drzewko rośnie przez 28 dni. Możesz hodować maksymalnie dwa naraz. Po 14 dniach możesz zasadzić kolejne.
           {newTreeDay && !canPlant ? ` Najbliższe sadzenie: ${readableDate(newTreeDay)}.` : ""}
         </p>
         <label htmlFor="bonsaiCategory" style={{ display: "block", marginBottom: 6 }}>Obszar</label>
@@ -365,7 +364,8 @@ export default function BonsaiPage() {
         <p style={{ color: "#537565", fontSize: 13 }}>Nawyk możesz wykonać o dowolnej porze. Potwierdzasz go dopiero wieczorem.</p>
         <button disabled={!canPlant || busy} style={{ ...button, opacity: canPlant && !busy ? 1 : .55, cursor: canPlant && !busy ? "pointer" : "not-allowed" }}
           onClick={plantTree}>{trees.length === 0 ? "Zasadzam pierwsze Bonsai" : "Zasadzam kolejne Bonsai"}</button>
-        {!canPlant && newTreeDay && <p style={{ color: "#527460" }}>Możesz zasadzić następne drzewko od {readableDate(newTreeDay)}.</p>}
+        {!canPlant && newTreeDay && activeTrees.length < 2 && <p style={{ color: "#527460" }}>Możesz zasadzić następne drzewko od {readableDate(newTreeDay)}.</p>}
+        {activeTrees.length >= 2 && <p style={{color:"#527460"}}>Pielęgnujesz teraz dwa drzewka. Kolejne będzie dostępne po zakończeniu jednego z nich.</p>}
       </section>}
 
       {tab === "progress" && <div style={{ display: "grid", gap: 16 }}>
@@ -394,7 +394,7 @@ export default function BonsaiPage() {
             </div>
             <BonsaiGrowth count={tree.checks.length}/>
             <p style={{ textAlign: "center" }}><strong>{tree.checks.length}</strong> z {GROWTH_DAYS} dni</p>
-            <ProgressCalendar tree={tree} cutoff={plantingDay}/>
+            <ProgressCalendar tree={tree} cutoff={plantingDay}/>\n            {finished && <BonsaiReflection treeId={tree.id}/>}
             {finished && <div style={{marginTop:18}}>
               <BonsaiHarvest
                 tree={tree}
