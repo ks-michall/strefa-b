@@ -135,3 +135,4 @@ export default function HomePage() {
       <p className="sb-home-footer">Strefa B • Nasze miejsce. Nasze historie. Nasze małe kroki.</p>
     </div>
   </main>
+}
