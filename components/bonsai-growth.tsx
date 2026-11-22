@@ -17,8 +17,8 @@ export function BonsaiGrowth({count,compact=false}:{count:number;compact?:boolea
   const stage = growthStage(count)
   const stageIndex = GROWTH_STAGES.findIndex(item=>item.at===stage.at)
   const next = nextGrowthStage(count)
-  return <div style={{textAlign:"center",padding:compact?"4px 0":"12px 0"}}>
-    <svg viewBox="0 0 240 180" role="img" aria-label={`Bonsai: ${stage.name}; ${count} z 28 potwierdzeń`}
+  return <div className="sb-bonsai-tree" style={{textAlign:"center",padding:compact?"4px 0":"12px 0"}}>
+    <svg className="sb-bonsai-svg" viewBox="0 0 240 180" role="img" aria-label={`Bonsai: ${stage.name}; ${count} z 28 potwierdzeń`}
       style={{display:"block",width:compact?145:210,maxWidth:"100%",height:"auto",margin:"0 auto"}}>
       <ellipse cx="120" cy="169" rx="76" ry="7" fill="#dcebe0"/>
       {stageIndex===0 ?
@@ -44,21 +44,21 @@ export function BonsaiGrowth({count,compact=false}:{count:number;compact?:boolea
           {stageIndex>=4 && <path d="M125 102 Q145 101 158 87" fill="none" stroke="#785b43" strokeWidth="6" strokeLinecap="round"/>}
           {stageIndex>=5 && <path d="M119 83 Q96 82 78 65 M120 69 Q142 64 161 60" fill="none" stroke="#785b43" strokeWidth="5" strokeLinecap="round"/>}
           {leaves.filter(leaf=>leaf.at<=stageIndex).map((leaf,i)=>
-            <ellipse key={i} cx={leaf.x} cy={leaf.y} rx={leaf.r} ry={leaf.r*.78}
+            <ellipse key={`${i}-${stageIndex}`} className="sb-bonsai-leaf" cx={leaf.x} cy={leaf.y} rx={leaf.r} ry={leaf.r*.78}
               fill={i%3===0?"#5b9b5b":i%3===1?"#75b779":"#42844f"} opacity=".96"/>)}
           {stageIndex===8 && blossoms.map((flower,i)=>
             <g key={i} transform={`translate(${flower.x} ${flower.y})`}>
-              <circle cx="-4" cy="0" r="5" fill="#f4b5c9"/>
-              <circle cx="4" cy="0" r="5" fill="#f4b5c9"/>
-              <circle cx="0" cy="-4" r="5" fill="#ffd4df"/>
+              <circle className="sb-bonsai-flower" cx="-4" cy="0" r="5" fill="#f4b5c9"/>
+              <circle className="sb-bonsai-flower" cx="4" cy="0" r="5" fill="#f4b5c9"/>
+              <circle className="sb-bonsai-flower" cx="0" cy="-4" r="5" fill="#ffd4df"/>
               <circle cx="0" cy="3" r="3" fill="#f5dc72"/>
             </g>)}
         </>}
     </svg>
-    <div style={{fontWeight:800,fontSize:compact?14:17,color:"#2e6746",marginTop:5}}>
+    <div className="sb-bonsai-info" style={{fontWeight:800,fontSize:compact?14:17,color:"#2e6746",marginTop:5}}>
       {stage.name}
     </div>
-    <div style={{fontSize:12,color:"#678070",marginTop:4}}>
+    <div className="sb-bonsai-info" style={{fontSize:12,color:"#678070",marginTop:4}}>
       {next ? `Kolejny etap: ${next.name} (za ${next.at-count} potwierdzeń)`
         : "Najwyższy etap wzrostu!"}
     </div>
