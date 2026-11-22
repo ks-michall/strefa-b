@@ -9,6 +9,10 @@ export async function middleware(request: NextRequest) {
     pathname === "/api/login" ||
     pathname.startsWith("/_next/") ||
     pathname === "/favicon.ico" ||
+    pathname === "/icon" ||
+    pathname === "/apple-icon" ||
+    pathname === "/icon-192" ||
+    pathname === "/icon-512" ||
     pathname === "/icon.png" ||
     pathname === "/icon-192.png" ||
     pathname === "/icon-512.png" ||

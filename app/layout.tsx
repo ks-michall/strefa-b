@@ -6,6 +6,12 @@ export const metadata = {
   title: "Strefa B — przestrzeń klasy",
   description: "Bonsai, Bohaterowie, Bajki. Nasze miejsce, nasze historie.",
   applicationName: "Strefa B",
+  manifest: "/manifest.json",
+  appleWebApp: {capable: true, title: "Strefa B", statusBarStyle: "default" },
+  icons: {
+    icon: [{url: "/icon", sizes: "512x512", type: "image/png"}],
+    apple: [{url: "/apple-icon", sizes: "180x180", type: "image/png"}],
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
