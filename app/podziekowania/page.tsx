@@ -985,13 +985,13 @@ export default function PodziekowaniaPage() {
                     color: "#374151",
                   }}
                 >
-                  Za co chcesz podziękować?
+                  Co godnego uwagi zrobiła ta osoba?
                 </label>
 
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Np. za pomoc w matematyce albo dziękuję za dobre słowo"
+                  placeholder="np. pomoc w zadaniu, wsparcie w trudnej chwili, zaangażowanie w życie klasy"
                   rows={5}
                   style={{
                     width: "100%",
