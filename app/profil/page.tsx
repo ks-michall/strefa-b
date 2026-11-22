@@ -102,11 +102,12 @@ export default function ProfilePage(){
     padding:"26px 16px 60px",fontFamily:"Arial,sans-serif",color:"#253347"}}>
     <div style={{maxWidth:720,margin:"0 auto"}}>
       <Link href="/" style={{color:"#386e67",textDecoration:"none"}}>← Strefa B</Link>
-      <h1 style={{fontSize:32,margin:"22px 0 8px"}}>Mój profil</h1>
+      <p className="sb-small-label" style={{margin:"24px 0 8px"}}>TWÓJ MAŁY KĄT W STREFIE B</p>
+      <h1 style={{fontSize:32,margin:"0 0 8px"}}>Mój profil</h1>
       <p style={{color:"#607286",lineHeight:1.65,margin:"0 0 24px"}}>
         Wybierz swój awatar w Strefie B.
       </p>
-      {loading?<div style={card}>Wczytywanie ustawień…</div>:<section id="awatar" style={card}>
+      {loading?<div style={card}>Wczytywanie ustawień…</div>:<section id="awatar" className="sb-surface" style={card}>
         <div style={{display:"flex",alignItems:"center",gap:17,marginBottom:24}}>
           <AvatarFace name={user} avatar={current} size={76}/>
           <div><h2 style={{fontSize:22,margin:"0 0 4px"}}>{user}</h2>
