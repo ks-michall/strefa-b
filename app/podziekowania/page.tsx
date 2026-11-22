@@ -117,7 +117,7 @@ function RankingCard({
   avatars: Record<string,AvatarEntry>
 }) {
   return (
-    <div
+    <div className="sb-surface"
       style={{
         backgroundColor: "white",
         border: "1px solid #e5e7eb",
@@ -438,7 +438,7 @@ export default function PodziekowaniaPage() {
 
       setThanksList((prev) => [newThank, ...prev])
       setNewEntryId(newThank.id)
-      setSuccess("Dodano bohatera")
+      setSuccess("Dobre słowo poszło w świat! 💙")
       closeModal()
     } catch (e) {
       console.error(e)
@@ -487,7 +487,7 @@ export default function PodziekowaniaPage() {
   }
 
   return (
-    <main
+    <main className="sb-app-page sb-theme-blue"
       style={{
         minHeight: "100vh",
         background:
@@ -496,7 +496,7 @@ export default function PodziekowaniaPage() {
       }}
     >
       <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-        <section
+        <section className="sb-feature-header"
           style={{
             background: "rgba(255,255,255,0.75)",
             backdropFilter: "blur(10px)",
@@ -517,6 +517,7 @@ export default function PodziekowaniaPage() {
             }}
           >
             <div style={{ maxWidth: "620px" }}>
+              <p className="sb-small-label" style={{margin:"0 0 10px"}}>DOBRO, KTÓRE WARTO ZAUWAŻYĆ</p>
               <h1
                 style={{
                   margin: 0,
@@ -597,6 +598,7 @@ export default function PodziekowaniaPage() {
 
             <button
               onClick={openModal}
+              className="sb-pill-button"
               style={{
                 border: "none",
                 background:
@@ -733,6 +735,7 @@ export default function PodziekowaniaPage() {
               {visibleThanks.map((item) => (
                 <article
                   key={item.id}
+                  className="sb-interactive-card"
                   style={{
                     background:
                       "linear-gradient(135deg, #ffffff 0%, #eff6ff 100%)",
