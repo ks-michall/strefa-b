@@ -64,19 +64,20 @@ export default function BusolaPage() {
       active:trees.filter(tree=>asOf && daysBetween(tree.started,asOf)>=0 && daysBetween(tree.started,asOf)<28).length,
       ready:trees.filter(tree=>asOf && asOf>=addDays(tree.started,28) && tree.checks.length>=RECOGNITION_THRESHOLD).length}
   },[trees,asOf])
-  return <main style={{
+  return <main className="sb-app-page sb-theme-green" style={{
     background:"linear-gradient(180deg,#f4f8fb,#edf6f4)",minHeight:"100vh",
     padding:"26px 16px 64px",color:"#1e3342",
   }}>
     <div style={{maxWidth:820,margin:"0 auto"}}>
       <Link href="/" style={{color:"#376277",textDecoration:"none"}}>← Strefa B</Link>
       <header style={{margin:"22px 0 24px"}}>
+        <p className="sb-small-label" style={{margin:"0 0 9px"}}>TWÓJ PUNKT WIDZENIA</p>
         <h1 style={{margin:"0 0 8px",fontSize:38}}>🧭 Busola</h1>
         <p style={{color:"#617887",fontSize:17,lineHeight:1.65,margin:0}}>
           Wybierz ucznia: zobaczysz jego aktualne nawyki, regularność i zakończone wyzwania wymagające rozmowy.
         </p>
       </header>
-      <section style={{...surface,marginBottom:18}}>
+      <section className="sb-surface" style={{...surface,marginBottom:18}}>
         <label htmlFor="student" style={{display:"block",fontWeight:700,marginBottom:10}}>Wybierz ucznia</label>
         <select id="student" value={student} onChange={event=>setStudent(event.target.value)}
           style={{width:"100%",padding:14,borderRadius:14,border:"1px solid #cddbe3",fontSize:16,background:"white"}}>
@@ -88,10 +89,10 @@ export default function BusolaPage() {
           Starsze, lokalne drzewka pokażą się po przeniesieniu ich przez ucznia.
         </p>
       </section>
-      {loading && <section style={surface}>Pobieram drzewka…</section>}
+      {loading && <section className="sb-surface" style={surface}>Pobieram drzewka…</section>}
       {error && <p role="alert" style={{background:"#fee2e2",color:"#991b1b",padding:16,borderRadius:14}}>{error}</p>}
       {!loading && !error && student && <>
-        <section style={{...surface,marginBottom:18}}>
+        <section className="sb-surface" style={{...surface,marginBottom:18}}>
           <h2 style={{marginTop:0,fontSize:23}}>{student} – podsumowanie Bonsai</h2>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:12}}>
             {[
@@ -107,7 +108,7 @@ export default function BusolaPage() {
             Ostatnie potwierdzenie: <strong>{stats.latest?readableDate(stats.latest):"brak"}</strong>
           </p>
         </section>
-        {trees.length===0 ? <section style={surface}>
+        {trees.length===0 ? <section className="sb-surface" style={surface}>
           <h2 style={{marginTop:0,fontSize:20}}>Brak zapisanych drzewek</h2>
           <p style={{marginBottom:0,color:"#607786",lineHeight:1.65}}>
             Ten uczeń nie ma jeszcze Bonsai zapisanych w bazie. Może dopiero zacząć lub przechowywać wcześniejsze drzewka w swojej przeglądarce.
@@ -121,7 +122,7 @@ export default function BusolaPage() {
           }).map(tree=>{
             const done=asOf && asOf>=addDays(tree.started,28)
             const habit=habits[tree.habitIndex]
-            return <section key={tree.id} style={surface}>
+            return <section key={tree.id} className="sb-surface" style={surface}>
               <div style={{display:"flex",justifyContent:"space-between",gap:16,alignItems:"start",flexWrap:"wrap"}}>
                 <div>
                   <p style={{fontSize:13,color:"#607786",margin:"0 0 7px"}}>{done?"Zakończone wyzwanie":"Aktywny nawyk"}</p>
