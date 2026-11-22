@@ -3,6 +3,7 @@
 import { students as activeStudents } from "../../lib/students"
 import { isActiveStudent } from "../../lib/active-students"
 import {AvatarFace,type AvatarEntry} from "../../components/avatar-face"
+import { useHeroesSession } from "../../components/heroes-session"
 
 import { useEffect, useMemo, useState } from "react"
 import { supabase } from "../../lib/supabase"
@@ -230,15 +231,16 @@ function FilterButton({
 }
 
 export default function PodziekowaniaPage() {
-  const [currentUser, setCurrentUser] = useState("")
+  const currentUser = useHeroesSession()
   const [avatars, setAvatars] = useState<Record<string,AvatarEntry>>({})
-  const [userLoaded, setUserLoaded] = useState(false)
 
   const [person, setPerson] = useState("")
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [isLoaded, setIsLoaded] = useState(false)
+  const [loadError, setLoadError] = useState("")
+  const [loadAttempt, setLoadAttempt] = useState(0)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [newEntryId, setNewEntryId] = useState("")
   const [feedFilter, setFeedFilter] = useState<"all" | "mine" | "forme">("all")
@@ -246,18 +248,6 @@ export default function PodziekowaniaPage() {
   const [thanksList, setThanksList] = useState<Thank[]>([])
 
   const isAdmin = currentUser === "ks. Michał"
-
-  useEffect(() => {
-    fetch("/api/me")
-      .then((res) => res.json())
-      .then((data) => {
-        setCurrentUser(data.name || "")
-        setUserLoaded(true)
-      })
-      .catch(() => {
-        setUserLoaded(true)
-      })
-  }, [])
 
   useEffect(() => {
     let active=true
@@ -278,28 +268,42 @@ export default function PodziekowaniaPage() {
   }, [])
 
   useEffect(() => {
+    let active = true
+    const controller = new AbortController()
+    // Nie zostawiamy użytkownika bez końca na ekranie ładowania.
+    const timeout = window.setTimeout(() => controller.abort(), 8500)
     async function loadThanks() {
+      setIsLoaded(false)
+      setLoadError("")
       try {
         const { data, error } = await supabase
           .from("thanks")
-          .select("*")
+          .select("id,author,person,message,created_at,deleted")
+          .eq("deleted", false)
           .order("created_at", { ascending: false })
+          .abortSignal(controller.signal)
 
-        if (error) {
-          console.error("Błąd pobierania Bohaterów:", error)
-          return
-        }
-
-        setThanksList((data as ThankRow[]).map(mapRowToThank))
-      } catch (e) {
-        console.error("Błąd pobierania Bohaterów:", e)
+        if (!active) return
+        if (error) throw error
+        setThanksList(((data ?? []) as ThankRow[]).map(mapRowToThank))
+      } catch (error) {
+        if (!active) return
+        console.error("Błąd pobierania Bohaterów:", error)
+        setLoadError(controller.signal.aborted
+          ? "Połączenie trwa zbyt długo. Spróbuj ponownie."
+          : "Nie udało się pobrać podziękowań. Spróbuj ponownie.")
       } finally {
-        setIsLoaded(true)
+        window.clearTimeout(timeout)
+        if (active) setIsLoaded(true)
       }
     }
-
-    loadThanks()
-  }, [])
+    void loadThanks()
+    return () => {
+      active = false
+      controller.abort()
+      window.clearTimeout(timeout)
+    }
+  }, [loadAttempt])
 
   useEffect(() => {
     if (!success) return
@@ -471,10 +475,6 @@ export default function PodziekowaniaPage() {
     } catch (e) {
       console.error(e)
     }
-  }
-
-  if (!userLoaded) {
-    return null
   }
 
   if (!currentUser) {
@@ -681,7 +681,7 @@ export default function PodziekowaniaPage() {
         </section>
 
         {!isLoaded ? (
-          <div
+          <div role="status" aria-live="polite"
             style={{
               backgroundColor: "rgba(255,255,255,0.85)",
               borderRadius: "22px",
@@ -692,6 +692,18 @@ export default function PodziekowaniaPage() {
             }}
           >
             Ładowanie Bohaterów...
+          </div>
+        ) : loadError ? (
+          <div role="alert" style={{
+            background:"white",border:"1px solid #e4e9f2",borderRadius:20,
+            padding:"28px 22px",color:"#35435a",textAlign:"center",
+          }}>
+            <p style={{margin:"0 0 16px"}}>{loadError}</p>
+            <button type="button" onClick={() => setLoadAttempt(n => n+1)}
+              style={{border:0,background:"#244e9b",color:"white",padding:"11px 20px",
+                borderRadius:12,fontWeight:700,cursor:"pointer"}}>
+              Spróbuj ponownie
+            </button>
           </div>
         ) : (
           <div
