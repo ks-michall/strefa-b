@@ -82,14 +82,8 @@ export default function ProfilePage(){
       })
       const data=await res.json()
       if(!res.ok)throw new Error(data.error||"Nie udało się zapisać awatara.")
-      const list=await fetch("/api/avatars",{cache:"no-store"})
-      if(!list.ok)throw new Error("Zmiana zapisana, ale nie udało się odświeżyć profilu.")
-      const json=await list.json()
-      const avatar=Array.isArray(json.avatars)?
-        (json.avatars as AvatarEntry[]).find(item=>item.student_name===user):null
-      setCurrent(avatar||null)
-      setPhoto(null)
-      setMessage("✓ Awatar zmieniono.")
+      // Zapis zakończony: ekran główny sam odczyta nowy awatar.
+      window.location.replace("/")
     }catch(e){setError(e instanceof Error?e.message:"Nie udało się zapisać awatara.")}
     finally{setBusy(false)}
   }
@@ -104,7 +98,7 @@ export default function ProfilePage(){
   }
   const card:React.CSSProperties={background:"white",border:"1px solid #e4e9ef",borderRadius:24,
     padding:23,boxShadow:"0 12px 30px rgba(0,0,0,.06)"}
-  return <main style={{minHeight:"100vh",background:"linear-gradient(180deg,#f8fbfa,#eff5ff)",
+  return <main className="sb-app-page sb-theme-green" style={{minHeight:"100vh",background:"linear-gradient(180deg,#f8fbfa,#eff5ff)",
     padding:"26px 16px 60px",fontFamily:"Arial,sans-serif",color:"#253347"}}>
     <div style={{maxWidth:720,margin:"0 auto"}}>
       <Link href="/" style={{color:"#386e67",textDecoration:"none"}}>← Strefa B</Link>
