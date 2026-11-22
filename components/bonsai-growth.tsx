@@ -2,6 +2,16 @@
 
 import { GROWTH_STAGES, growthStage, nextGrowthStage } from "../lib/bonsai-rewards"
 
+function confirmationForm(count: number): string {
+  if (count === 1) return "potwierdzenie"
+  const lastTwo = count % 100
+  if (lastTwo < 12 || lastTwo > 14) {
+    const lastDigit = count % 10
+    if (lastDigit >= 2 && lastDigit <= 4) return "potwierdzenia"
+  }
+  return "potwierdzeń"
+}
+
 const leaves = [
   {x:116,y:103,at:2,r:8}, {x:127,y:99,at:3,r:8},
   {x:106,y:90,at:4,r:10}, {x:139,y:84,at:4,r:10},
@@ -59,7 +69,7 @@ export function BonsaiGrowth({count,compact=false}:{count:number;compact?:boolea
       {stage.name}
     </div>
     <div className="sb-bonsai-info" style={{fontSize:12,color:"#678070",marginTop:4}}>
-      {next ? `Kolejny etap: ${next.name} (za ${next.at-count} potwierdzeń)`
+      {next ? `Kolejny etap: ${next.name} (za ${next.at-count} ${confirmationForm(next.at-count)})`
         : "Najwyższy etap wzrostu!"}
     </div>
   </div>
