@@ -1,1070 +1,353 @@
 "use client"
 
-import { students as activeStudents } from "../../lib/students"
-import { isActiveStudent } from "../../lib/active-students"
-import {AvatarFace,type AvatarEntry} from "../../components/avatar-face"
-import { useHeroesSession } from "../../components/heroes-session"
-
 import { useEffect, useMemo, useState } from "react"
-import { supabase } from "../../lib/supabase"
+import { AvatarFace, type AvatarEntry } from "../../components/avatar-face"
+import { useHeroesSession } from "../../components/heroes-session"
+import { sortedStudents } from "../../lib/students"
 
-type Thank = {
-  id: string
-  author: string
-  person: string
-  message: string
-  date: string
-  deleted: boolean
+type Recognition = {
+  id:string;author:string;person:string;message:string;created_at:string;deleted:boolean
 }
-
-type ThankRow = {
-  id: string
-  author: string
-  person: string
-  message: string
-  created_at: string
-  deleted: boolean
+type Report = {
+  id:string;thank_id:string;reporter:string;reason:string;created_at:string;reviewed_at:string|null
 }
+type FeedView = "recent"|"received"|"given"
 
-function mapRowToThank(row: ThankRow): Thank {
-  return {
-    id: row.id,
-    author: row.author,
-    person: row.person,
-    message: row.message,
-    date: row.created_at,
-    deleted: row.deleted,
-  }
-}
-
-function normalizeMessage(message: string) {
-  const trimmed = message.trim()
-  if (!trimmed) return ""
-
-  const lower = trimmed.toLowerCase()
-
-  if (lower.startsWith("dziękuję za")) return trimmed
-  if (lower.startsWith("za ")) return `dziękuję ${trimmed}`
-
-  return `dziękuję za ${trimmed}`
-}
-
-function canDeleteThank(dateString: string) {
-  const createdAt = new Date(dateString).getTime()
-  const now = Date.now()
-  return now - createdAt <= 24 * 60 * 60 * 1000
-}
-
-function isNewThank(dateString: string) {
-  return canDeleteThank(dateString)
-}
-
-function isSameMonth(dateString: string, now: Date) {
-  const date = new Date(dateString)
-  return (
-    date.getMonth() === now.getMonth() &&
-    date.getFullYear() === now.getFullYear()
-  )
-}
-
-function isSameYear(dateString: string, now: Date) {
-  const date = new Date(dateString)
-  return date.getFullYear() === now.getFullYear()
-}
-
-function buildRanking(
-  thanks: Thank[],
-  mode: "received" | "given",
-  period: "month" | "year",
-  now: Date
-) {
-  const filtered = thanks.filter((item) => {
-    if (item.deleted) return false
-    return period === "month"
-      ? isSameMonth(item.date, now)
-      : isSameYear(item.date, now)
-  })
-
-  const counts: Record<string, number> = {}
-
-  filtered.forEach((item) => {
-    const key = mode === "received" ? item.person : item.author
-    counts[key] = (counts[key] || 0) + 1
-  })
-
-  return Object.entries(counts)
-    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "pl"))
-    .map(([name, count]) => ({ name, count }))
-}
-
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString("pl-PL")
-}
-
-const students = [...activeStudents]
-const sortedStudents = [...students].sort((a, b) => {
-  if (a === "ks. Michał") return 1
-  if (b === "ks. Michał") return -1
-  return a.localeCompare(b, "pl")
+const monthParts = new Intl.DateTimeFormat("pl-PL",{
+  timeZone:"Europe/Warsaw",year:"numeric",month:"2-digit",
 })
-
-function RankingCard({
-  title,
-  items,
-  avatars,
-}: {
-  title: string
-  items: { name: string; count: number }[]
-  avatars: Record<string,AvatarEntry>
-}) {
-  return (
-    <div className="sb-surface"
-      style={{
-        backgroundColor: "white",
-        border: "1px solid #e5e7eb",
-        borderRadius: "22px",
-        padding: "22px",
-        boxShadow: "0 10px 26px rgba(0,0,0,0.06)",
-        color: "#111827",
-      }}
-    >
-      <h2
-        style={{
-          marginTop: 0,
-          marginBottom: "16px",
-          fontSize: "22px",
-          color: "#111827",
-          fontWeight: 800,
-        }}
-      >
-        {title}
-      </h2>
-
-      <div style={{ display: "grid", gap: "12px" }}>
-        {items.length === 0 && (
-          <div
-            style={{
-              color: "#6b7280",
-              backgroundColor: "#f8fafc",
-              borderRadius: "14px",
-              padding: "14px",
-            }}
-          >
-            Brak danych.
-          </div>
-        )}
-
-        {items.map((item, index) => (
-          <div
-            key={item.name}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              padding: "12px",
-              borderRadius: "14px",
-              backgroundColor: index === 0 ? "#eff6ff" : "#f9fafb",
-              border:
-                index === 0 ? "2px solid #60a5fa" : "1px solid transparent",
-            }}
-          >
-            <div
-              style={{
-                width: "28px",
-                textAlign: "center",
-                fontWeight: 800,
-                color: "#1f2937",
-              }}
-            >
-              {index + 1}.
-            </div>
-
-            <AvatarFace name={item.name} avatar={avatars[item.name]} size={42} />
-
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700 }}>{item.name}</div>
-              <div style={{ color: "#6b7280", fontSize: "14px" }}>
-                {item.count}{" "}
-                {item.count === 1
-                  ? "punkt"
-                  : item.count < 5
-                    ? "punkty"
-                    : "punktów"}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
+function monthKey(date:Date){
+  const p=monthParts.formatToParts(date)
+  return p.find(v=>v.type==="year")!.value+"-"+p.find(v=>v.type==="month")!.value
+}
+function monthLabel(date:Date){
+  return new Intl.DateTimeFormat("pl-PL",{timeZone:"Europe/Warsaw",month:"long"}).format(date)
+}
+function formatDate(raw:string){
+  return new Intl.DateTimeFormat("pl-PL",{
+    timeZone:"Europe/Warsaw",day:"numeric",month:"short",year:"numeric",
+  }).format(new Date(raw))
+}
+function canDelete(row:Recognition,name:string){
+  return name==="ks. Michał" || (row.author===name &&
+    Date.now()-new Date(row.created_at).getTime()<=86400000)
+}
+function isRecent(row:Recognition){
+  return Date.now()-new Date(row.created_at).getTime()<86400000
 }
 
-function FilterButton({
-  active,
-  label,
-  onClick,
-}: {
-  active: boolean
-  label: string
-  onClick: () => void
-}) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        border: active ? "none" : "1px solid #d1d5db",
-        background: active
-          ? "linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%)"
-          : "white",
-        color: active ? "white" : "#374151",
-        borderRadius: "999px",
-        padding: "10px 16px",
-        cursor: "pointer",
-        fontWeight: 700,
-        fontSize: "14px",
-        boxShadow: active ? "0 8px 20px rgba(79,70,229,0.22)" : "none",
-      }}
-    >
-      {label}
-    </button>
-  )
-}
+export default function BohaterowiePage(){
+  const currentUser=useHeroesSession()
+  const isAdmin=currentUser==="ks. Michał"
+  const [items,setItems]=useState<Recognition[]>([])
+  const [avatars,setAvatars]=useState<Record<string,AvatarEntry>>({})
+  const [loading,setLoading]=useState(true)
+  const [loadError,setLoadError]=useState("")
+  const [attempt,setAttempt]=useState(0)
+  const [view,setView]=useState<FeedView>("recent")
+  const [dialog,setDialog]=useState(false)
+  const [person,setPerson]=useState("")
+  const [message,setMessage]=useState("")
+  const [busy,setBusy]=useState(false)
+  const [formError,setFormError]=useState("")
+  const [notice,setNotice]=useState("")
+  const [reports,setReports]=useState<Report[]>([])
+  const [showReports,setShowReports]=useState(false)
 
-export default function PodziekowaniaPage() {
-  const currentUser = useHeroesSession()
-  const [avatars, setAvatars] = useState<Record<string,AvatarEntry>>({})
-
-  const [person, setPerson] = useState("")
-  const [message, setMessage] = useState("")
-  const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
-  const [isLoaded, setIsLoaded] = useState(false)
-  const [loadError, setLoadError] = useState("")
-  const [loadAttempt, setLoadAttempt] = useState(0)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [newEntryId, setNewEntryId] = useState("")
-  const [feedFilter, setFeedFilter] = useState<"all" | "mine" | "forme">("all")
-  const [selectedPersonFilter, setSelectedPersonFilter] = useState("")
-  const [thanksList, setThanksList] = useState<Thank[]>([])
-
-  const isAdmin = currentUser === "ks. Michał"
-
-  useEffect(() => {
+  useEffect(()=>{
+    const choice=new URLSearchParams(window.location.search).get("widok")
+    if(choice==="dla-mnie")setView("received")
+    if(choice==="ode-mnie")setView("given")
+  },[])
+  useEffect(()=>{
     let active=true
-    async function loadAvatars(){
-      try{
-        const response=await fetch("/api/avatars",{cache:"no-store"})
-        if(!response.ok)return
-        const data=await response.json()
-        if(active&&Array.isArray(data.avatars)){
-          const values:Record<string,AvatarEntry>={}
-          for(const row of data.avatars as AvatarEntry[])values[row.student_name]=row
-          setAvatars(values)
-        }
-      }catch{ /* Default smile avatar remains available */ }
-    }
-    void loadAvatars()
-    return()=>{active=false}
-  }, [])
-
-  useEffect(() => {
-    let active = true
-    const controller = new AbortController()
-    // Nie zostawiamy użytkownika bez końca na ekranie ładowania.
-    const timeout = window.setTimeout(() => controller.abort(), 8500)
-    async function loadThanks() {
-      setIsLoaded(false)
+    const controller=new AbortController()
+    const timeout=window.setTimeout(()=>controller.abort(),8500)
+    async function read(){
+      setLoading(true)
       setLoadError("")
-      try {
-        const { data, error } = await supabase
-          .from("thanks")
-          .select("id,author,person,message,created_at,deleted")
-          .eq("deleted", false)
-          .order("created_at", { ascending: false })
-          .abortSignal(controller.signal)
-
-        if (!active) return
-        if (error) throw error
-        setThanksList(((data ?? []) as ThankRow[]).map(mapRowToThank))
-      } catch (error) {
-        if (!active) return
-        console.error("Błąd pobierania Bohaterów:", error)
-        setLoadError(controller.signal.aborted
-          ? "Połączenie trwa zbyt długo. Spróbuj ponownie."
-          : "Nie udało się pobrać podziękowań. Spróbuj ponownie.")
-      } finally {
+      try{
+        const response=await fetch("/api/thanks",{cache:"no-store",signal:controller.signal})
+        const data=await response.json()
+        if(!response.ok)throw Error(data.error||"Nie udało się pobrać wyróżnień.")
+        if(!active)return
+        const rows=Array.isArray(data.thanks)?data.thanks as Recognition[]:[]
+        setItems(rows)
+        // Wyróżnienia stają się przeczytane dopiero po wejściu do Bohaterów.
+        const newest=rows.filter(row=>row.person===currentUser)
+          .sort((a,b)=>b.created_at.localeCompare(a.created_at))[0]
+        if(newest)try{
+          localStorage.setItem("sb_heroes_seen:"+currentUser,newest.created_at)
+        }catch{/* Brak pamięci urządzenia nie blokuje modułu. */}
+      }catch(error){
+        if(active)setLoadError(controller.signal.aborted?
+          "Połączenie trwa zbyt długo. Spróbuj ponownie.":
+          error instanceof Error?error.message:"Nie udało się pobrać Bohaterów.")
+      }finally{
         window.clearTimeout(timeout)
-        if (active) setIsLoaded(true)
+        if(active)setLoading(false)
       }
     }
-    void loadThanks()
-    return () => {
-      active = false
-      controller.abort()
-      window.clearTimeout(timeout)
-    }
-  }, [loadAttempt])
+    void read()
+    return()=>{active=false;controller.abort();window.clearTimeout(timeout)}
+  },[attempt,currentUser])
+  useEffect(()=>{
+    let active=true
+    void (async()=>{
+      try{
+        const r=await fetch("/api/avatars",{cache:"no-store"})
+        if(!r.ok)return
+        const data=await r.json()
+        if(!active||!Array.isArray(data.avatars))return
+        const map:Record<string,AvatarEntry>={}
+        for(const row of data.avatars as AvatarEntry[])map[row.student_name]=row
+        setAvatars(map)
+      }catch{/* Awatary emoji działają także bez połączenia. */}
+    })()
+    return()=>{active=false}
+  },[])
+  useEffect(()=>{
+    if(!notice)return
+    const timer=window.setTimeout(()=>setNotice(""),4000)
+    return()=>window.clearTimeout(timer)
+  },[notice])
 
-  useEffect(() => {
-    if (!success) return
-    const timer = setTimeout(() => setSuccess(""), 2500)
-    return () => clearTimeout(timer)
-  }, [success])
+  const now=new Date()
+  const thisMonth=monthKey(now)
+  const prevDate=new Date(Date.UTC(now.getFullYear(),now.getMonth()-1,15,12))
+  const lastMonth=monthKey(prevDate)
+  const thisMonthRows=useMemo(()=>items.filter(row=>monthKey(new Date(row.created_at))===thisMonth),
+    [items,thisMonth])
+  const previousCount=useMemo(()=>items.filter(row=>monthKey(new Date(row.created_at))===lastMonth).length,
+    [items,lastMonth])
+  const currentCount=thisMonthRows.length
+  const aim=previousCount+1
+  const toRecord=Math.max(0,aim-currentCount)
+  const uniquePeople=new Set(thisMonthRows.map(item=>item.person)).size
+  const ownCount=thisMonthRows.filter(item=>item.author===currentUser).length
+  const receivedCount=items.filter(item=>item.person===currentUser).length
+  const shown=useMemo(()=>items.filter(item=>view==="received"?item.person===currentUser:
+    view==="given"?item.author===currentUser:true),[items,view,currentUser])
+  const weeklyStory=useMemo(()=>{
+    const recent=items.filter(item=>Date.now()-new Date(item.created_at).getTime()<90*86400000)
+    if(recent.length===0)return null
+    const week=Math.floor(Date.now()/604800000)
+    return recent[week%recent.length]
+  },[items])
 
-  useEffect(() => {
-    if (!newEntryId) return
-    const timer = setTimeout(() => setNewEntryId(""), 2200)
-    return () => clearTimeout(timer)
-  }, [newEntryId])
-
-  const visibleThanks = useMemo(() => {
-    let items = thanksList
-      .filter((item) => !item.deleted && isActiveStudent(item.author) && isActiveStudent(item.person))
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-
-    if (feedFilter === "mine") {
-      items = items.filter((item) => item.author === currentUser)
-    }
-
-    if (feedFilter === "forme") {
-      items = items.filter((item) => item.person === currentUser)
-    }
-
-    if (selectedPersonFilter) {
-      items = items.filter((item) => item.person === selectedPersonFilter)
-    }
-
-    return items
-  }, [thanksList, feedFilter, selectedPersonFilter, currentUser])
-
-  const monthlyHelpfulRanking = useMemo(() => {
-    return buildRanking(thanksList.filter(item => isActiveStudent(item.author) && isActiveStudent(item.person)), "received", "month", new Date())
-  }, [thanksList])
-
-  const monthlyBuildersRanking = useMemo(() => {
-    return buildRanking(thanksList.filter(item => isActiveStudent(item.author) && isActiveStudent(item.person)), "given", "month", new Date())
-  }, [thanksList])
-
-  const yearlyHelpfulRanking = useMemo(() => {
-    return buildRanking(thanksList.filter(item => isActiveStudent(item.author) && isActiveStudent(item.person)), "received", "year", new Date())
-  }, [thanksList])
-
-  const yearlyBuildersRanking = useMemo(() => {
-    return buildRanking(thanksList.filter(item => isActiveStudent(item.author) && isActiveStudent(item.person)), "given", "year", new Date())
-  }, [thanksList])
-
-  const currentUserMonthlyCount = useMemo(() => {
-    const now = new Date()
-    return thanksList.filter(
-      (item) =>
-        !item.deleted &&
-        item.author === currentUser &&
-        isSameMonth(item.date, now)
-    ).length
-  }, [thanksList, currentUser])
-
-  const monthlyPercent = Math.min((currentUserMonthlyCount / 7) * 100, 100)
-
-  function resetForm() {
-    setPerson("")
-    setMessage("")
-    setError("")
+  async function post(payload:Record<string,unknown>){
+    const response=await fetch("/api/thanks",{
+      method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload),
+    })
+    const data=await response.json()
+    if(!response.ok)throw Error(data.error||"Nie udało się zapisać zmian.")
+    return data
   }
-
-  function openModal() {
-    resetForm()
-    setIsModalOpen(true)
-  }
-
-  function closeModal() {
-    resetForm()
-    setIsModalOpen(false)
-  }
-
-  async function addThank() {
-    setError("")
-    setSuccess("")
-
-    if (!person.trim() || !message.trim() || !isActiveStudent(person)) {
-      setError("Wybierz osobę i wpisz treść podziękowania.")
+  async function add(){
+    if(busy)return
+    setFormError("")
+    if(!person||message.trim().length<5){
+      setFormError("Wybierz osobę i opisz konkretnie, co zrobiła (co najmniej 5 znaków).")
       return
     }
-
-    if (person === currentUser) {
-      setError("Nie możesz podziękować samemu sobie.")
-      return
-    }
-
-    const now = new Date()
-
-    const monthlyThanksByAuthor = thanksList.filter(
-      (item) =>
-        !item.deleted &&
-        item.author === currentUser &&
-        isSameMonth(item.date, now)
-    )
-
-    if (monthlyThanksByAuthor.length >= 7) {
-      setError("W tym miesiącu możesz dodać maksymalnie 7 podziękowań.")
-      return
-    }
-
-    const monthlyThanksForThisPerson = monthlyThanksByAuthor.filter(
-      (item) => item.person === person
-    )
-
-    if (monthlyThanksForThisPerson.length >= 2) {
-      setError(
-        "W tym miesiącu możesz podziękować tej osobie maksymalnie 2 razy."
-      )
-      return
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from("thanks")
-        .insert({
-          author: currentUser,
-          person: person.trim(),
-          message: message.trim(),
-          deleted: false,
-        })
-        .select()
-        .single()
-
-      if (error) {
-        console.error(error)
-        setError("Nie udało się dodać wpisu.")
-        return
-      }
-
-      const newThank = mapRowToThank(data as ThankRow)
-
-      setThanksList((prev) => [newThank, ...prev])
-      setNewEntryId(newThank.id)
-      setSuccess("Dobre słowo poszło w świat! 💙")
-      closeModal()
-    } catch (e) {
-      console.error(e)
-      setError("Nie udało się dodać wpisu.")
+    setBusy(true)
+    try{
+      const data=await post({action:"add",person,message:message.trim()})
+      if(!data.thank||typeof data.thank.id!=="string")throw Error("Nie udało się potwierdzić zapisu.")
+      setItems(old=>[data.thank as Recognition,...old])
+      setDialog(false);setPerson("");setMessage("")
+      setNotice("Dobre działanie zostało zauważone! 💙")
+      setView("recent")
+    }catch(error){
+      setFormError(error instanceof Error?error.message:"Nie udało się zapisać wyróżnienia.")
+    }finally{setBusy(false)}
+  }
+  async function remove(row:Recognition){
+    if(!window.confirm("Usunąć to wyróżnienie?"))return
+    try{
+      await post({action:"delete",id:row.id})
+      setItems(old=>old.filter(item=>item.id!==row.id))
+      setNotice("Wyróżnienie usunięte.")
+    }catch(error){
+      setNotice(error instanceof Error?error.message:"Nie udało się usunąć wyróżnienia.")
     }
   }
-
-  async function deleteThank(id: string) {
-    const confirmed = window.confirm(
-      "Czy na pewno chcesz usunąć to podziękowanie?"
-    )
-    if (!confirmed) return
-
-    try {
-      const { error } = await supabase
-        .from("thanks")
-        .update({ deleted: true })
-        .eq("id", id)
-
-      if (error) {
-        console.error(error)
-        return
-      }
-
-      setThanksList((prev) =>
-        prev.map((item) =>
-          item.id === id ? { ...item, deleted: true } : item
-        )
-      )
-    } catch (e) {
-      console.error(e)
+  async function report(row:Recognition){
+    const reason=window.prompt("Co jest nieodpowiednie w tym wpisie? Zgłoszenie zobaczy tylko wychowawca.","")
+    if(reason===null)return
+    try{
+      await post({action:"report",id:row.id,reason:reason.trim()})
+      setNotice("Zgłoszenie przesłane wychowawcy. Dziękujemy.")
+    }catch(error){
+      setNotice(error instanceof Error?error.message:"Nie udało się wysłać zgłoszenia.")
     }
   }
-
-  if (!currentUser) {
-    return (
-      <main style={{ padding: "40px", textAlign: "center" }}>
-        <h1>Musisz się zalogować</h1>
-        <a href="/login">Przejdź do logowania</a>
-      </main>
-    )
+  async function loadReports(){
+    setShowReports(v=>!v)
+    if(showReports)return
+    try{
+      const response=await fetch("/api/thanks?reports=1",{cache:"no-store"})
+      const data=await response.json()
+      if(!response.ok)throw Error(data.error||"Nie udało się pobrać zgłoszeń.")
+      setReports(Array.isArray(data.reports)?data.reports:[])
+    }catch(error){setNotice(error instanceof Error?error.message:"Nie udało się pobrać zgłoszeń.")}
+  }
+  async function reviewReport(row:Report,action:"hide"|"dismiss"){
+    if(action==="hide"&&!window.confirm("Ukryć zgłoszone wyróżnienie?"))return
+    try{
+      await post({action:"reviewReport",id:row.id,reviewAction:action})
+      setReports(old=>old.filter(item=>item.id!==row.id))
+      if(action==="hide")setItems(old=>old.filter(item=>item.id!==row.thank_id))
+      setNotice(action==="hide"?"Wpis został ukryty.":"Zgłoszenie zamknięte.")
+    }catch(error){setNotice(error instanceof Error?error.message:"Nie udało się rozpatrzyć zgłoszenia.")}
   }
 
-  return (
-    <main className="sb-app-page sb-theme-blue"
-      style={{
-        minHeight: "100vh",
-        background:
-          "linear-gradient(180deg, #eff6ff 0%, #f8fafc 45%, #eef2ff 100%)",
-        padding: "28px 16px 80px",
-      }}
-    >
-      <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-        <section className="sb-feature-header"
-          style={{
-            background: "rgba(255,255,255,0.75)",
-            backdropFilter: "blur(10px)",
-            borderRadius: "28px",
-            padding: "28px",
-            boxShadow: "0 18px 50px rgba(0,0,0,0.08)",
-            border: "1px solid rgba(255,255,255,0.85)",
-            marginBottom: "24px",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              gap: "20px",
-              alignItems: "flex-start",
-              flexWrap: "wrap",
-            }}
-          >
-            <div style={{ maxWidth: "620px" }}>
-              <p className="sb-small-label" style={{margin:"0 0 10px"}}>DOBRO, KTÓRE WARTO ZAUWAŻYĆ</p>
-              <h1
-                style={{
-                  margin: 0,
-                  fontSize: "42px",
-                  lineHeight: 1.1,
-                  color: "#111827",
-                }}
-              >
-                Bohaterowie
-              </h1>
+  return <main className="sb-app-page sb-theme-blue sb-heroes-page">
+    <div className="sb-heroes-inner">
+      <a className="sb-heroes-back" href="/">← Wróć do Strefy B</a>
+      <header className="sb-heroes-header">
+        <div>
+          <p className="sb-small-label" style={{margin:"0 0 10px"}}>DOBRO, KTÓRE WARTO ZAUWAŻYĆ</p>
+          <h1>💙 Bohaterowie</h1>
+          <p>Każdy może zrobić coś dobrego. Każdy może to zauważyć.</p>
+        </div>
+        <button className="sb-heroes-primary" type="button"
+          onClick={()=>{setFormError("");setDialog(true)}} disabled={ownCount>=7}>
+          + Zauważ czyjeś dobro
+        </button>
+      </header>
 
-              <p
-                style={{
-                  marginTop: "14px",
-                  marginBottom: "10px",
-                  fontSize: "18px",
-                  lineHeight: 1.7,
-                  color: "#4b5563",
-                }}
-              >
-                Nikt na nich nie zasługuje, ale wszyscy ich potrzebujemy.
-              </p>
-
-              <p
-                style={{
-                  marginTop: 0,
-                  marginBottom: "16px",
-                  fontSize: "16px",
-                  lineHeight: 1.7,
-                  color: "#6b7280",
-                }}
-              >
-                Budowniczy – ci, którzy słowem i wdzięcznością budują dobrą
-                atmosferę w Strefie B.
-              </p>
-
-              <div
-                style={{
-                  display: "flex",
-                  gap: "12px",
-                  flexWrap: "wrap",
-                  color: "#374151",
-                  fontSize: "14px",
-                  marginBottom: "14px",
-                }}
-              >
-                
-              </div>
-
-              <div style={{ maxWidth: "360px" }}>
-                <div
-                  style={{
-                    width: "100%",
-                    height: "12px",
-                    borderRadius: "999px",
-                    backgroundColor: "#dbeafe",
-                    overflow: "hidden",
-                    marginBottom: "6px",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: `${monthlyPercent}%`,
-                      height: "100%",
-                      background:
-                        "linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%)",
-                      borderRadius: "999px",
-                      transition: "width 0.3s ease",
-                    }}
-                  />
-                </div>
-
-                <div style={{ fontSize: "13px", color: "#6b7280" }}>
-                  Limit miesięczny bohaterów (max. 7)
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={openModal}
-              className="sb-pill-button"
-              style={{
-                border: "none",
-                background:
-                  "linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%)",
-                color: "white",
-                borderRadius: "18px",
-                padding: "16px 24px",
-                fontSize: "16px",
-                fontWeight: 800,
-                letterSpacing: "0.04em",
-                cursor: "pointer",
-                boxShadow: "0 14px 30px rgba(79,70,229,0.35)",
-              }}
-            >
-              DODAJ
-            </button>
+      <section className="sb-heroes-stats" aria-label="Wspólny wynik klasy">
+        <div className="sb-heroes-stat">
+          <span>W poprzednim miesiącu</span>
+          <strong>{previousCount}</strong>
+          <small>zauważonych dobrych czynów</small>
+        </div>
+        <div className="sb-heroes-stat sb-heroes-current">
+          <span>W tym miesiącu</span>
+          <strong>{currentCount}</strong>
+          <small>zauważonych dobrych czynów</small>
+        </div>
+        <div className="sb-heroes-goal">
+          <p className="sb-small-label">NASZ WSPÓLNY CEL</p>
+          <h2>{toRecord===0?"Pobiliśmy wynik! 🎉":
+            `Jeszcze ${toRecord} do nowego rekordu! 🌟`}</h2>
+          <p>{`Spróbujmy razem dostrzec więcej dobra niż w ${monthLabel(prevDate)}.`}
+            {" "}Nie ma podium — liczy się każdy zauważony czyn.</p>
+          <div className="sb-heroes-progress" aria-label={`Postęp: ${currentCount} z ${aim} do rekordu`}>
+            <span style={{width:`${Math.min(100,currentCount/aim*100)}%`}}/>
           </div>
-        </section>
+          <small>{uniquePeople} {uniquePeople===1?"osoba została":"osób zostało"} wyróżnionych w tym miesiącu</small>
+        </div>
+      </section>
 
-        {success && (
-          <div
-            style={{
-              marginBottom: "18px",
-              backgroundColor: "#dcfce7",
-              color: "#166534",
-              padding: "14px 16px",
-              borderRadius: "16px",
-              fontWeight: 700,
-              boxShadow: "0 8px 20px rgba(0,0,0,0.04)",
-            }}
-          >
-            {success}
-          </div>
-        )}
+      {notice&&<div className="sb-heroes-notice" role="status">{notice}</div>}
 
-        <section
-          style={{
-            display: "flex",
-            gap: "10px",
-            flexWrap: "wrap",
-            marginBottom: "18px",
-          }}
-        >
-          <FilterButton
-            active={feedFilter === "all"}
-            label="Wszystkie"
-            onClick={() => setFeedFilter("all")}
-          />
-          <FilterButton
-            active={feedFilter === "mine"}
-            label="Moje"
-            onClick={() => setFeedFilter("mine")}
-          />
-          <FilterButton
-            active={feedFilter === "forme"}
-            label="Dla mnie"
-            onClick={() => setFeedFilter("forme")}
-          />
+      {weeklyStory&&<section className="sb-heroes-story">
+        <div>
+          <p className="sb-small-label">✨ DOBRA HISTORIA TYGODNIA</p>
+          <p className="sb-heroes-story-text">„{weeklyStory.message}”</p>
+          <span>{weeklyStory.person} <span aria-hidden="true">·</span> zauważone przez {weeklyStory.author}</span>
+        </div>
+        <AvatarFace name={weeklyStory.person} avatar={avatars[weeklyStory.person]} size={62}/>
+      </section>}
 
-          <select
-            value={selectedPersonFilter}
-            onChange={(e) => setSelectedPersonFilter(e.target.value)}
-            style={{
-              padding: "10px 14px",
-              borderRadius: "999px",
-              border: "1px solid #d1d5db",
-              backgroundColor: "white",
-              fontSize: "14px",
-              color: "#374151",
-              fontWeight: 600,
-            }}
-          >
-            <option value="">Wszystkie osoby</option>
-            {sortedStudents.map((student) => (
-              <option key={student} value={student}>
-                {student}
-              </option>
-            ))}
-          </select>
-        </section>
-
-        {!isLoaded ? (
-          <div role="status" aria-live="polite"
-            style={{
-              backgroundColor: "rgba(255,255,255,0.85)",
-              borderRadius: "22px",
-              padding: "34px 26px",
-              color: "#6b7280",
-              textAlign: "center",
-              boxShadow: "0 12px 30px rgba(0,0,0,0.06)",
-            }}
-          >
-            Ładowanie Bohaterów...
-          </div>
-        ) : loadError ? (
-          <div role="alert" style={{
-            background:"white",border:"1px solid #e4e9f2",borderRadius:20,
-            padding:"28px 22px",color:"#35435a",textAlign:"center",
-          }}>
-            <p style={{margin:"0 0 16px"}}>{loadError}</p>
-            <button type="button" onClick={() => setLoadAttempt(n => n+1)}
-              style={{border:0,background:"#244e9b",color:"white",padding:"11px 20px",
-                borderRadius:12,fontWeight:700,cursor:"pointer"}}>
-              Spróbuj ponownie
-            </button>
-          </div>
-        ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-              gap: "24px",
-              alignItems: "start",
-            }}
-          >
-            <section style={{ display: "grid", gap: "16px" }}>
-              {visibleThanks.length === 0 && (
-                <div
-                  style={{
-                    backgroundColor: "rgba(255,255,255,0.85)",
-                    borderRadius: "22px",
-                    padding: "34px 26px",
-                    color: "#6b7280",
-                    textAlign: "center",
-                    boxShadow: "0 12px 30px rgba(0,0,0,0.06)",
-                  }}
-                >
-                  <div style={{ fontSize: "34px", marginBottom: "10px" }}>
-                    💙
-                  </div>
-                  <div
-                    style={{
-                      fontWeight: 700,
-                      color: "#374151",
-                      marginBottom: "6px",
-                    }}
-                  >
-                    Nie ma jeszcze bohaterów w tym widoku
-                  </div>
-                  <div style={{ fontSize: "14px" }}>
-                    Dodaj pierwsze podziękowanie albo zmień filtry.
-                  </div>
-                </div>
-              )}
-
-              {visibleThanks.map((item) => (
-                <article
-                  key={item.id}
-                  className="sb-interactive-card"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #ffffff 0%, #eff6ff 100%)",
-                    border:
-                      item.id === newEntryId
-                        ? "2px solid #60a5fa"
-                        : "1px solid #e5e7eb",
-                    borderRadius: "22px",
-                    padding: "18px",
-                    boxShadow:
-                      item.id === newEntryId
-                        ? "0 14px 30px rgba(96,165,250,0.28)"
-                        : "0 10px 26px rgba(0,0,0,0.06)",
-                    position: "relative",
-                    transition: "all 0.3s ease",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "16px",
-                      alignItems: "flex-start",
-                      paddingRight:
-                        (item.author === currentUser &&
-                          canDeleteThank(item.date)) ||
-                        isAdmin
-                          ? "90px"
-                          : "0",
-                    }}
-                  >
-                    <AvatarFace name={item.person} avatar={avatars[item.person]} size={64}/>
-
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                          flexWrap: "wrap",
-                          marginBottom: "8px",
-                        }}
-                      >
-                        <span style={{ fontSize: "18px" }}>💙</span>
-
-                        <span
-                          style={{
-                            fontWeight: 800,
-                            fontSize: "22px",
-                            lineHeight: 1.35,
-                            color: "#111827",
-                          }}
-                        >
-                          {item.person} - {normalizeMessage(item.message)}
-                        </span>
-
-                        {isNewThank(item.date) && (
-                          <span
-                            style={{
-                              background:
-                                "linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)",
-                              color: "white",
-                              borderRadius: "999px",
-                              padding: "4px 10px",
-                              fontSize: "12px",
-                              fontWeight: 800,
-                            }}
-                          >
-                            Nowe
-                          </span>
-                        )}
-                      </div>
-
-                      <div
-                        style={{
-                          color: "#6b7280",
-                          fontStyle: "italic",
-                          fontSize: "16px",
-                          marginBottom: "4px",
-                        }}
-                      >
-                        {item.author}
-                      </div>
-
-                      <div style={{ color: "#9ca3af", fontSize: "13px" }}>
-                        {formatDate(item.date)}
-                      </div>
-                    </div>
-                  </div>
-
-                  {((item.author === currentUser && canDeleteThank(item.date)) ||
-                    isAdmin) && (
-                    <button
-                      onClick={() => deleteThank(item.id)}
-                      style={{
-                        position: "absolute",
-                        right: "16px",
-                        bottom: "16px",
-                        backgroundColor: "#fee2e2",
-                        color: "#991b1b",
-                        border: "none",
-                        borderRadius: "12px",
-                        padding: "10px 14px",
-                        cursor: "pointer",
-                        fontSize: "14px",
-                        minWidth: "80px",
-                        fontWeight: 600,
-                      }}
-                    >
-                      Usuń
-                    </button>
-                  )}
-                </article>
-              ))}
-            </section>
-
-            <div style={{ display: "grid", gap: "20px" }}>
-              <RankingCard
-                title="Bohaterowie miesiąca"
-                items={monthlyHelpfulRanking}
-                avatars={avatars}
-              />
-              <RankingCard
-                title="Budowniczowie miesiąca"
-                items={monthlyBuildersRanking}
-                avatars={avatars}
-              />
-              <RankingCard
-                title="Bohaterowie roku"
-                items={yearlyHelpfulRanking}
-                avatars={avatars}
-              />
-              <RankingCard
-                title="Budowniczowie roku"
-                items={yearlyBuildersRanking}
-                avatars={avatars}
-              />
-            </div>
-          </div>
-        )}
+      <div className="sb-heroes-tabs" role="group" aria-label="Filtruj dobre historie">
+        {([
+          {id:"recent",title:"Ostatnie"},
+          {id:"received",title:"Dla mnie"},
+          {id:"given",title:"Ode mnie"},
+        ] as const).map(tab=><button key={tab.id} type="button"
+          className={view===tab.id?"active":""} aria-pressed={view===tab.id}
+          onClick={()=>setView(tab.id)}>{tab.title}{tab.id==="received"&&receivedCount>0?
+          ` · ${receivedCount}`:""}</button>)}
       </div>
 
-      {isModalOpen && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(17,24,39,0.45)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "20px",
-            zIndex: 1000,
-          }}
-        >
-          <div
-            style={{
-              width: "100%",
-              maxWidth: "680px",
-              background: "linear-gradient(180deg, #ffffff 0%, #eef2ff 100%)",
-              borderRadius: "28px",
-              padding: "28px",
-              boxShadow: "0 24px 60px rgba(0,0,0,0.25)",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: "16px",
-                alignItems: "center",
-                marginBottom: "18px",
-              }}
-            >
-              <h2 style={{ margin: 0, fontSize: "30px", color: "#111827" }}>
-                Dodaj bohatera
-              </h2>
+      {view==="received"&&<div className="sb-heroes-personal">
+        <h2>Moje dobre historie 💙</h2>
+        <p>Tu zbierają się chwile, w których ktoś zauważył Twoje dobre działanie. Bez punktów i porównywania z innymi.</p>
+      </div>}
 
-              <button
-                onClick={closeModal}
-                style={{
-                  border: "none",
-                  backgroundColor: "#f3f4f6",
-                  borderRadius: "12px",
-                  padding: "10px 14px",
-                  cursor: "pointer",
-                  fontWeight: 700,
-                }}
-              >
-                Zamknij
-              </button>
-            </div>
-
-            <div style={{ display: "grid", gap: "16px" }}>
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "8px",
-                    fontWeight: 700,
-                    color: "#374151",
-                  }}
-                >
-                  Dla kogo?
-                </label>
-
-                <select
-                  value={person}
-                  onChange={(e) => setPerson(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "14px",
-                    borderRadius: "16px",
-                    border: "1px solid #d1d5db",
-                    fontSize: "16px",
-                    backgroundColor: "white",
-                    color: "#111827",
-                    boxSizing: "border-box",
-                  }}
-                >
-                  <option value="">Wybierz osobę</option>
-                  {sortedStudents.map((student) => (
-                    <option key={student} value={student}>
-                      {student}
-                    </option>
-                  ))}
-                </select>
+      {loading?<div className="sb-heroes-empty" role="status">Odczytujemy dobre historie…</div>:
+        loadError?<div className="sb-heroes-empty" role="alert">
+          <p>{loadError}</p>
+          <button type="button" onClick={()=>setAttempt(i=>i+1)}>Spróbuj ponownie</button>
+        </div>:
+        shown.length===0?<div className="sb-heroes-empty">
+          <span aria-hidden="true">💙</span>
+          <h2>{view==="received"?"Twoja kolekcja dopiero czeka na pierwszą historię.":
+            view==="given"?"Jeszcze nie zauważyłeś tu czyjegoś dobra.":"Tu pojawią się nasze dobre historie."}</h2>
+          <p>Możesz zacząć od jednej konkretnej sytuacji, w której ktoś zrobił coś wartościowego.</p>
+        </div>:
+        <section className="sb-heroes-feed" aria-label="Historie dobrych czynów">
+          {shown.map(item=><article className="sb-heroes-card" key={item.id}>
+            <AvatarFace name={item.person} avatar={avatars[item.person]} size={52}/>
+            <div className="sb-heroes-card-body">
+              <div className="sb-heroes-card-top">
+                <h2>{item.person}</h2>
+                {isRecent(item)&&<span className="sb-heroes-new">Nowe</span>}
               </div>
-
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "8px",
-                    fontWeight: 700,
-                    color: "#374151",
-                  }}
-                >
-                  Co godnego uwagi zrobiła ta osoba?
-                </label>
-
-                <textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="np. pomoc w zadaniu, wsparcie w trudnej chwili, zaangażowanie w życie klasy"
-                  rows={5}
-                  style={{
-                    width: "100%",
-                    padding: "14px",
-                    borderRadius: "16px",
-                    border: "1px solid #d1d5db",
-                    fontSize: "16px",
-                    resize: "vertical",
-                    boxSizing: "border-box",
-                    backgroundColor: "white",
-                    color: "#111827",
-                  }}
-                />
-              </div>
-
-              {error && (
-                <div
-                  style={{
-                    backgroundColor: "#fee2e2",
-                    color: "#991b1b",
-                    padding: "12px 14px",
-                    borderRadius: "14px",
-                    fontSize: "14px",
-                  }}
-                >
-                  {error}
-                </div>
-              )}
-
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  gap: "12px",
-                  marginTop: "8px",
-                  flexWrap: "wrap",
-                }}
-              >
-                <button
-                  onClick={closeModal}
-                  style={{
-                    border: "1px solid #d1d5db",
-                    backgroundColor: "white",
-                    color: "#374151",
-                    borderRadius: "14px",
-                    padding: "12px 18px",
-                    cursor: "pointer",
-                    fontWeight: 700,
-                  }}
-                >
-                  Anuluj
-                </button>
-
-                <button
-                  onClick={addThank}
-                  style={{
-                    border: "none",
-                    background:
-                      "linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%)",
-                    color: "white",
-                    borderRadius: "14px",
-                    padding: "12px 18px",
-                    cursor: "pointer",
-                    fontWeight: 800,
-                  }}
-                >
-                  Dodaj bohatera
-                </button>
+              <p className="sb-heroes-card-message">{item.message}</p>
+              <p className="sb-heroes-card-details">Zauważył(a): {item.author} · {formatDate(item.created_at)}</p>
+              <div className="sb-heroes-actions">
+                {canDelete(item,currentUser)&&<button type="button" onClick={()=>void remove(item)}>Usuń</button>}
+                {item.author!==currentUser && !isAdmin &&
+                  <button type="button" onClick={()=>void report(item)}>Zgłoś wpis</button>}
               </div>
             </div>
-          </div>
+          </article>)}
+        </section>
+      }
+
+      <div className="sb-heroes-bottom">
+        <p>W tym miesiącu dostrzegłeś(-aś) dobro {ownCount} razy. Limit: 7 wyróżnień, maksymalnie 2 dla tej samej osoby.</p>
+        {isAdmin&&<button type="button" onClick={()=>void loadReports()}>
+          {showReports?"Ukryj zgłoszenia":"Zgłoszenia do wychowawcy"} {reports.length>0?`(${reports.length})`:""}
+        </button>}
+      </div>
+
+      {isAdmin&&showReports&&<section className="sb-heroes-moderation">
+        <h2>Zgłoszenia do rozpatrzenia</h2>
+        {reports.length===0?<p>Brak nierozpatrzonych zgłoszeń.</p>:
+          reports.map(row=><div key={row.id} className="sb-heroes-report">
+            <p>Wpis: {items.find(item=>item.id===row.thank_id)?.message||"Wpis nie jest już widoczny"}</p>
+            <small>Zgłosił(a) {row.reporter} · {formatDate(row.created_at)}</small>
+            {row.reason&&<p>Powód: {row.reason}</p>}
+            <div className="sb-heroes-actions">
+              <button type="button" onClick={()=>void reviewReport(row,"dismiss")}>Zamknij zgłoszenie</button>
+              <button type="button" onClick={()=>void reviewReport(row,"hide")}>Ukryj wpis</button>
+            </div>
+          </div>)}
+      </section>}
+    </div>
+
+    {dialog&&<div className="sb-heroes-modal-backdrop" role="presentation" onMouseDown={event=>{
+      if(event.target===event.currentTarget&&!busy)setDialog(false)
+    }}>
+      <section className="sb-heroes-modal" role="dialog" aria-modal="true" aria-labelledby="hero-add-title">
+        <div className="sb-heroes-modal-title">
+          <h2 id="hero-add-title">Zauważ czyjeś dobro 💙</h2>
+          <button type="button" onClick={()=>setDialog(false)} disabled={busy} aria-label="Zamknij">✕</button>
         </div>
-      )}
-    </main>
-  )
+        <label htmlFor="hero-person">Kogo chcesz wyróżnić?</label>
+        <select id="hero-person" value={person} onChange={event=>setPerson(event.target.value)}>
+          <option value="">Wybierz osobę</option>
+          {sortedStudents.filter(name=>name!==currentUser).map(name=>
+            <option value={name} key={name}>{name}</option>)}
+        </select>
+        <label htmlFor="hero-message">Co godnego uwagi zrobiła ta osoba?</label>
+        <textarea id="hero-message" value={message} onChange={event=>setMessage(event.target.value)}
+          maxLength={600} rows={4}
+          placeholder="np. pomoc w zadaniu, wsparcie w trudnej chwili, zaangażowanie w życie klasy"/>
+        <p className="sb-heroes-tip">Napisz konkretnie, co się wydarzyło. Twoje słowa pojawią się dokładnie tak, jak je napiszesz.</p>
+        {formError&&<p className="sb-heroes-error" role="alert">{formError}</p>}
+        <div className="sb-heroes-modal-actions">
+          <button type="button" onClick={()=>setDialog(false)} disabled={busy}>Anuluj</button>
+          <button className="sb-heroes-primary" type="button" onClick={()=>void add()} disabled={busy}>
+            {busy?"Zapisuję…":"Wyróżnij"}
+          </button>
+        </div>
+      </section>
+    </div>}
+  </main>
 }

@@ -11,6 +11,7 @@ export default function HomePage() {
   const [currentUser, setCurrentUser] = useState("")
   const [userLoaded, setUserLoaded] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
+  const [newRecognition, setNewRecognition] = useState(false)
   const [bonsai, setBonsai] = useState<BonsaiSummary>({ count: 0, hasTrees: false })
 
   useEffect(() => {
@@ -44,6 +45,26 @@ export default function HomePage() {
     void load()
     return () => { active = false }
   }, [])
+
+  useEffect(() => {
+    if(!currentUser) return
+    let active=true
+    async function checkRecognition(){
+      try{
+        const response=await fetch("/api/thanks?summary=1",{cache:"no-store"})
+        if(!response.ok)return
+        const data=await response.json()
+        if(!active||!data.latestReceived?.created_at)return
+        const latest=Date.parse(data.latestReceived.created_at)
+        const seen=localStorage.getItem("sb_heroes_seen:"+currentUser)
+        const seenTime=seen?Date.parse(seen):0
+        if(Number.isFinite(latest)&&latest>Date.now()-30*86400000&&latest>seenTime)
+          setNewRecognition(true)
+      }catch{/* Powiadomienie nie blokuje strony głównej. */}
+    }
+    void checkRecognition()
+    return ()=>{active=false}
+  },[currentUser])
 
   async function handleLogout() {
     setLoggingOut(true)
@@ -104,10 +125,11 @@ export default function HomePage() {
       </section>
 
       <section className="sb-module-grid" aria-label="Moduły klasy">
-        <Link href="/podziekowania" className="sb-module-card sb-module-blue">
+        <Link href={newRecognition?"/podziekowania?widok=dla-mnie":"/podziekowania"} className="sb-module-card sb-module-blue">
           <div className="sb-module-top">
             <span className="sb-module-icon" aria-hidden="true">💙</span>
             <span className="sb-module-arrow" aria-hidden="true">↗</span>
+            {newRecognition&&<span className="sb-home-award" role="status">💙 Ktoś Cię zauważył!</span>}
           </div>
           <div>
             <h2 className="sb-module-title">Bohaterowie</h2>

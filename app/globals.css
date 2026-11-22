@@ -292,3 +292,150 @@ input::placeholder,textarea::placeholder { color:#718098; opacity:1; }
 @media(prefers-reduced-motion:reduce){
   .sb-bonsai-tabs button,.sb-app-page .sb-interactive-card {transition:none !important;}
 }
+
+
+/* Bohaterowie: recognition, not a popularity contest. */
+.sb-heroes-page {
+  padding:26px 16px 105px;
+  color:#17243b;
+}
+.sb-heroes-inner {max-width:920px;margin:auto;}
+.sb-heroes-back {color:#526581;text-decoration:none;font-size:13px;font-weight:800;display:inline-block;margin-bottom:20px;}
+.sb-heroes-header {
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:22px;
+  padding:30px 33px;margin-bottom:18px;border-radius:27px;
+  background:linear-gradient(140deg,rgba(255,255,255,.98),#edf3ff);
+  border:1px solid #dfe8f6;box-shadow:0 14px 40px rgba(30,54,100,.07);
+}
+.sb-heroes-header h1 {margin:0 0 13px;font-size:clamp(30px,5vw,45px);color:#17243b;}
+.sb-heroes-header p:not(.sb-small-label) {margin:0;line-height:1.5;color:#5c6a82;font-size:16px;}
+.sb-heroes-primary {
+  border:0;border-radius:15px;min-height:48px;padding:13px 18px;
+  background:#254b92;color:white;font-weight:900;font-size:15px;
+  box-shadow:0 10px 22px rgba(37,75,146,.18);
+  transition:transform .18s ease,box-shadow .18s ease;
+}
+.sb-heroes-primary:not(:disabled):hover {transform:translateY(-2px);box-shadow:0 14px 28px rgba(37,75,146,.26);}
+.sb-heroes-primary:disabled {opacity:.5;cursor:not-allowed;}
+.sb-heroes-stats {
+  display:grid;grid-template-columns:1fr 1fr 1.65fr;gap:13px;margin-bottom:19px;
+}
+.sb-heroes-stat,.sb-heroes-goal {
+  border:1px solid #dfe7f5;border-radius:22px;padding:23px 22px;
+  background:rgba(255,255,255,.92);box-shadow:0 9px 26px rgba(34,64,108,.04);
+}
+.sb-heroes-stat {display:flex;flex-direction:column;align-items:flex-start;}
+.sb-heroes-stat span {font-size:12px;color:#687891;font-weight:800;}
+.sb-heroes-stat strong {color:#20365d;font-size:clamp(37px,5.5vw,60px);letter-spacing:-2.2px;line-height:1.05;margin:12px 0;}
+.sb-heroes-stat small,.sb-heroes-goal small {color:#73829b;font-size:12px;line-height:1.5;}
+.sb-heroes-current {background:linear-gradient(135deg,#e2ebff,#d2e3fa);}
+.sb-heroes-goal {background:linear-gradient(140deg,#23395e,#223f68);color:white;border-color:#283e5e;}
+.sb-heroes-goal .sb-small-label {color:#bcd2ff;margin:0 0 9px;}
+.sb-heroes-goal h2 {font-size:clamp(19px,2.5vw,25px);line-height:1.15;margin:0 0 9px;letter-spacing:-.4px;}
+.sb-heroes-goal p:not(.sb-small-label) {color:#d9e4f4;font-size:12px;line-height:1.6;margin:0 0 16px;}
+.sb-heroes-goal small {color:#c4d7f1;}
+.sb-heroes-progress {height:9px;border-radius:99px;background:rgba(255,255,255,.21);overflow:hidden;margin-bottom:9px;}
+.sb-heroes-progress span {display:block;height:100%;background:#c9f7a8;border-radius:99px;transition:width .35s ease;}
+.sb-heroes-notice {padding:15px 17px;background:#e2f7ea;color:#205c3d;border:1px solid #c1edd2;border-radius:16px;font-weight:750;margin-bottom:18px;}
+.sb-heroes-story {
+  display:flex;justify-content:space-between;align-items:center;gap:17px;
+  border-radius:23px;padding:22px 25px;background:#fbf0ff;border:1px solid #eadcf3;
+  margin-bottom:20px;
+}
+.sb-heroes-story .sb-small-label {margin:0;color:#7d5099;}
+.sb-heroes-story-text {font-size:18px;font-weight:750;line-height:1.5;margin:10px 0;}
+.sb-heroes-story span {font-size:12px;color:#756181;}
+.sb-heroes-tabs {display:flex;flex-wrap:wrap;gap:9px;margin:22px 0 17px;}
+.sb-heroes-tabs button {
+  border:1px solid #dce4f0;border-radius:999px;padding:10px 17px;
+  color:#526581;background:#fff;font-size:14px;font-weight:800;
+}
+.sb-heroes-tabs button.active {background:#254b92;border-color:#254b92;color:#fff;}
+.sb-heroes-personal {padding:12px 18px 17px;margin-bottom:13px;border-left:4px solid #9eb9f6;}
+.sb-heroes-personal h2 {font-size:21px;margin:0 0 5px;}
+.sb-heroes-personal p {font-size:13px;margin:0;color:#62728a;line-height:1.5;}
+.sb-heroes-feed {display:grid;gap:13px;}
+.sb-heroes-card {
+  display:flex;align-items:flex-start;gap:18px;padding:21px 23px;
+  border:1px solid #dde7f4;border-radius:21px;background:#fff;
+  box-shadow:0 9px 27px rgba(25,48,88,.045);
+}
+.sb-heroes-card-body {flex:1;min-width:0;}
+.sb-heroes-card-top {display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+.sb-heroes-card-top h2 {font-size:19px;margin:0;letter-spacing:-.35px;}
+.sb-heroes-new {padding:4px 9px;font-size:11px;color:#235aa2;background:#e6efff;border-radius:99px;font-weight:900;}
+.sb-heroes-card-message {font-size:18px;line-height:1.55;font-weight:650;margin:11px 0;color:#24334b;white-space:pre-wrap;overflow-wrap:anywhere;}
+.sb-heroes-card-details {color:#7a899c;font-size:12px;margin:6px 0;line-height:1.55;}
+.sb-heroes-actions {display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+.sb-heroes-actions button {
+  border:1px solid #e0e7f1;background:#f5f7fc;color:#62728a;
+  border-radius:9px;padding:7px 10px;font-size:12px;font-weight:700;
+}
+.sb-heroes-actions button:hover {color:#2b4770;border-color:#c4d5ef;}
+.sb-heroes-bottom {display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:24px 4px;color:#7b899d;font-size:12px;}
+.sb-heroes-bottom p {margin:0;line-height:1.5;}
+.sb-heroes-bottom button {border:0;background:transparent;text-decoration:underline;color:#65768f;font-size:12px;}
+.sb-heroes-empty {
+  border-radius:22px;border:1px dashed #d5e0f0;
+  background:rgba(255,255,255,.9);padding:35px 25px;text-align:center;
+  color:#657590;line-height:1.6;
+}
+.sb-heroes-empty span {font-size:32px;}
+.sb-heroes-empty h2 {font-size:19px;color:#30455d;}
+.sb-heroes-empty button {
+  border:0;background:#254b92;color:white;border-radius:12px;
+  padding:11px 16px;font-weight:800;
+}
+.sb-heroes-moderation {padding:23px;border:1px solid #d9e1ec;background:white;border-radius:22px;}
+.sb-heroes-moderation h2 {margin:0 0 14px;font-size:20px;}
+.sb-heroes-report {padding:16px 0;border-top:1px solid #eef1f6;overflow-wrap:anywhere;}
+.sb-heroes-report p {line-height:1.5;}
+.sb-heroes-report small {color:#61718a;}
+.sb-heroes-modal-backdrop {
+  position:fixed;inset:0;z-index:1100;padding:18px;
+  background:rgba(16,28,47,.56);display:flex;align-items:center;justify-content:center;
+}
+.sb-heroes-modal {
+  width:min(100%,570px);max-height:min(90vh,720px);overflow:auto;
+  padding:27px;border:1px solid #dee8f6;border-radius:25px;
+  background:#fff;box-shadow:0 28px 70px rgba(12,27,50,.23);
+}
+.sb-heroes-modal-title {display:flex;justify-content:space-between;gap:14px;align-items:center;margin-bottom:22px;}
+.sb-heroes-modal-title h2 {font-size:23px;letter-spacing:-.6px;margin:0;}
+.sb-heroes-modal-title button {background:#f0f3f8;color:#354767;border:0;border-radius:10px;padding:8px 13px;}
+.sb-heroes-modal label {display:block;color:#30435c;font-size:14px;font-weight:800;margin:17px 0 8px;}
+.sb-heroes-modal select,.sb-heroes-modal textarea {
+  width:100%;padding:13px;border:1px solid #cedbec;border-radius:13px;background:#fff;
+  color:#17243b;font-size:16px;line-height:1.4;
+}
+.sb-heroes-modal textarea {resize:vertical;}
+.sb-heroes-tip {font-size:12px;line-height:1.5;color:#74839a;}
+.sb-heroes-error {background:#fce8e8;border-radius:12px;padding:11px;color:#a52d39;font-size:13px;}
+.sb-heroes-modal-actions {display:flex;gap:11px;justify-content:flex-end;align-items:center;margin-top:20px;}
+.sb-heroes-modal-actions button:not(.sb-heroes-primary) {border:1px solid #d4dfef;background:white;color:#52627a;padding:12px 16px;border-radius:12px;}
+.sb-home-award {
+  position:absolute;top:75px;right:19px;z-index:2;background:#fff;color:#214f83;
+  padding:7px 10px;border-radius:99px;box-shadow:0 4px 14px rgba(30,54,90,.12);
+  font-size:11px;font-weight:900;letter-spacing:-.1px;
+}
+@media(max-width:750px){
+  .sb-heroes-stats {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .sb-heroes-goal {grid-column:1/-1;}
+  .sb-heroes-header {padding:24px 21px;}
+  .sb-heroes-header .sb-heroes-primary {width:100%;}
+}
+@media(max-width:470px){
+  .sb-heroes-page {padding:21px 13px 105px;}
+  .sb-heroes-stats {gap:9px;}
+  .sb-heroes-stat,.sb-heroes-goal {padding:17px 16px;border-radius:18px;}
+  .sb-heroes-stat span {font-size:11px;}
+  .sb-heroes-stat strong {font-size:39px;}
+  .sb-heroes-card {padding:16px 14px;gap:12px;}
+  .sb-heroes-card-message {font-size:16px;}
+  .sb-heroes-modal {padding:22px 17px;}
+  .sb-heroes-story {padding:18px;}
+  .sb-home-award {right:10px;top:73px;font-size:9px;padding:6px 8px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .sb-heroes-progress span,.sb-heroes-primary {transition:none!important;}
+}
