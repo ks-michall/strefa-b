@@ -109,6 +109,11 @@ async function compressGalleryPhoto(file:File):Promise<{large:string;thumb:strin
 }
 
 function galleryPhotoSrc(source:string,size:"thumb"|"large"){
+  if(source.startsWith("legacy:")){
+    const id=source.slice(7)
+    return /^[a-f0-9-]{36}$/i.test(id)
+      ? "/api/gallery/legacy?id="+encodeURIComponent(id)+"&size="+size : ""
+  }
   if(!source.startsWith("gallery:"))return source
   const id=source.slice(8)
   return /^[a-f0-9-]{36}$/i.test(id)
@@ -181,8 +186,8 @@ export default function GaleriaPage() {
     async function loadGallery() {
       try {
         const { data, error } = await supabase
-          .from("gallery_items")
-          .select("*")
+          .from("gallery_feed")
+          .select("id,title,description,event,image,author,created_at,taken_at,deleted")
           .order("created_at", { ascending: false })
 
         if (error) {
