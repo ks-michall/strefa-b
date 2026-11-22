@@ -155,8 +155,9 @@ export default function BohaterowiePage(){
       const data=await post({action:"add",person,message:message.trim()})
       if(!data.thank||typeof data.thank.id!=="string")throw Error("Nie udało się potwierdzić zapisu.")
       setItems(old=>[data.thank as Recognition,...old])
+      void fetch("/api/world",{cache:"no-store"}).catch(()=>{})
       setDialog(false);setPerson("");setMessage("")
-      setNotice("Dobre działanie zostało zauważone! 💙")
+      setNotice("Dobry czyn trafił do Biuletynu. +1 morale dla Strefy B! ✳")
       setView("recent")
     }catch(error){
       setFormError(error instanceof Error?error.message:"Nie udało się zapisać wyróżnienia.")
@@ -206,9 +207,9 @@ export default function BohaterowiePage(){
     <div className="sb-heroes-inner">
       <header className="sb-heroes-header">
         <div>
-          <p className="sb-small-label" style={{margin:"0 0 10px"}}>DOBRO, KTÓRE WARTO ZAUWAŻYĆ</p>
-          <h1>💙 Bohaterowie</h1>
-          <p>Każdy może zrobić coś dobrego. Każdy może to zauważyć.</p>
+          <p className="sb-small-label" style={{margin:"0 0 10px"}}>STREFA B / BIULETYN OCALAŁYCH</p>
+          <h1>✳ Biuletyn</h1>
+          <p>Doceniamy konkretną pomoc i budujemy morale Strefy B. Każde wyróżnienie to +1 morale dla naszej wspólnoty.</p>
         </div>
         <button className="sb-heroes-primary" type="button"
           onClick={()=>{setFormError("");setDialog(true)}} disabled={ownCount>=7}>
@@ -267,7 +268,7 @@ export default function BohaterowiePage(){
         <p>Tu zbierają się chwile, w których ktoś zauważył Twoje dobre działanie. Bez punktów i porównywania z innymi.</p>
       </div>}
 
-      {loading?<div className="sb-heroes-empty" role="status">Odczytujemy dobre historie…</div>:
+      {loading?<div className="sb-heroes-empty" role="status">Odbieramy raporty z Biuletynu…</div>:
         loadError?<div className="sb-heroes-empty" role="alert">
           <p>{loadError}</p>
           <button type="button" onClick={()=>setAttempt(i=>i+1)}>Spróbuj ponownie</button>
