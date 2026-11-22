@@ -39,7 +39,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main
+    <main className="sb-app-page sb-theme-blue"
       style={{
         minHeight: "100vh",
         display: "flex",
@@ -64,6 +64,10 @@ export default function LoginPage() {
       >
       
 
+        <p className="sb-small-label" style={{margin:"0 0 10px"}}>WITAJ W STREFIE B</p>
+        <h1 style={{fontSize:33,fontWeight:900,letterSpacing:"-1.2px",color:"#17243b",margin:"0 0 11px"}}>
+          Fajnie, że jesteś.
+        </h1>
         <p
           style={{
             marginTop: 0,
