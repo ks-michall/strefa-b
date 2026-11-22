@@ -434,7 +434,7 @@ export default function GaleriaPage() {
   }
 
   return (
-    <main className="sb-app-page sb-theme-lilac"
+    <main className="sb-app-page sb-theme-lilac sb-archive-page"
       style={{
         minHeight: "100vh",
         padding: "28px 16px 80px",
@@ -464,7 +464,7 @@ export default function GaleriaPage() {
             }}
           >
             <div style={{ maxWidth: "620px" }}>
-              <p className="sb-small-label" style={{margin:"0 0 10px"}}>NASZA KOLEKCJA WSPOMNIEŃ</p>
+              <p className="sb-small-label" style={{margin:"0 0 10px"}}>STREFA B / ARCHIWUM WSPOMNIEŃ</p>
               <h1
                 style={{
                   margin: 0,
@@ -473,7 +473,7 @@ export default function GaleriaPage() {
                   color: "#111827",
                 }}
               >
-                Bajki
+                Baza Archiwalna
               </h1>
 
               <p
@@ -485,7 +485,7 @@ export default function GaleriaPage() {
                   color: "#4b5563",
                 }}
               >
-                Podobno życie to nie bajka... ale jak nazwać nasze przygody?
+                Ślady naszego życia. Fotografie, wspomnienia i dowody, że Strefa B to przede wszystkim ludzie.
               </p>
 
               <div
@@ -703,7 +703,7 @@ export default function GaleriaPage() {
                 fontSize: "18px",
               }}
             >
-              Bajki są jeszcze puste
+              Archiwum jest jeszcze puste
             </div>
             <div style={{ fontSize: "14px" }}>
               Dodaj pierwsze zdjęcie albo grafikę klasy.
