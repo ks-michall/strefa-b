@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { habits, availableHabits } from "../../lib/bonsai-habits"
 import { BiostationPlot } from "../../components/biostation-plot"
+import { useBiostationSession } from "../../components/biostation-session"
 import { BonsaiHarvest } from "../../components/bonsai-harvest"
 import { BonsaiReflection } from "../../components/bonsai-reflection"
 import { useEffect, useMemo, useState } from "react"
@@ -79,7 +80,7 @@ const button: React.CSSProperties = {
 
 export default function BonsaiPage() {
   const [loaded, setLoaded] = useState(false)
-  const [user, setUser] = useState("")
+  const user = useBiostationSession()
   const [trees, setTrees] = useState<BonsaiTree[]>([])
   const [legacyAvailable, setLegacyAvailable] = useState(false)
   const [storageWarning, setStorageWarning] = useState(false)
@@ -103,42 +104,31 @@ export default function BonsaiPage() {
     let cancelled = false
     async function load() {
       try {
-        const response = await fetch("/api/me", { cache: "no-store" })
-        if (!response.ok) throw new Error("Sesja wygasła")
-        const data = await response.json()
-        if (!data.name) { window.location.replace("/login"); return }
-        if (data.mustChangePassword) { window.location.replace("/ustaw-haslo"); return }
+        const response = await fetch("/api/bonsai", {cache:"no-store"})
+        const cloud = await response.json()
+        if (!response.ok) throw new Error(cloud.error || "Nie udało się pobrać upraw.")
         if (cancelled) return
-        const name = String(data.name)
-        setUser(name)
-        try {
-          const result = await fetch("/api/bonsai", { cache: "no-store" })
-          const cloud = await result.json()
-          if (!result.ok) throw new Error(cloud.error || "Nie udało się pobrać drzewek.")
-          if (cancelled) return
-          const forest = Array.isArray(cloud.trees) ? cloud.trees as BonsaiTree[] : []
-          setTrees(forest)
-          if (forest.length === 0) {
-            let old = parseForest(localStorage.getItem(storageKey(name)))
-            if (old.length === 0) {
-              const legacy: unknown = JSON.parse(localStorage.getItem(LEGACY_KEY) || "null")
-              if (validLegacy(legacy)) old = [{ ...legacy,
-                id: crypto.randomUUID(), checks: cleanChecks(legacy.checks, legacy.started) }]
+        const forest = Array.isArray(cloud.trees) ? cloud.trees as BonsaiTree[] : []
+        setTrees(forest)
+        if(forest.length===0) {
+          try {
+            let old = parseForest(localStorage.getItem(storageKey(user)))
+            if(old.length===0){
+              const legacy:unknown=JSON.parse(localStorage.getItem(LEGACY_KEY)||"null")
+              if(validLegacy(legacy))old=[{...legacy,id:crypto.randomUUID(),checks:cleanChecks(legacy.checks,legacy.started)}]
             }
-            setLegacyAvailable(old.length > 0)
-          }
-        } catch(error) {
-          if (!cancelled) setCloudError(error instanceof Error ? error.message : "Błąd synchronizacji Biostacji.")
+            setLegacyAvailable(old.length>0)
+          }catch{setStorageWarning(true)}
         }
-      } catch {
-        if (!cancelled) window.location.replace("/login")
-      } finally {
-        if (!cancelled) setLoaded(true)
+      }catch(error){
+        if(!cancelled)setCloudError(error instanceof Error?error.message:"Błąd synchronizacji Biostacji.")
+      }finally{
+        if(!cancelled)setLoaded(true)
       }
     }
     void load()
-    return () => { cancelled = true }
-  }, [])
+    return ()=>{cancelled=true}
+  }, [user])
 
   async function refresh() {
     const response = await fetch("/api/bonsai", { cache: "no-store" })
