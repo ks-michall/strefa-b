@@ -71,29 +71,48 @@ function formatDateOnly(date: string) {
   return new Date(date).toLocaleDateString("pl-PL")
 }
 
-async function compressGalleryPhoto(file: File): Promise<string> {
-  if (!file.type.startsWith("image/") || file.size > 15 * 1024 * 1024)
+async function compressGalleryPhoto(file:File):Promise<{large:string;thumb:string}> {
+  if(!file.type.startsWith("image/") || file.size>15*1024*1024)
     throw new Error("Wybierz zdjęcie o rozmiarze do 15 MB.")
-  const objectUrl = URL.createObjectURL(file)
-  try {
-    const picture = new Image()
-    picture.src = objectUrl
-    await new Promise<void>((resolve, reject) => {
-      picture.onload = () => resolve()
-      picture.onerror = () => reject(new Error("Nie można odczytać zdjęcia. Spróbuj JPG lub PNG."))
+  const url=URL.createObjectURL(file)
+  try{
+    const picture=new Image()
+    picture.src=url
+    await new Promise<void>((resolve,reject)=>{
+      picture.onload=()=>resolve()
+      picture.onerror=()=>reject(new Error("Nie można otworzyć zdjęcia. Spróbuj JPG lub PNG."))
     })
-    const factor = Math.min(1, 1600 / Math.max(picture.naturalWidth, picture.naturalHeight))
-    const canvas = document.createElement("canvas")
-    canvas.width = Math.max(1, Math.round(picture.naturalWidth * factor))
-    canvas.height = Math.max(1, Math.round(picture.naturalHeight * factor))
-    const context = canvas.getContext("2d")
-    if (!context) throw new Error("Przeglądarka nie może przetworzyć zdjęcia.")
-    context.drawImage(picture, 0, 0, canvas.width, canvas.height)
-    const webp = canvas.toDataURL("image/webp", 0.78)
-    return webp.startsWith("data:image/webp;") ? webp : canvas.toDataURL("image/jpeg", 0.79)
-  } finally {
-    URL.revokeObjectURL(objectUrl)
-  }
+    function render(maxSize:number,quality:number){
+      const ratio=Math.min(1,maxSize/Math.max(picture.naturalWidth,picture.naturalHeight))
+      const canvas=document.createElement("canvas")
+      canvas.width=Math.max(1,Math.round(picture.naturalWidth*ratio))
+      canvas.height=Math.max(1,Math.round(picture.naturalHeight*ratio))
+      const ctx=canvas.getContext("2d")
+      if(!ctx)throw new Error("Nie można przetworzyć zdjęcia.")
+      ctx.drawImage(picture,0,0,canvas.width,canvas.height)
+      const encoded=canvas.toDataURL("image/webp",quality)
+      if(!encoded.startsWith("data:image/webp;base64,"))
+        throw new Error("Twoja przeglądarka nie obsługuje formatu WebP.")
+      return encoded
+    }
+    let large=""
+    for(const [pixels,quality] of [[1600,.78],[1400,.72],[1200,.68],[1000,.64],[800,.60]]){
+      large=render(pixels,quality)
+      if(large.length<1450000)break
+    }
+    let thumb=render(520,.73)
+    if(thumb.length>300000)thumb=render(400,.64)
+    if(large.length>1450000||thumb.length>300000)
+      throw new Error("Nie udało się wystarczająco zmniejszyć zdjęcia.")
+    return {large,thumb}
+  }finally{URL.revokeObjectURL(url)}
+}
+
+function galleryPhotoSrc(source:string,size:"thumb"|"large"){
+  if(!source.startsWith("gallery:"))return source
+  const id=source.slice(8)
+  return /^[a-f0-9-]{36}$/i.test(id)
+    ? "/api/gallery/image?id="+encodeURIComponent(id)+"&size="+size : ""
 }
 
 export default function GaleriaPage() {
@@ -112,6 +131,8 @@ export default function GaleriaPage() {
   const [description, setDescription] = useState("")
   const [event, setEvent] = useState("")
   const [image, setImage] = useState("")
+  const [thumbnail, setThumbnail] = useState("")
+  const [uploading, setUploading] = useState(false)
   const [takenAt, setTakenAt] = useState("")
   const [selectedFileName, setSelectedFileName] = useState("")
   const [processingImage, setProcessingImage] = useState(false)
@@ -237,6 +258,7 @@ export default function GaleriaPage() {
     setDescription("")
     setEvent("")
     setImage("")
+    setThumbnail("")
     setTakenAt("")
     setSelectedFileName("")
     setError("")
@@ -260,11 +282,13 @@ export default function GaleriaPage() {
     if (!file) return
     setError("")
     setImage("")
+    setThumbnail("")
     setSelectedFileName(file.name)
     setProcessingImage(true)
     try {
       const compressed = await compressGalleryPhoto(file)
-      setImage(compressed)
+      setImage(compressed.large)
+      setThumbnail(compressed.thumb)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Nie udało się przygotować zdjęcia.")
       setSelectedFileName("")
@@ -277,8 +301,8 @@ export default function GaleriaPage() {
     setError("")
     setSuccess("")
 
-    if (processingImage) return
-    if (!image || !title.trim()) {
+    if (processingImage || uploading) return
+    if (!image || !thumbnail || !title.trim()) {
       setError("Dodaj obraz i wpisz tytuł.")
       return
     }
@@ -293,14 +317,26 @@ export default function GaleriaPage() {
       return
     }
 
+    setUploading(true)
     try {
+      const uploaded=await fetch("/api/gallery/upload",{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          large:image.slice("data:image/webp;base64,".length),
+          thumb:thumbnail.slice("data:image/webp;base64,".length),
+        }),
+      })
+      const prepared=await uploaded.json()
+      if(!uploaded.ok||typeof prepared.id!=="string")
+        throw new Error(prepared.error||"Nie udało się przesłać zdjęcia.")
+      const storedImage="gallery:"+prepared.id
       const { data, error } = await supabase
         .from("gallery_items")
         .insert({
           title: title.trim(),
           description: description.trim() || null,
           event: event.trim() || null,
-          image,
+          image:storedImage,
           author: currentUser,
           taken_at: takenAt,
           deleted: false,
@@ -322,7 +358,9 @@ export default function GaleriaPage() {
       closeModal()
     } catch (e) {
       console.error(e)
-      setError("Nie udało się zapisać zdjęcia.")
+      setError(e instanceof Error ? e.message : "Nie udało się zapisać zdjęcia.")
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -704,7 +742,7 @@ export default function GaleriaPage() {
                   onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openPreview(item.id) } }}
                 >
                   <img
-                    src={item.image}
+                    src={galleryPhotoSrc(item.image,"thumb")}
                     alt={item.title}
                     loading="lazy" decoding="async" className="sb-gallery-image"
                     style={{
@@ -1115,6 +1153,7 @@ export default function GaleriaPage() {
 
                 <button
                   onClick={addImage}
+                  disabled={processingImage || uploading}
                   style={{
                     border: "none",
                     background:
@@ -1126,7 +1165,7 @@ export default function GaleriaPage() {
                     fontWeight: 800,
                   }}
                 >
-                  Dodaj zdjęcie
+                  {uploading ? "Zapisywanie…" : "Dodaj zdjęcie"}
                 </button>
               </div>
             </div>
@@ -1231,7 +1270,7 @@ export default function GaleriaPage() {
             }}
           >
             <img
-              src={previewItem.image}
+              src={galleryPhotoSrc(previewItem.image,"large")}
               decoding="async"
               alt={previewItem.title}
               style={{
