@@ -52,12 +52,22 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Nieprawidłowe żądanie" }, { status: 400 })
   }
   try {
+    // Fast metadata-only check prevents serving a deleted photo from the image cache.
+    const { data: visible, error: lookupError } = await supabase
+      .from("gallery_feed")
+      .select("id")
+      .eq("id", id)
+      .maybeSingle()
+    if (lookupError) throw lookupError
+    if (!visible) {
+      return NextResponse.json({ error: "Nie znaleziono zdjęcia." }, { status: 404 })
+    }
     const base64 = await optimizedLegacyImage(id, size)
     const bytes = Buffer.from(base64, "base64")
     return new NextResponse(new Uint8Array(bytes), {
       headers: {
         "Content-Type": "image/webp",
-        "Cache-Control": "private, max-age=604800",
+        "Cache-Control": "private, max-age=3600",
         "X-Content-Type-Options": "nosniff",
         "Vary": "Cookie",
       },
