@@ -14,7 +14,7 @@ export function FrontierMap({
   return <div className="sb-frontier-map" aria-label="Mapa odkrywania Bezdroży">
     <svg className="sb-frontier-art" viewBox="0 0 900 570" role="img"
       aria-label="Topograficzna mapa Strefy B: odkryte tereny w kolorze, pozostałe ukryte pod mgłą."
-      preserveAspectRatio="xMidYMid slice">
+      preserveAspectRatio="none">
       <defs>
         <linearGradient id="sb-terrain" x1="0" x2="1" y1="0" y2="1">
           <stop offset="0" stopColor="#28463f"/>
