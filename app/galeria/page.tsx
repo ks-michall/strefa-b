@@ -71,6 +71,50 @@ function formatDateOnly(date: string) {
   return new Date(date).toLocaleDateString("pl-PL")
 }
 
+async function compressGalleryPhoto(file:File):Promise<{large:string;thumb:string}> {
+  if(!file.type.startsWith("image/") || file.size>15*1024*1024)
+    throw new Error("Wybierz zdjęcie o rozmiarze do 15 MB.")
+  const url=URL.createObjectURL(file)
+  try{
+    const picture=new Image()
+    picture.src=url
+    await new Promise<void>((resolve,reject)=>{
+      picture.onload=()=>resolve()
+      picture.onerror=()=>reject(new Error("Nie można otworzyć zdjęcia. Spróbuj JPG lub PNG."))
+    })
+    function render(maxSize:number,quality:number){
+      const ratio=Math.min(1,maxSize/Math.max(picture.naturalWidth,picture.naturalHeight))
+      const canvas=document.createElement("canvas")
+      canvas.width=Math.max(1,Math.round(picture.naturalWidth*ratio))
+      canvas.height=Math.max(1,Math.round(picture.naturalHeight*ratio))
+      const ctx=canvas.getContext("2d")
+      if(!ctx)throw new Error("Nie można przetworzyć zdjęcia.")
+      ctx.drawImage(picture,0,0,canvas.width,canvas.height)
+      const encoded=canvas.toDataURL("image/webp",quality)
+      if(!encoded.startsWith("data:image/webp;base64,"))
+        throw new Error("Twoja przeglądarka nie obsługuje formatu WebP.")
+      return encoded
+    }
+    let large=""
+    for(const [pixels,quality] of [[1600,.78],[1400,.72],[1200,.68],[1000,.64],[800,.60]]){
+      large=render(pixels,quality)
+      if(large.length<1450000)break
+    }
+    let thumb=render(520,.73)
+    if(thumb.length>300000)thumb=render(400,.64)
+    if(large.length>1450000||thumb.length>300000)
+      throw new Error("Nie udało się wystarczająco zmniejszyć zdjęcia.")
+    return {large,thumb}
+  }finally{URL.revokeObjectURL(url)}
+}
+
+function galleryPhotoSrc(source:string,size:"thumb"|"large"){
+  if(!source.startsWith("gallery:"))return source
+  const id=source.slice(8)
+  return /^[a-f0-9-]{36}$/i.test(id)
+    ? "/api/gallery/image?id="+encodeURIComponent(id)+"&size="+size : ""
+}
+
 export default function GaleriaPage() {
   const [currentUser, setCurrentUser] = useState("")
   const [avatars, setAvatars] = useState<Record<string, AvatarEntry>>({})
@@ -87,8 +131,11 @@ export default function GaleriaPage() {
   const [description, setDescription] = useState("")
   const [event, setEvent] = useState("")
   const [image, setImage] = useState("")
+  const [thumbnail, setThumbnail] = useState("")
+  const [uploading, setUploading] = useState(false)
   const [takenAt, setTakenAt] = useState("")
   const [selectedFileName, setSelectedFileName] = useState("")
+  const [processingImage, setProcessingImage] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [newEntryId, setNewEntryId] = useState("")
@@ -97,6 +144,7 @@ export default function GaleriaPage() {
   const [sortMode, setSortMode] = useState<"added" | "taken">("added")
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const previewTouchX = useRef<number | null>(null)
 
   useEffect(() => {
     fetch("/api/me")
@@ -181,6 +229,22 @@ export default function GaleriaPage() {
   )
 }, [items, feedFilter, currentUser, sortMode])
 
+  // Klawisze i gesty ułatwiają przeglądanie fotografii na telefonie.
+  useEffect(() => {
+    if (previewIndex === null) return
+    function handleKeys(event: KeyboardEvent) {
+      if (event.key === "Escape") setPreviewIndex(null)
+      if (event.key === "ArrowLeft") setPreviewIndex(index =>
+        index === null || visibleItems.length === 0 ? null :
+          (index - 1 + visibleItems.length) % visibleItems.length)
+      if (event.key === "ArrowRight") setPreviewIndex(index =>
+        index === null || visibleItems.length === 0 ? null :
+          (index + 1) % visibleItems.length)
+    }
+    window.addEventListener("keydown", handleKeys)
+    return () => window.removeEventListener("keydown", handleKeys)
+  }, [previewIndex, visibleItems.length])
+
   const todaysUploadsCount = useMemo(() => {
     return items.filter(
       (i) => !i.deleted && i.author === currentUser && isSameDay(i.date)
@@ -194,6 +258,7 @@ export default function GaleriaPage() {
     setDescription("")
     setEvent("")
     setImage("")
+    setThumbnail("")
     setTakenAt("")
     setSelectedFileName("")
     setError("")
@@ -212,29 +277,32 @@ export default function GaleriaPage() {
     setModalOpen(false)
   }
 
-  function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-
+    setError("")
+    setImage("")
+    setThumbnail("")
     setSelectedFileName(file.name)
-
-    const reader = new FileReader()
-
-    reader.onload = (event) => {
-      const result = event.target?.result
-      if (typeof result === "string") {
-        setImage(result)
-      }
+    setProcessingImage(true)
+    try {
+      const compressed = await compressGalleryPhoto(file)
+      setImage(compressed.large)
+      setThumbnail(compressed.thumb)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Nie udało się przygotować zdjęcia.")
+      setSelectedFileName("")
+    } finally {
+      setProcessingImage(false)
     }
-
-    reader.readAsDataURL(file)
   }
 
   async function addImage() {
     setError("")
     setSuccess("")
 
-    if (!image || !title.trim()) {
+    if (processingImage || uploading) return
+    if (!image || !thumbnail || !title.trim()) {
       setError("Dodaj obraz i wpisz tytuł.")
       return
     }
@@ -249,14 +317,26 @@ export default function GaleriaPage() {
       return
     }
 
+    setUploading(true)
     try {
+      const uploaded=await fetch("/api/gallery/upload",{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          large:image.slice("data:image/webp;base64,".length),
+          thumb:thumbnail.slice("data:image/webp;base64,".length),
+        }),
+      })
+      const prepared=await uploaded.json()
+      if(!uploaded.ok||typeof prepared.id!=="string")
+        throw new Error(prepared.error||"Nie udało się przesłać zdjęcia.")
+      const storedImage="gallery:"+prepared.id
       const { data, error } = await supabase
         .from("gallery_items")
         .insert({
           title: title.trim(),
           description: description.trim() || null,
           event: event.trim() || null,
-          image,
+          image:storedImage,
           author: currentUser,
           taken_at: takenAt,
           deleted: false,
@@ -278,7 +358,9 @@ export default function GaleriaPage() {
       closeModal()
     } catch (e) {
       console.error(e)
-      setError("Nie udało się zapisać zdjęcia.")
+      setError(e instanceof Error ? e.message : "Nie udało się zapisać zdjęcia.")
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -347,7 +429,7 @@ export default function GaleriaPage() {
   }
 
   return (
-    <main
+    <main className="sb-app-page sb-theme-lilac"
       style={{
         minHeight: "100vh",
         padding: "28px 16px 80px",
@@ -356,7 +438,7 @@ export default function GaleriaPage() {
       }}
     >
       <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-        <section
+        <section className="sb-feature-header sb-feature-pink"
           style={{
             background: "rgba(255,255,255,0.75)",
             backdropFilter: "blur(10px)",
@@ -377,6 +459,7 @@ export default function GaleriaPage() {
             }}
           >
             <div style={{ maxWidth: "620px" }}>
+              <p className="sb-small-label" style={{margin:"0 0 10px"}}>NASZA KOLEKCJA WSPOMNIEŃ</p>
               <h1
                 style={{
                   margin: 0,
@@ -444,6 +527,7 @@ export default function GaleriaPage() {
 
             <button
               onClick={openModal}
+              className="sb-pill-button"
               style={{
                 border: "none",
                 background:
@@ -653,10 +737,14 @@ export default function GaleriaPage() {
                     cursor: "pointer",
                   }}
                   onClick={() => openPreview(item.id)}
+                  className="sb-card-pressable"
+                  role="button" tabIndex={0} aria-label={`Otwórz zdjęcie: ${item.title}`}
+                  onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openPreview(item.id) } }}
                 >
                   <img
-                    src={item.image}
+                    src={galleryPhotoSrc(item.image,"thumb")}
                     alt={item.title}
+                    loading="lazy" decoding="async" className="sb-gallery-image"
                     style={{
                       width: "100%",
                       display: "block",
@@ -1065,6 +1153,7 @@ export default function GaleriaPage() {
 
                 <button
                   onClick={addImage}
+                  disabled={processingImage || uploading}
                   style={{
                     border: "none",
                     background:
@@ -1076,7 +1165,7 @@ export default function GaleriaPage() {
                     fontWeight: 800,
                   }}
                 >
-                  Dodaj zdjęcie
+                  {uploading ? "Zapisywanie…" : "Dodaj zdjęcie"}
                 </button>
               </div>
             </div>
@@ -1086,6 +1175,15 @@ export default function GaleriaPage() {
 
       {previewItem && (
         <div
+          role="dialog" aria-modal="true" aria-label="Podgląd zdjęcia"
+          onTouchStart={event => { previewTouchX.current = event.changedTouches[0]?.clientX ?? null }}
+          onTouchEnd={event => {
+            const start = previewTouchX.current
+            previewTouchX.current = null
+            if (start === null || visibleItems.length < 2) return
+            const shift = event.changedTouches[0]?.clientX - start
+            if (Math.abs(shift) > 48) { if (shift > 0) goPrev(); else goNext() }
+          }}
           style={{
             position: "fixed",
             inset: 0,
@@ -1172,7 +1270,8 @@ export default function GaleriaPage() {
             }}
           >
             <img
-              src={previewItem.image}
+              src={galleryPhotoSrc(previewItem.image,"large")}
+              decoding="async"
               alt={previewItem.title}
               style={{
                 maxWidth: "100%",
