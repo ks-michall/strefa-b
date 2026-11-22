@@ -71,6 +71,31 @@ function formatDateOnly(date: string) {
   return new Date(date).toLocaleDateString("pl-PL")
 }
 
+async function compressGalleryPhoto(file: File): Promise<string> {
+  if (!file.type.startsWith("image/") || file.size > 15 * 1024 * 1024)
+    throw new Error("Wybierz zdjęcie o rozmiarze do 15 MB.")
+  const objectUrl = URL.createObjectURL(file)
+  try {
+    const picture = new Image()
+    picture.src = objectUrl
+    await new Promise<void>((resolve, reject) => {
+      picture.onload = () => resolve()
+      picture.onerror = () => reject(new Error("Nie można odczytać zdjęcia. Spróbuj JPG lub PNG."))
+    })
+    const factor = Math.min(1, 1600 / Math.max(picture.naturalWidth, picture.naturalHeight))
+    const canvas = document.createElement("canvas")
+    canvas.width = Math.max(1, Math.round(picture.naturalWidth * factor))
+    canvas.height = Math.max(1, Math.round(picture.naturalHeight * factor))
+    const context = canvas.getContext("2d")
+    if (!context) throw new Error("Przeglądarka nie może przetworzyć zdjęcia.")
+    context.drawImage(picture, 0, 0, canvas.width, canvas.height)
+    const webp = canvas.toDataURL("image/webp", 0.78)
+    return webp.startsWith("data:image/webp;") ? webp : canvas.toDataURL("image/jpeg", 0.79)
+  } finally {
+    URL.revokeObjectURL(objectUrl)
+  }
+}
+
 export default function GaleriaPage() {
   const [currentUser, setCurrentUser] = useState("")
   const [avatars, setAvatars] = useState<Record<string, AvatarEntry>>({})
@@ -89,6 +114,7 @@ export default function GaleriaPage() {
   const [image, setImage] = useState("")
   const [takenAt, setTakenAt] = useState("")
   const [selectedFileName, setSelectedFileName] = useState("")
+  const [processingImage, setProcessingImage] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [newEntryId, setNewEntryId] = useState("")
@@ -97,6 +123,7 @@ export default function GaleriaPage() {
   const [sortMode, setSortMode] = useState<"added" | "taken">("added")
 
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const previewTouchX = useRef<number | null>(null)
 
   useEffect(() => {
     fetch("/api/me")
@@ -181,6 +208,22 @@ export default function GaleriaPage() {
   )
 }, [items, feedFilter, currentUser, sortMode])
 
+  // Klawisze i gesty ułatwiają przeglądanie fotografii na telefonie.
+  useEffect(() => {
+    if (previewIndex === null) return
+    function handleKeys(event: KeyboardEvent) {
+      if (event.key === "Escape") setPreviewIndex(null)
+      if (event.key === "ArrowLeft") setPreviewIndex(index =>
+        index === null || visibleItems.length === 0 ? null :
+          (index - 1 + visibleItems.length) % visibleItems.length)
+      if (event.key === "ArrowRight") setPreviewIndex(index =>
+        index === null || visibleItems.length === 0 ? null :
+          (index + 1) % visibleItems.length)
+    }
+    window.addEventListener("keydown", handleKeys)
+    return () => window.removeEventListener("keydown", handleKeys)
+  }, [previewIndex, visibleItems.length])
+
   const todaysUploadsCount = useMemo(() => {
     return items.filter(
       (i) => !i.deleted && i.author === currentUser && isSameDay(i.date)
@@ -212,28 +255,29 @@ export default function GaleriaPage() {
     setModalOpen(false)
   }
 
-  function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-
+    setError("")
+    setImage("")
     setSelectedFileName(file.name)
-
-    const reader = new FileReader()
-
-    reader.onload = (event) => {
-      const result = event.target?.result
-      if (typeof result === "string") {
-        setImage(result)
-      }
+    setProcessingImage(true)
+    try {
+      const compressed = await compressGalleryPhoto(file)
+      setImage(compressed)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Nie udało się przygotować zdjęcia.")
+      setSelectedFileName("")
+    } finally {
+      setProcessingImage(false)
     }
-
-    reader.readAsDataURL(file)
   }
 
   async function addImage() {
     setError("")
     setSuccess("")
 
+    if (processingImage) return
     if (!image || !title.trim()) {
       setError("Dodaj obraz i wpisz tytuł.")
       return
@@ -347,7 +391,7 @@ export default function GaleriaPage() {
   }
 
   return (
-    <main
+    <main className="sb-app-page sb-theme-lilac"
       style={{
         minHeight: "100vh",
         padding: "28px 16px 80px",
@@ -356,7 +400,7 @@ export default function GaleriaPage() {
       }}
     >
       <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-        <section
+        <section className="sb-feature-header sb-feature-pink"
           style={{
             background: "rgba(255,255,255,0.75)",
             backdropFilter: "blur(10px)",
@@ -377,6 +421,7 @@ export default function GaleriaPage() {
             }}
           >
             <div style={{ maxWidth: "620px" }}>
+              <p className="sb-small-label" style={{margin:"0 0 10px"}}>NASZA KOLEKCJA WSPOMNIEŃ</p>
               <h1
                 style={{
                   margin: 0,
@@ -444,6 +489,7 @@ export default function GaleriaPage() {
 
             <button
               onClick={openModal}
+              className="sb-pill-button"
               style={{
                 border: "none",
                 background:
@@ -653,6 +699,9 @@ export default function GaleriaPage() {
                     cursor: "pointer",
                   }}
                   onClick={() => openPreview(item.id)}
+                  className="sb-card-pressable"
+                  role="button" tabIndex={0} aria-label={`Otwórz zdjęcie: ${item.title}`}
+                  onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openPreview(item.id) } }}
                 >
                   <img
                     src={item.image}
@@ -1086,6 +1135,15 @@ export default function GaleriaPage() {
 
       {previewItem && (
         <div
+          role="dialog" aria-modal="true" aria-label="Podgląd zdjęcia"
+          onTouchStart={event => { previewTouchX.current = event.changedTouches[0]?.clientX ?? null }}
+          onTouchEnd={event => {
+            const start = previewTouchX.current
+            previewTouchX.current = null
+            if (start === null || visibleItems.length < 2) return
+            const shift = event.changedTouches[0]?.clientX - start
+            if (Math.abs(shift) > 48) { if (shift > 0) goPrev(); else goNext() }
+          }}
           style={{
             position: "fixed",
             inset: 0,
@@ -1173,6 +1231,7 @@ export default function GaleriaPage() {
           >
             <img
               src={previewItem.image}
+              decoding="async"
               alt={previewItem.title}
               style={{
                 maxWidth: "100%",
