@@ -5,7 +5,6 @@ import { habits, availableHabits } from "../../lib/bonsai-habits"
 import { BonsaiGrowth } from "../../components/bonsai-growth"
 import { BonsaiHarvest } from "../../components/bonsai-harvest"
 import { BonsaiReflection } from "../../components/bonsai-reflection"
-import { RECOGNITION_THRESHOLD } from "../../lib/bonsai-rewards"
 import { useEffect, useMemo, useState } from "react"
 import {
   addDays, countdown, currentCheckInDay, currentPlantingDay, daysBetween,
@@ -231,8 +230,7 @@ export default function BonsaiPage() {
     padding: "26px 16px 60px", color: "#193a2b",
   }}>
     <div style={{ maxWidth: 800, margin: "auto" }}>
-      <Link href="/" style={{ color: "#386e4d", textDecoration: "none" }}>← Strefa B</Link>
-      <header style={{ margin: "20px 0 24px" }}>
+      <header style={{ margin: "0 0 24px" }}>
         <p className="sb-small-label" style={{margin:"0 0 9px"}}>TWÓJ OGRÓD ROZWOJU</p>
         <h1 style={{ fontSize: 40, margin: "0 0 6px" }}>🌱 Bonsai</h1>
         <p style={{ margin: 0, color: "#537565", fontSize: 17 }}>
@@ -374,7 +372,7 @@ export default function BonsaiPage() {
           <h2 style={{ marginTop: 0 }}>Twój mały las</h2>
           <p style={{color:"#567765",fontSize:14,lineHeight:1.6}}>
             Po 28 dniach każde drzewko trafia do Twojego ogrodu osiągnięć — nawet jeśli nie wszystkie dni zostały potwierdzone.
-            Przy wyniku co najmniej {RECOGNITION_THRESHOLD}/28 pojawi się zaproszenie na rozmowę z ks. Michałem.
+            W tym miejscu możesz wracać do swoich postępów i zobaczyć, jak rozwijały się Twoje nawyki.
           </p>
           <p style={{ marginBottom: 0 }}><strong>{trees.length}</strong> zasadzonych drzewek • <strong>{completedTrees.length}</strong> zakończonych wyzwań • <strong>{trees.reduce((sum, tree) => sum + tree.checks.length, 0)}</strong> potwierdzonych dni łącznie.</p>
         </section>
