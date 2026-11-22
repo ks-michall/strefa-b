@@ -1,7 +1,7 @@
 "use client"
 
 import { type TreeAchievement, harvestBadges, RECOGNITION_THRESHOLD } from "../lib/bonsai-rewards"
-import { BonsaiGrowth } from "./bonsai-growth"
+import { BiostationPlot } from "./biostation-plot"
 import { habits } from "../lib/bonsai-habits"
 
 export function BonsaiHarvest({
@@ -21,10 +21,10 @@ export function BonsaiHarvest({
     borderRadius:24,padding:22,boxShadow:"0 9px 28px rgba(33,104,61,.09)",
   }}>
     <p style={{margin:"0 0 8px",fontSize:12,fontWeight:800,letterSpacing:1,color:"#427653"}}>
-      🌾 ZBIORY BONSAI • WYZWANIE ZAKOŃCZONE
+      🌾 ZBIORY BIOSTACJI • CYKL ZAKOŃCZONY
     </p>
     <h2 style={{fontSize:22,margin:"0 0 8px",color:"#214c31"}}>{habits[tree.habitIndex]?.title ?? "Twój nawyk"}</h2>
-    <BonsaiGrowth count={count}/>
+    <BiostationPlot count={count}/>
     <div style={{fontSize:25,fontWeight:800,textAlign:"center",color:"#214c31"}}>{count} / 28 dni</div>
     <div style={{height:10,background:"#d5e8d8",borderRadius:99,overflow:"hidden",margin:"12px 0"}}>
       <div style={{height:"100%",width:`${Math.min(count,28)/28*100}%`,background:"#579b6d",borderRadius:99}}/>
@@ -67,10 +67,10 @@ export function BonsaiHarvest({
         background:canPlant?"white":"#e5ece5",color:"#285b3e",
         padding:"13px 15px",border:"1px solid #b4d7bf",borderRadius:14,fontWeight:700,
         cursor:canPlant?"pointer":"not-allowed",
-      }}>🌱 Sadzę nowe Bonsai</button>
+      }}>🌱 Rozpoczynam nową uprawę</button>
     </div>
     {!canPlant && <p style={{fontSize:13,color:"#5c7867",marginBottom:0}}>
-      Następne drzewko będzie można zasadzić po upływie 14 dni od ostatniego sadzenia.
+      Następną uprawę będzie można rozpocząć po upływie 14 dni od ostatniego sadzenia.
     </p>}
   </section>
 }
