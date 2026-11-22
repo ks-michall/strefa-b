@@ -128,7 +128,7 @@ export default function BonsaiPage() {
             setLegacyAvailable(old.length > 0)
           }
         } catch(error) {
-          if (!cancelled) setCloudError(error instanceof Error ? error.message : "Błąd synchronizacji Bonsai.")
+          if (!cancelled) setCloudError(error instanceof Error ? error.message : "Błąd synchronizacji Biostacji.")
         }
       } catch {
         if (!cancelled) window.location.replace("/login")
@@ -257,12 +257,12 @@ export default function BonsaiPage() {
       {cloudError && <p role="alert" style={{padding:14,background:"#fee2e2",color:"#991b1b",borderRadius:12}}>{cloudError}</p>}
 
       {legacyAvailable && trees.length === 0 && <section className="sb-surface" style={{ ...surface, marginBottom: 18 }}>
-        <h2 style={{ marginTop: 0, fontSize: 20 }}>Masz zapisane wcześniejsze drzewko</h2>
+        <h2 style={{ marginTop: 0, fontSize: 20 }}>Masz zapisane wcześniejsze uprawy</h2>
         <p>Na tym urządzeniu są starsze postępy. Jeśli należą do Ciebie, przenieś je do swojego konta. Będą widoczne dla wychowawcy.</p>
-        <button style={{...button,opacity:busy?.6:1}} disabled={busy} onClick={importLegacy}>{busy?"Przenoszenie…":"Przenieś moje drzewka do konta"}</button>
+        <button style={{...button,opacity:busy?.6:1}} disabled={busy} onClick={importLegacy}>{busy?"Przenoszenie…":"Przenieś moje uprawy do konta"}</button>
       </section>}
 
-      <nav className="sb-bonsai-tabs" aria-label="Zakładki Bonsai" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
+      <nav className="sb-bonsai-tabs" aria-label="Zakładki Biostacji" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
         {([["today", "Dzisiaj"], ["progress", "Mój ogród"], ["catalog", "Nawyki"]] as const)
           .map(([id, label]) => <button key={id} onClick={() => setTab(id)}
             aria-current={tab === id ? "page" : undefined}
@@ -343,7 +343,7 @@ export default function BonsaiPage() {
         {!canPlant && newTreeDay && activeTrees.length < 2 && <section className="sb-surface" style={surface}>
           <strong>Nowa uprawa od {readableDate(newTreeDay)}</strong>
           <p style={{ color: "#527460", marginBottom: 0 }}>
-            Jeszcze {daysBetween(plantingDay, newTreeDay)} {daysBetween(plantingDay, newTreeDay) === 1 ? "dzień" : "dni"} do kolejnego sadzenia.
+            Jeszcze {daysBetween(plantingDay, newTreeDay)} {daysBetween(plantingDay, newTreeDay) === 1 ? "dzień" : "dni"} do uruchomienia kolejnej uprawy.
           </p>
         </section>}
       </div>}
@@ -423,7 +423,7 @@ export default function BonsaiPage() {
       </div>}
 
       <p style={{ color: "#688574", fontSize: 12, lineHeight: 1.6, marginTop: 20 }}>
-        Drzewka i potwierdzenia zapisują się na Twoim koncie i synchronizują między urządzeniami.
+        Uprawy i potwierdzenia zapisują się na Twoim koncie i synchronizują między urządzeniami.
         Wychowawca może zobaczyć wybrane nawyki i dni ich wykonania.
         O godzinie potwierdzenia decyduje zegar serwera.
       </p>
