@@ -204,7 +204,6 @@ export default function BohaterowiePage(){
 
   return <main className="sb-app-page sb-theme-blue sb-heroes-page">
     <div className="sb-heroes-inner">
-      <a className="sb-heroes-back" href="/">← Wróć do Strefy B</a>
       <header className="sb-heroes-header">
         <div>
           <p className="sb-small-label" style={{margin:"0 0 10px"}}>DOBRO, KTÓRE WARTO ZAUWAŻYĆ</p>
