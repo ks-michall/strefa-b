@@ -24,6 +24,10 @@ export async function GET(request:NextRequest){
       const data=await classThanksService({action:"listReports",actor:session.name})
       return json({reports:Array.isArray(data.reports)?data.reports:[]})
     }
+    if(request.nextUrl.searchParams.get("summary")==="1"){
+      const data=await classThanksService({action:"summary",actor:session.name})
+      return json({latestReceived:data.latestReceived??null})
+    }
     const data=await classThanksService({action:"list",actor:session.name})
     const all=Array.isArray(data.thanks)?data.thanks:[]
     const visible=all.filter((item:unknown):item is {
@@ -33,10 +37,6 @@ export async function GET(request:NextRequest){
       typeof item.id==="string"&&typeof item.author==="string"&&typeof item.person==="string"&&
       typeof item.message==="string"&&typeof item.created_at==="string"&&
       roster.has(item.author)&&roster.has(item.person))
-    if(request.nextUrl.searchParams.get("summary")==="1"){
-      const latest=visible.find(item=>item.person===session.name)
-      return json({latestReceived:latest?{id:latest.id,created_at:latest.created_at}:null})
-    }
     return json({thanks:visible})
   }catch(error){
     return json({error:error instanceof Error?error.message:"Nie udało się pobrać Bohaterów."},statusOf(error))
