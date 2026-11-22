@@ -1,5 +1,6 @@
 import "./globals.css"
 import Link from "next/link"
+import { QuickNav } from "../components/quick-nav"
 
 export const metadata = {
   title: "Strefa B — przestrzeń klasy",
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </header>
         <div className="sb-page-frame">{children}</div>
+        <QuickNav/>
       </body>
     </html>
   )
