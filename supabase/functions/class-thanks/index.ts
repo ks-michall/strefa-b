@@ -30,6 +30,14 @@ Deno.serve(async req=>{
     if(!url||!key)throw Error("Missing Supabase service configuration")
     const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}})
 
+    if(action==="summary"){
+      const {data,error}=await db.from("thanks").select("id,created_at")
+        .eq("person",actor).eq("deleted",false)
+        .order("created_at",{ascending:false}).limit(1).maybeSingle()
+      if(error)throw error
+      return reply({latestReceived:data??null})
+    }
+
     if(action==="list"){
       const {data,error}=await db.from("thanks")
         .select("id,author,person,message,created_at,deleted")
