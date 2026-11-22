@@ -706,6 +706,7 @@ export default function GaleriaPage() {
                   <img
                     src={item.image}
                     alt={item.title}
+                    loading="lazy" decoding="async" className="sb-gallery-image"
                     style={{
                       width: "100%",
                       display: "block",
