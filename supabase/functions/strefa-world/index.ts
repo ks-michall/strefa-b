@@ -52,7 +52,9 @@ Deno.serve(async req=>{
         known.add(sector.id)
       }
     }
-    return response({food,morale,unlocked:[...known],serverNow:new Date().toISOString()})
+    const final=await db.from("strefa_b_world_unlocks").select("sector,unlocked_at")
+    if(final.error)throw final.error
+    return response({food,morale,unlocked:final.data??[],serverNow:new Date().toISOString()})
   }catch(error){
     console.error("strefa-world:",error instanceof Error?error.message:"unknown")
     return response({error:"Nie udało się odczytać wspólnych zasobów."},503)
