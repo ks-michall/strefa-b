@@ -5,9 +5,9 @@ import { WORLD_SECTORS } from "../lib/world-story"
 type SectorId=(typeof WORLD_SECTORS)[number]["id"]
 
 export function FrontierMap({
-  unlocked,selected,onSelect,
+  unlocked,selected,onSelect,revealing,
 }:{
-  unlocked:Set<string>;selected:string;onSelect:(id:SectorId)=>void
+  unlocked:Set<string>;selected:string;onSelect:(id:SectorId)=>void;revealing?:string|null
 }){
   const visible=(id:string)=>id==="baza"||unlocked.has(id)
   const reveal=WORLD_SECTORS.filter(s=>visible(s.id))
@@ -109,6 +109,10 @@ export function FrontierMap({
       </g>
     </svg>
     <div className="sb-frontier-map-wash" aria-hidden="true"/>
+    {revealing&&WORLD_SECTORS.filter(s=>s.id===revealing).map(s=>
+      <div key={s.id} className="sb-frontier-fog-retract" aria-hidden="true"
+        style={{left:s.x+"%",top:s.y+"%"}}/>
+    )}
     {WORLD_SECTORS.map(s=>{
       const discovered=visible(s.id)
       const active=selected===s.id
