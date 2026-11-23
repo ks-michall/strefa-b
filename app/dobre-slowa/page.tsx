@@ -578,7 +578,7 @@ function getAddedLabel(author: string) {
 }
 
 export default function DobreSlowaPage() {
-  const currentUserEmail = "jan.kowalski@radosnanowina.pl"
+  const currentUserEmail = String("jan.kowalski@radosnanowina.pl")
   const currentUser = getFirstNameFromEmail(currentUserEmail)
   const isAdmin = currentUserEmail === ADMIN_EMAIL
   const now = new Date()
