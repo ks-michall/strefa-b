@@ -217,6 +217,18 @@ export default function BohaterowiePage(){
         </button>
       </header>
 
+      {notice&&<div className="sb-heroes-notice" role="status">{notice}</div>}
+
+      {weeklyStory&&<section className="sb-heroes-story">
+        <div>
+          <p className="sb-small-label">✨ DOBRA HISTORIA TYGODNIA • ŻYCIE STREFY B</p>
+          <p className="sb-heroes-story-text">„{weeklyStory.message}”</p>
+          <span>{weeklyStory.person} <span aria-hidden="true">·</span> zauważone przez {weeklyStory.author}</span>
+        </div>
+        <AvatarFace name={weeklyStory.person} avatar={avatars[weeklyStory.person]} size={62}/>
+      </section>}
+
+
       <section className="sb-heroes-stats" aria-label="Wspólny wynik klasy">
         <div className="sb-heroes-stat">
           <span>W poprzednim miesiącu</span>
@@ -241,16 +253,6 @@ export default function BohaterowiePage(){
         </div>
       </section>
 
-      {notice&&<div className="sb-heroes-notice" role="status">{notice}</div>}
-
-      {weeklyStory&&<section className="sb-heroes-story">
-        <div>
-          <p className="sb-small-label">✨ DOBRA HISTORIA TYGODNIA</p>
-          <p className="sb-heroes-story-text">„{weeklyStory.message}”</p>
-          <span>{weeklyStory.person} <span aria-hidden="true">·</span> zauważone przez {weeklyStory.author}</span>
-        </div>
-        <AvatarFace name={weeklyStory.person} avatar={avatars[weeklyStory.person]} size={62}/>
-      </section>}
 
       <div className="sb-heroes-tabs" role="group" aria-label="Filtruj dobre historie">
         {([
