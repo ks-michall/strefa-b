@@ -443,16 +443,7 @@ export default function GaleriaPage() {
       }}
     >
       <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-        <section className="sb-archive-header"
-          style={{
-            background: "linear-gradient(125deg,#182d38,#203e38)",
-            borderRadius: "24px",
-            padding: "28px",
-            boxShadow: "0 18px 50px rgba(0,0,0,0.2)",
-            border: "1px solid #426354",
-            marginBottom: "24px",
-          }}
-        >
+        <header className="sb-archive-header sb-module-heading" style={{marginBottom:"24px"}}>
           <div
             style={{
               display: "flex",
@@ -463,17 +454,7 @@ export default function GaleriaPage() {
             }}
           >
             <div style={{ maxWidth: "620px" }}>
-              <p className="sb-small-label" style={{margin:"0 0 10px"}}>BAZA ARCHIWALNA</p>
-              <h1
-                style={{
-                  margin: 0,
-                  fontSize: "clamp(30px, 5vw, 42px)",
-                  lineHeight: 1.1,
-                  color: "#f2f8e9",
-                }}
-              >
-                Baza Archiwalna
-              </h1>
+              <h1>Baza Archiwalna<span className="sb-green-dot">.</span></h1>
 
               <p
                 style={{
@@ -536,7 +517,7 @@ export default function GaleriaPage() {
               + Dodaj zdjęcie
             </button>
           </div>
-        </section>
+        </header>
 
         {success && (
           <div

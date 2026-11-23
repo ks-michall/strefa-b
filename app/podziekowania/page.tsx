@@ -211,10 +211,9 @@ export default function BohaterowiePage(){
 
   return <main className="sb-app-page sb-theme-blue sb-heroes-page">
     <div className="sb-heroes-inner">
-      <header className="sb-heroes-header">
+      <header className="sb-heroes-header sb-module-heading">
         <div>
-          <p className="sb-small-label" style={{margin:"0 0 10px"}}>BIULETYN</p>
-          <h1>✳ Biuletyn</h1>
+          <h1>Biuletyn<span className="sb-green-dot">.</span></h1>
           <p>Doceniamy konkretną pomoc i budujemy morale Strefy B. Każde wyróżnienie to +1 morale dla naszej wspólnoty.</p>
         </div>
         <button className="sb-heroes-primary" type="button"

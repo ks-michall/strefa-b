@@ -244,8 +244,7 @@ export default function BonsaiPage() {
     padding: "26px 16px 60px", color: "#193a2b",
   }}>
     <div style={{ maxWidth: 800, margin: "auto" }}>
-      <header className="sb-bio-header" style={{ margin: "0 0 24px" }}>
-        <p className="sb-small-label" style={{margin:"0 0 9px"}}>BIOSTACJA</p>
+      <header className="sb-bio-header sb-module-heading" style={{ margin: "0 0 24px" }}>
         <h1 className="sb-bio-title">Biostacja<span className="sb-green-dot">.</span></h1>
         <p style={{ margin: 0, color: "#537565", fontSize: 17 }}>
           Twoja uprawa. Twój codzienny nawyk. Wspólne zapasy Strefy B.
