@@ -1,9 +1,8 @@
 "use client"
 
-import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { habits } from "../../lib/bonsai-habits"
-import { BonsaiGrowth } from "../../components/bonsai-growth"
+import { BiostationPlot } from "../../components/biostation-plot"
 import { harvestBadges, RECOGNITION_THRESHOLD } from "../../lib/bonsai-rewards"
 import { addDays, currentPlantingDay, daysBetween, readableDate } from "../../lib/bonsai-time"
 import { sortedStudents } from "../../lib/students"
@@ -22,7 +21,7 @@ function Calendar({tree,cutoff}:{tree:Tree;cutoff:string}) {
         padding:"10px 0",textAlign:"center",borderRadius:10,
         background:checked?"#bee5c7":"#eef2f5",
         color:checked?"#235d39":"#64748b",fontWeight:700,
-      }}>{checked?"✓":missed?"0":index+1}</div>
+      }}>{checked?"✓":missed?"—":index+1}</div>
     })}
   </div>
 }
@@ -69,8 +68,7 @@ export default function BusolaPage() {
     padding:"26px 16px 64px",color:"#1e3342",
   }}>
     <div style={{maxWidth:820,margin:"0 auto"}}>
-      <Link href="/" style={{color:"#376277",textDecoration:"none"}}>← Strefa B</Link>
-      <header style={{margin:"22px 0 24px"}}>
+      <header style={{margin:"5px 0 24px"}}>
         <p className="sb-small-label" style={{margin:"0 0 9px"}}>TWÓJ PUNKT WIDZENIA</p>
         <h1 style={{margin:"0 0 8px",fontSize:38}}>🧭 Busola</h1>
         <p style={{color:"#617887",fontSize:17,lineHeight:1.65,margin:0}}>
@@ -85,15 +83,15 @@ export default function BusolaPage() {
           {pupils.map(name=><option key={name} value={name}>{name}</option>)}
         </select>
         <p style={{fontSize:13,color:"#64748b",lineHeight:1.65,marginBottom:0}}>
-          Tutaj widać tylko dane Bonsai zapisane na kontach uczniów.
-          Starsze, lokalne drzewka pokażą się po przeniesieniu ich przez ucznia.
+          Tutaj widać wyłącznie dane Biostacji zapisane na kontach uczniów.
+          Wcześniejsze lokalne uprawy pojawią się po przeniesieniu ich przez ucznia.
         </p>
       </section>
-      {loading && <section className="sb-surface" style={surface}>Pobieram drzewka…</section>}
+      {loading && <section className="sb-surface" style={surface}>Pobieram uprawy…</section>}
       {error && <p role="alert" style={{background:"#fee2e2",color:"#991b1b",padding:16,borderRadius:14}}>{error}</p>}
       {!loading && !error && student && <>
         <section className="sb-surface" style={{...surface,marginBottom:18}}>
-          <h2 style={{marginTop:0,fontSize:23}}>{student} – podsumowanie Bonsai</h2>
+          <h2 style={{marginTop:0,fontSize:23}}>{student} – podsumowanie Biostacji</h2>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:12}}>
             {[
               {label:"Aktywne nawyki",value:stats.active},
@@ -109,9 +107,9 @@ export default function BusolaPage() {
           </p>
         </section>
         {trees.length===0 ? <section className="sb-surface" style={surface}>
-          <h2 style={{marginTop:0,fontSize:20}}>Brak zapisanych drzewek</h2>
+          <h2 style={{marginTop:0,fontSize:20}}>Brak zapisanych upraw</h2>
           <p style={{marginBottom:0,color:"#607786",lineHeight:1.65}}>
-            Ten uczeń nie ma jeszcze Bonsai zapisanych w bazie. Może dopiero zacząć lub przechowywać wcześniejsze drzewka w swojej przeglądarce.
+            Ten uczeń nie ma jeszcze upraw Biostacji zapisanych w bazie. Być może jeszcze nie rozpoczął wyzwania albo przechowuje wcześniejsze uprawy tylko w swojej przeglądarce.
             Sam brak danych nie oznacza, że nie korzystał z aplikacji.
           </p>
         </section> : <div style={{display:"grid",gap:16}}>
@@ -130,7 +128,7 @@ export default function BusolaPage() {
                   <p style={{margin:"0 0 7px",color:"#546c7c",lineHeight:1.6}}>{habit?.action||""}</p>
                   <p style={{margin:0,fontSize:13,color:"#648273"}}>Sygnał: {tree.cue}</p>
                 </div>
-                <BonsaiGrowth count={tree.checks.length} compact/>
+                <BiostationPlot count={tree.checks.length} compact/>
               </div>
               <div style={{margin:"18px 0 12px",display:"flex",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
                 <strong>{tree.checks.length} / 28 dni</strong>
@@ -146,7 +144,7 @@ export default function BusolaPage() {
                 </div>
               <Calendar tree={tree} cutoff={asOf}/>
               {done && <div style={{marginTop:17,padding:14,background:"#eaf5ee",borderRadius:14,color:"#315e43"}}>
-                <strong>🌾 Zbiory Bonsai: {tree.checks.length}/28 dni</strong>
+                <strong>🌾 Zbiory Biostacji: {tree.checks.length}/28 dni</strong>
                 {harvestBadges(tree,trees.filter(other=>other.id!==tree.id && other.started<=tree.started),asOf).map(badge=>
                   <div key={badge.id} style={{fontSize:13,marginTop:7}}>{badge.icon} {badge.title}</div>)}
                 {tree.checks.length>=RECOGNITION_THRESHOLD &&
@@ -159,7 +157,7 @@ export default function BusolaPage() {
           })}
         </div>}
       </>}
-      {!student && <p style={{textAlign:"center",color:"#6a7d85",marginTop:30}}>Wybierz imię ucznia, żeby zobaczyć jego mały las. 🌳</p>}
+      {!student && <p style={{textAlign:"center",color:"#6a7d85",marginTop:30}}>Wybierz imię ucznia, żeby zobaczyć jego ogród upraw. 🌾</p>}
     </div>
   </main>
 }
