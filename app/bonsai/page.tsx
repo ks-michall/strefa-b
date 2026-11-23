@@ -4,6 +4,7 @@ import Link from "next/link"
 import { habits, availableHabits } from "../../lib/bonsai-habits"
 import { BiostationPlot } from "../../components/biostation-plot"
 import { useBiostationSession } from "../../components/biostation-session"
+import { nextExpedition,type WorldState } from "../../lib/world-story"
 import { BonsaiHarvest } from "../../components/bonsai-harvest"
 import { BonsaiReflection } from "../../components/bonsai-reflection"
 import { useEffect, useMemo, useState } from "react"
@@ -93,12 +94,17 @@ export default function BonsaiPage() {
   const [nowMs, setNowMs] = useState(0)
   const [expandedTree, setExpandedTree] = useState<string|null>(null)
   const [harvestNotice, setHarvestNotice] = useState("")
+  const [impact,setImpact]=useState<{food:number;morale:number;targetFood:number;targetMorale:number;name:string}|null>(null)
 
   useEffect(() => {
     setNowMs(Date.now())
-    const timer = window.setInterval(() => setNowMs(Date.now()), 1000)
+    const timer = window.setInterval(() => setNowMs(Date.now()), 60000)
     return () => window.clearInterval(timer)
   }, [])
+
+  useEffect(()=>{
+    if(new URLSearchParams(window.location.search).get("start")==="1")setTab("catalog")
+  },[])
 
   useEffect(() => {
     let cancelled = false
@@ -182,7 +188,6 @@ export default function BonsaiPage() {
   const now = new Date(nowMs || 0)
   const plantingDay = nowMs ? currentPlantingDay(now) : ""
   const windowDay = nowMs ? currentCheckInDay(now) : null
-  const nextOpening = nowMs ? remainingUntilNextOpening(now) : 0
   const latest = trees[trees.length - 1]
   const newTreeDay = latest ? addDays(latest.started, PLANTING_INTERVAL) : null
   const canPlantByDate = !!nowMs && (!newTreeDay || plantingDay >= newTreeDay)
@@ -214,7 +219,18 @@ export default function BonsaiPage() {
   async function markDone(treeId: string) {
     if (!user || busy || !windowDay) return
     const success=await post("check",{treeId})
-    if(success)setHarvestNotice("🌾 Dzisiejszy plon zasilił wspólne zapasy Strefy B!")
+    if(!success)return
+    setHarvestNotice("🌾 Dzisiejszy plon zasilił wspólne zapasy Strefy B!")
+    try{
+      const response=await fetch("/api/world",{cache:"no-store"})
+      if(!response.ok)return
+      const data=await response.json() as WorldState
+      const expedition=nextExpedition(data)
+      if(expedition)setImpact({food:data.food,morale:data.morale,
+        targetFood:expedition.food,targetMorale:expedition.morale,name:expedition.name})
+      else setImpact({food:data.food,morale:data.morale,
+        targetFood:data.food,targetMorale:data.morale,name:"Wszystkie sektory odkryte"})
+    }catch{/* Nie utrudniamy potwierdzenia, jeśli mapa chwilowo nie odpowiada. */}
   }
 
   if (!loaded || !nowMs) return <main style={{ padding: 30 }}>Ładowanie Biostacji…</main>
@@ -238,7 +254,19 @@ export default function BonsaiPage() {
         <span>Każdy potwierdzony dzień = <strong>+1 żywność</strong> dla Strefy B</span>
         <Link href="/bezdroza">Zobacz Bezdroża ↗</Link>
       </div>
-      {harvestNotice&&<p role="status" className="sb-bio-harvest-notice">{harvestNotice}</p>}
+      {harvestNotice&&<div role="status" className="sb-bio-impact-card">
+        <strong>{harvestNotice}</strong>
+        {impact&&<div className="sb-bio-impact-data">
+          <span>Następna wyprawa: {impact.name}</span>
+          <div className="sb-bio-impact-resource"><span>🌾 Żywność</span>
+            <strong>{impact.food} / {impact.targetFood}</strong></div>
+          <div className="sb-bio-impact-meter"><span style={{width:Math.min(100,impact.food/Math.max(1,impact.targetFood)*100)+"%"}}/></div>
+          <div className="sb-bio-impact-resource"><span>✳ Morale</span>
+            <strong>{impact.morale} / {impact.targetMorale}</strong></div>
+          <p>Jeszcze {Math.max(0,impact.targetFood-impact.food)} żywności i {Math.max(0,impact.targetMorale-impact.morale)} morale do celu wyprawy.</p>
+        </div>}
+        <Link href="/bezdroza">Sprawdź Bezdroża ↗</Link>
+      </div>}
 
       {storageWarning && <p role="alert" style={{
         padding: 14, background: "#fff2d7", borderRadius: 12, color: "#71470c",
@@ -273,6 +301,13 @@ export default function BonsaiPage() {
             <h2>{habits[tree.habitIndex].title}</h2>
             <p className="sb-bio-action">{habits[tree.habitIndex].action}</p>
             <p className="sb-bio-cue">⌁ Twój sygnał: {tree.cue.toLowerCase()}</p>
+            {(()=>{
+              const last=[...tree.checks].sort().at(-1)
+              const since=last?daysBetween(last,plantingDay):daysBetween(tree.started,plantingDay)
+              return since>=3&&!checked?<p className="sb-bio-comeback">
+                Dobrze, że wracasz do Strefy B! Każdy dzień jest nowym początkiem.
+              </p>:null
+            })()}
             <BiostationPlot count={tree.checks.length} compact/>
             <div className="sb-bio-mission-progress">
               <strong>{tree.checks.length} / 28 <small>potwierdzonych dni</small></strong>
@@ -281,7 +316,7 @@ export default function BonsaiPage() {
             {checked
               ? <div className="sb-bio-mission-complete" role="status">
                   <strong>✓ Dzisiejszy nawyk potwierdzony!</strong>
-                  <span>Następna możliwość potwierdzenia za {countdown(nextOpening)}</span>
+                  <span>Możesz wrócić do tej misji jutro.</span>
                 </div>
               : eligible
                 ? <button type="button" onClick={()=>void markDone(tree.id)} disabled={busy}
@@ -289,8 +324,7 @@ export default function BonsaiPage() {
                     {busy?"Zapisuję plon…":"✓ Potwierdź dzisiejszy nawyk · +1 żywność"}
                   </button>
                 : <div className="sb-bio-mission-wait">
-                    Potwierdzenie dostępne od 20:00
-                    <strong>{countdown(nextOpening)}</strong>
+                    Dzisiejsze okno potwierdzenia jest niedostępne dla tej uprawy.
                   </div>}
             <p className="sb-bio-mission-encourage">Przerwa nie przekreśla postępu. Liczy się powrót do działania.</p>
           </article>
