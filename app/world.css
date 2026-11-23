@@ -631,3 +631,52 @@ body{background:var(--sb-night);color:#e5ecd9;}
   font-size:clamp(18px,2.9vw,23px);line-height:1.52;color:#f4ffe9;
 }
 .sb-heroes-page .sb-heroes-story span{color:#c9dfcf;}
+
+/* Unified module headings: a single white title with the Strefa B lime dot. */
+.sb-module-heading,
+.sb-heroes-header.sb-module-heading,
+.sb-archive-page .sb-archive-header.sb-module-heading{
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding:0!important;
+  margin-top:0!important;
+  margin-bottom:24px!important;
+}
+.sb-module-heading h1,
+.sb-module-heading .sb-bio-title,
+.sb-frontier-header.sb-module-heading h1,
+.sb-heroes-header.sb-module-heading h1{
+  font-size:clamp(37px,6vw,54px)!important;
+  line-height:1.12!important;
+  font-weight:900!important;
+  letter-spacing:-2px!important;
+  margin:0 0 9px!important;
+  color:#f1f8e8!important;
+}
+.sb-module-heading h1 .sb-green-dot{color:#bbef93!important;}
+.sb-module-heading p:not(.sb-small-label):not(.sb-world-overline),
+.sb-heroes-header.sb-module-heading p,
+.sb-bio-page .sb-bio-header.sb-module-heading p:not(.sb-small-label){
+  margin:0!important;
+  color:#d2e5da!important;
+  font-size:16px!important;
+  line-height:1.6!important;
+}
+.sb-heroes-header.sb-module-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+}
+.sb-archive-header.sb-module-heading{display:block;}
+.sb-archive-header.sb-module-heading > div{align-items:flex-start;}
+.sb-archive-header.sb-module-heading > div > div:first-child{min-width:0;}
+@media(max-width:750px){
+  .sb-heroes-header.sb-module-heading{padding:0!important;}
+  .sb-heroes-header.sb-module-heading .sb-heroes-primary{width:auto;max-width:100%;}
+}
+@media(max-width:470px){
+  .sb-heroes-header.sb-module-heading .sb-heroes-primary{width:100%;}
+}
