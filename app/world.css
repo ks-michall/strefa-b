@@ -606,3 +606,17 @@ body{background:var(--sb-night);color:#e5ecd9;}
  .sb-world-welcome{padding:19px;}
 }
 @media(prefers-reduced-motion:reduce){.sb-bio-impact-meter span{transition:none;}}
+
+/* Good actions deserve the spotlight more than the counters. */
+.sb-heroes-page .sb-heroes-story{
+  background:linear-gradient(135deg,#27473c,#253f48 70%,#354a43);
+  border:1px solid #6d9a7e;color:#f2f9e9;padding:26px 28px;
+  box-shadow:0 15px 35px rgba(4,15,18,.19);margin-bottom:20px;
+}
+.sb-heroes-page .sb-heroes-story .sb-small-label{
+  color:#c8f3a8!important;font-size:11px;letter-spacing:1.1px;
+}
+.sb-heroes-page .sb-heroes-story .sb-heroes-story-text{
+  font-size:clamp(18px,2.9vw,23px);line-height:1.52;color:#f4ffe9;
+}
+.sb-heroes-page .sb-heroes-story span{color:#c9dfcf;}
