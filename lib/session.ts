@@ -60,7 +60,7 @@ export async function verifySession(token: string | undefined | null): Promise<V
   if (!secret || !signatureBytes || !payloadBytes || signatureBytes.length !== 32) return null
   try {
     const key = await crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["verify"])
-    if (!await crypto.subtle.verify("HMAC", key, signatureBytes, encoder.encode(body))) return null
+    if (!await crypto.subtle.verify("HMAC", key, new Uint8Array(signatureBytes), encoder.encode(body))) return null
     const payload = JSON.parse(new TextDecoder().decode(payloadBytes)) as Partial<SessionPayload>
     if (payload.v !== 2 || typeof payload.name !== "string" || !students.some(s => s === payload.name)) return null
     if (payload.mode !== "setup" && payload.mode !== "full") return null
