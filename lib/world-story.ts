@@ -84,7 +84,7 @@ function patrolMondayUtc(week:number){
   const offsetPart=new Intl.DateTimeFormat("en-GB",{
     timeZone:"Europe/Warsaw",timeZoneName:"shortOffset",
   }).formatToParts(noonUtc).find(p=>p.type==="timeZoneName")?.value??"GMT+1"
-  const hour=Number(offsetPart.match(/GMT([+-]\\d+)/)?.[1]??"1")
+  const hour=Number(offsetPart.match(/GMT([+-]\d+)/)?.[1]??"1")
   return Date.UTC(noonUtc.getUTCFullYear(),noonUtc.getUTCMonth(),noonUtc.getUTCDate(),18-hour)
 }
 
