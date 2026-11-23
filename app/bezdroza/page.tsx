@@ -118,7 +118,12 @@ export default function BezdrozaPage(){
     discoveryRef.current=null
     setDiscovery(null)
     if(readReport && report)showEvent(report)
-    // Additional discoveries earned while offline appear one by one.
+    else void load()
+    // Other discoveries will appear after the expedition report closes.
+  }
+
+  function closeReport(){
+    setOpenEvent(null)
     void load()
   }
 
@@ -159,7 +164,7 @@ export default function BezdrozaPage(){
         <div><p className="sb-world-overline">KARTOGRAFIA / ZASIĘG ZWIADU</p><h2>Mapa Strefy B</h2></div>
         <span>{1+unlocked.size} ODKRYTYCH SEKTORÓW</span>
       </div>
-      <div className="sb-frontier-stage">
+      <div className="sb-frontier-stage" style={discovery?{zIndex:1400}:undefined}>
         <FrontierMap selected={selected} unlocked={unlocked} onSelect={id=>setSelected(id)}
           revealing={discovery}/>
         {discoveryPlace&&<div className="sb-world-reveal" role="dialog" aria-modal="true"
@@ -279,12 +284,12 @@ export default function BezdrozaPage(){
     </div>
 
     {openEvent&&<div className="sb-world-modal-backdrop" role="presentation" onMouseDown={e=>{
-      if(e.target===e.currentTarget)setOpenEvent(null)
+      if(e.target===e.currentTarget)closeReport()
     }}>
       <article className="sb-world-modal" role="dialog" aria-modal="true" aria-labelledby="sb-world-event-title">
         <div className="sb-world-modal-top">
           <p className="sb-world-overline">{openEvent.eyebrow}</p>
-          <button type="button" onClick={()=>setOpenEvent(null)} aria-label="Zamknij transmisję">✕</button>
+          <button type="button" onClick={closeReport} aria-label="Zamknij transmisję">✕</button>
         </div>
         <div className="sb-world-signal-icon">⌁</div>
         <h2 id="sb-world-event-title">{openEvent.title}</h2>
@@ -292,7 +297,7 @@ export default function BezdrozaPage(){
         <div className="sb-world-transcript">
           {openEvent.body.map((paragraph,i)=><p key={i} className={paragraph.startsWith("[")?"signal-lost":""}>{paragraph}</p>)}
         </div>
-        <button type="button" className="sb-world-modal-close" onClick={()=>setOpenEvent(null)}>Zamknij raport ↗</button>
+        <button type="button" className="sb-world-modal-close" onClick={closeReport}>Zamknij raport ↗</button>
       </article>
     </div>}
   </main>
