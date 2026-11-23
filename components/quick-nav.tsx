@@ -3,7 +3,6 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 const destinations = [
-  {href:"/", icon:"⌂", label:"Start"},
   {href:"/bonsai", icon:"🌾", label:"Biostacja"},
   {href:"/podziekowania", icon:"✳", label:"Biuletyn"},
   {href:"/galeria", icon:"▤", label:"Baza"},
