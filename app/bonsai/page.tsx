@@ -375,7 +375,12 @@ export default function BonsaiPage() {
          </p>
          <label style={{ display: "block", marginBottom: 8, fontWeight: 750 }}>Obszar rozwoju</label>
         <div className="sb-bio-categories" role="group" aria-label="Kategorie nawyków">
-          {categories.map(value=><button type="button" key={value} onClick={()=>setCategory(value)}
+          {categories.map(value=><button type="button" key={value} onClick={()=>{
+             setCategory(value)
+             const first=availableHabits.find(habit=>value==="Wszystkie" ||
+               (value==="Polecane na start"?habit.recommended:habit.category===value))
+             if(first)setChosen(first.index)
+           }}
             aria-pressed={category===value}
             className={category===value?"active":""}>{value}</button>)}
         </div>
