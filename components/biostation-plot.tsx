@@ -1,80 +1,107 @@
 "use client"
 
-/** The twenty-eight confirmed days become a growing greenhouse plot.
- * No student information leaves this component.
- */
+import { useId } from "react"
+
+/** Each confirmed day grows one of 28 seedlings. Purely visual, no personal data. */
 export function BiostationPlot({count,compact=false}:{count:number;compact?:boolean}){
-  const grown=Math.max(0,Math.min(28,count))
-  const plants=Array.from({length:28},(_,i)=>({
-    i, row:Math.floor(i/7),col:i%7,ready:i<grown,
-  }))
-  return <div className={"sb-bio-plot"+(compact?" compact":"")} aria-label={"Poletko Biostacji: "+grown+" z 28 dni potwierdzonych"}>
-    <svg viewBox="0 0 620 320" role="img" aria-label={"Szklarnia z "+grown+" rosnącymi roślinami"}
-      preserveAspectRatio="xMidYMid meet">
+  const grown=Math.max(0,Math.min(28,Math.floor(Number.isFinite(count)?count:0)))
+  const id=useId().replace(/:/g,"")
+  const url=(key:string)=>`url(#${id}-${key})`
+  const plants=Array.from({length:28},(_,i)=>({i,row:Math.floor(i/7),col:i%7,ready:i<grown}))
+  return <div className={"sb-bio-plot"+(compact?" compact":"")}
+    aria-label={`Postęp Biostacji: ${grown} z 28 sadzonek`}>
+    <svg viewBox="0 0 620 330" preserveAspectRatio="xMidYMid meet" role="img"
+      aria-label={`Futurystyczna szklarnia z ${grown} wyrośniętymi sadzonkami na 28 miejsc`}>
       <defs>
-        <linearGradient id="bio-dome" x1="0" x2="1" y1="0" y2="1">
-          <stop stopColor="#152d31"/><stop offset=".5" stopColor="#2a4e47"/><stop offset="1" stopColor="#152a2b"/>
+        <linearGradient id={id+"-night"} x1="0" y1="0" x2="0" y2="1">
+          <stop stopColor="#1b3e4a"/><stop offset=".57" stopColor="#285d53"/><stop offset="1" stopColor="#101f2b"/>
         </linearGradient>
-        <linearGradient id="bio-floor" x1="0" x2="0" y1="0" y2="1">
-          <stop stopColor="#516d52"/><stop offset="1" stopColor="#233b34"/>
+        <linearGradient id={id+"-glass"} x1="0" y1="0" x2="1" y2="1">
+          <stop stopColor="#b8f4cd" stopOpacity=".35"/><stop offset=".45" stopColor="#8cd6bd" stopOpacity=".1"/>
+          <stop offset="1" stopColor="#77bfad" stopOpacity=".25"/>
         </linearGradient>
-        <linearGradient id="bio-leaf" x1="0" x2="1">
-          <stop stopColor="#70bf81"/><stop offset="1" stopColor="#cdfc9c"/>
+        <linearGradient id={id+"-bed"} x1="0" y1="0" x2="0" y2="1">
+          <stop stopColor="#354c4c"/><stop offset=".5" stopColor="#223c3f"/><stop offset="1" stopColor="#101d2b"/>
         </linearGradient>
-        <radialGradient id="bio-light">
-          <stop stopColor="#c0f4b4" stopOpacity=".23"/><stop offset="1" stopColor="#c0f4b4" stopOpacity="0"/>
+        <linearGradient id={id+"-leaf"} x1="0" y1="0" x2="1" y2=".4">
+          <stop stopColor="#4c9f6d"/><stop offset=".58" stopColor="#94d886"/><stop offset="1" stopColor="#d8fa9c"/>
+        </linearGradient>
+        <linearGradient id={id+"-sun"} x1="0" y1="0" x2="0" y2="1">
+          <stop stopColor="#d9ffbe" stopOpacity=".42"/><stop offset="1" stopColor="#d9ffbe" stopOpacity="0"/>
+        </linearGradient>
+        <radialGradient id={id+"-haze"}>
+          <stop stopColor="#baf2a1" stopOpacity=".32"/><stop offset="1" stopColor="#baf2a1" stopOpacity="0"/>
         </radialGradient>
-        <pattern id="bio-glass" width="37" height="37" patternUnits="userSpaceOnUse">
-          <path d="M37 0H0V37" fill="none" stroke="#d7fbcd" strokeWidth=".75" opacity=".13"/>
-        </pattern>
+        <clipPath id={id+"-interior"}>
+          <path d="M46 221V125Q52 50 152 39Q312 6 467 39Q564 54 574 125V221Z"/>
+        </clipPath>
       </defs>
-      <rect width="620" height="320" rx="24" fill="url(#bio-dome)"/>
-      <path d="M18 152Q90 23 310 20Q530 23 603 152V286H18Z"
-        fill="#406355" opacity=".42" stroke="#aad9ac" strokeWidth="2.5"/>
-      <path d="M39 152Q96 42 310 41Q524 42 581 152"
-        fill="none" stroke="#acd7b2" opacity=".22" strokeWidth="4"/>
-      <path d="M310 25V190M95 58L206 163M520 58L412 163M18 152H603"
-        stroke="#b1d5b7" opacity=".17" strokeWidth="3"/>
-      <rect width="620" height="220" fill="url(#bio-glass)" opacity=".63"/>
-      <ellipse cx="310" cy="125" rx="278" ry="140" fill="url(#bio-light)"/>
-      <path d="M32 231L307 147L594 230L583 295H38Z" fill="url(#bio-floor)"/>
-      <path d="M32 231L307 147L594 230" fill="none" stroke="#b1cc9b" opacity=".49" strokeWidth="2"/>
-      <g fill="none" stroke="#a8d19e" opacity=".16" strokeWidth="2">
-        <path d="M53 249L311 165L574 245M57 265L311 185L569 263M65 280L309 206L565 282"/>
+      <rect width="620" height="330" rx="20" fill={url("night")}/>
+      <circle cx="460" cy="90" r="190" fill={url("haze")}/>
+      <path d="M40 244V124Q44 46 151 30Q312 -8 469 30Q578 46 580 124V244Z"
+        fill="#101f28" stroke="#79b49e" strokeWidth="5"/>
+      <g clipPath={url("interior")}>
+        <rect x="45" y="27" width="530" height="218" fill={url("glass")}/>
+        <circle cx="424" cy="43" r="85" fill={url("sun")}/>
+        <path d="M42 176Q116 128 187 169Q245 141 315 167Q370 129 433 167Q501 137 583 180V241H42Z"
+          fill="#264f4c" opacity=".76"/>
+        <path d="M46 191Q145 163 252 189Q343 159 433 186Q500 166 574 196V244H46Z"
+          fill="#1b3c39" opacity=".9"/>
+        <path d="M126 30Q109 123 115 234M217 18Q206 127 211 234M310 12V243M403 18Q414 127 408 234M495 30Q512 123 506 234"
+          fill="none" stroke="#b7e4cb" strokeWidth="3" opacity=".38"/>
+        <path d="M41 113Q310 59 578 113M43 173Q310 123 576 173"
+          fill="none" stroke="#b9dfd1" strokeWidth="2.4" opacity=".28"/>
+        <path d="M85 71L270 220M523 66L344 217" stroke="#d2f7d5" strokeWidth="12" opacity=".035"/>
       </g>
-      {plants.map(({i,row,col,ready})=>{
-        // Slight perspective: more distant rows are higher, and plants grow
-        // upwards from a small patch in the shared planter.
-        const x=111+col*56+row*4
-        const y=191+row*23-(col%2)*4
-        const tall=9+(i%4)*3
-        return <g key={i} className={ready?"sb-bio-seedbed alive":"sb-bio-seedbed"} style={{animationDelay:(i%7)*65+"ms"}}>
-          <ellipse cx={x} cy={y+9} rx="21" ry="10" fill="#122925" opacity=".55"/>
-          <path d={`M${x-22} ${y+6} l22 -8 l23 8 l-22 10 Z`} fill={ready?"#496e42":"#445348"} stroke="#8bad6f" strokeWidth=".8" opacity={ready?1:.49}/>
-          {ready ? <>
-            <path d={`M${x} ${y+7} Q${x-2} ${y-tall*.55} ${x+2} ${y-tall}`}
-              stroke="#b2e88c" strokeWidth="2.3" strokeLinecap="round" fill="none"/>
-            <path d={`M${x} ${y+1} Q${x-8} ${y-tall*.75} ${x-13} ${y-tall*.6}
-              Q${x-9} ${y+1} ${x} ${y+2}`} fill="#6fac6e"/>
-            <path d={`M${x+1} ${y-tall*.3} Q${x+6} ${y-tall*1.05} ${x+13} ${y-tall*.85}
-              Q${x+10} ${y-tall*.3} ${x+1} ${y-tall*.3}`} fill="url(#bio-leaf)"/>
-            {i%5===0&&<circle cx={x+2} cy={y-tall} r="3.4" fill="#d3e66c"/>}
-          </>:
-            <path d={`M${x-5} ${y+5}q5 -3 10 0`} stroke="#b4a17e" strokeWidth="1.3" fill="none" opacity=".43"/>}
+      <path d="M42 223H578V251H42Z" fill="#152e32" stroke="#5e9082" strokeWidth="2.5"/>
+      <path d="M48 244H571V313H48Z" fill={url("bed")}/>
+      <path d="M48 272H572M48 304H572" stroke="#6e9782" strokeWidth="1.5" opacity=".24"/>
+      <path d="M57 245H563" stroke="#c6ed9a" strokeWidth="3" opacity=".55"/>
+      <path d="M59 58V225M562 58V225" stroke="#78b0a7" strokeWidth="7" opacity=".75"/>
+      <path d="M76 72V224M546 72V224" stroke="#c0e7cb" opacity=".2" strokeWidth="2"/>
+      {Array.from({length:4},(_,row)=>{
+        const y=183+row*35
+        return <g key={row}>
+          <rect x="88" y={y-3} width="445" height="29" rx="8" fill="#182c31" stroke="#6a9682" strokeWidth="1.5"/>
+          <rect x="92" y={y+15} width="437" height="6" rx="3" fill="#84bfa2" opacity=".23"/>
+          <path d={`M100 ${y+24}H522`} stroke="#d2f9a2" strokeWidth="2" opacity=".65"/>
+          <path d={`M104 ${y+27}H517`} stroke="#7cd9ad" strokeWidth="1" opacity=".27"/>
         </g>
       })}
-      <path d="M35 290L310 211L585 288" stroke="#c3e1a5" strokeWidth="2" opacity=".43" fill="none"/>
-      <rect x="19" y="18" width="131" height="27" rx="8" fill="#122d2b" opacity=".75"/>
-      <circle cx="33" cy="31" r="4" fill="#c9fa97"/>
-      <text x="46" y="35" fill="#c5e6be" fontFamily="monospace" fontSize="11" letterSpacing="2">BIOSTACJA 01</text>
-      <rect x="469" y="18" width="127" height="27" rx="8" fill="#122d2b" opacity=".75"/>
-      <text x="532" y="35" textAnchor="middle" fill="#c5e6be" fontFamily="monospace" fontSize="11" letterSpacing="1">
-        {String(grown).padStart(2,"0")} / 28 DNI
+      {plants.map(({i,row,col,ready})=>{
+        const x=121+col*61.5
+        const y=187+row*35
+        const stemH=9+(i%3)*2.5
+        return <g key={i} className={ready?"sb-bio-seedbed alive":"sb-bio-seedbed"}
+          style={{animationDelay:(i%7)*55+"ms"}}>
+          <ellipse cx={x} cy={y+2} rx="19.5" ry="6.5" fill="#101e22" stroke="#638674" strokeWidth="1"/>
+          <ellipse cx={x} cy={y+1} rx="15" ry="4.4" fill={ready?"#516f46":"#374743"}/>
+          {ready?<g>
+            <path d={`M${x} ${y}Q${x-1.7} ${y-stemH*.57} ${x} ${y-stemH}`}
+              stroke="#c2ef9f" strokeWidth="2" strokeLinecap="round" fill="none"/>
+            <path d={`M${x} ${y-stemH*.36}Q${x-6} ${y-stemH-3} ${x-12} ${y-stemH-1}
+              Q${x-10} ${y-stemH*.18} ${x} ${y-stemH*.36}Z`}
+              fill={url("leaf")} stroke="#b1eaa2" strokeWidth=".5"/>
+            <path d={`M${x} ${y-stemH*.43}Q${x+6} ${y-stemH-5} ${x+13} ${y-stemH-3}
+              Q${x+10} ${y-stemH*.24} ${x} ${y-stemH*.43}Z`}
+              fill={url("leaf")} stroke="#b1eaa2" strokeWidth=".5"/>
+            <circle cx={x} cy={y-stemH} r="1.8" fill="#e5ffc0"/>
+          </g>:
+            <ellipse cx={x} cy={y} rx="3" ry="1.5" fill="#78957b" opacity=".5"/>}
+        </g>
+      })}
+      <path d="M39 244H581M42 316H578" stroke="#a6cead" strokeWidth="2" opacity=".65"/>
+      <rect x="18" y="15" width="143" height="28" rx="8" fill="#0c2527" stroke="#4f8272"/>
+      <circle cx="34" cy="29" r="4" fill="#c4f594"/>
+      <text x="47" y="33" fill="#ddf8cb" fontFamily="monospace" fontWeight="700" fontSize="11" letterSpacing="1">SZKLARNIA 01</text>
+      <rect x="483" y="15" width="119" height="28" rx="8" fill="#0c2527" stroke="#4f8272"/>
+      <text x="542" y="33" textAnchor="middle" fill="#ddf8cb" fontFamily="monospace" fontSize="12" fontWeight="700">
+        {String(grown).padStart(2,"0")} / 28
       </text>
     </svg>
     {!compact&&<div className="sb-bio-plot-foot">
-      <span><span className="sb-bio-led"/> UPRAWA AKTYWNA</span>
-      <strong>{grown} / 28 <small>potwierdzeń</small></strong>
+      <span><span className="sb-bio-led"/> SZKLARNIA AKTYWNA</span>
+      <strong>{grown} / 28 <small>sadzonki</small></strong>
     </div>}
   </div>
 }
