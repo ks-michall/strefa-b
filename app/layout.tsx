@@ -2,6 +2,7 @@ import "./globals.css"
 import "./world.css"
 import Link from "next/link"
 import { QuickNav } from "../components/quick-nav"
+import { HeaderProfile } from "../components/header-profile"
 
 export const metadata = {
   title: "Strefa B — przestrzeń klasy",
@@ -28,7 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <span className="sb-brand-caption">SEKTOR OCALAŁYCH</span>
               </span>
             </Link>
-            <span className="sb-site-meta">SEKTOR 3B • ONLINE</span>
+            <HeaderProfile/>
           </div>
         </header>
         <div className="sb-page-frame">{children}</div>
