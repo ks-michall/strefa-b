@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { useEffect,useMemo,useState } from "react"
-import { ProfileMenu } from "../components/profile-menu"
 import { BiostationPlot } from "../components/biostation-plot"
 import { habits } from "../lib/bonsai-habits"
 import { currentPlantingDay,daysBetween } from "../lib/bonsai-time"
@@ -14,7 +13,6 @@ type BioBrief={count:number;hasTrees:boolean;active:boolean;doneToday:boolean;ha
 export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
   const [currentUser,setCurrentUser]=useState("")
   const [userLoaded,setUserLoaded]=useState(false)
-  const [loggingOut,setLoggingOut]=useState(false)
   const [newRecognition,setNewRecognition]=useState(false)
   const [bio,setBio]=useState<BioBrief>({count:0,hasTrees:false,active:false,doneToday:false,habit:"",action:""})
   const [bioLoaded,setBioLoaded]=useState(false)
@@ -109,14 +107,6 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
     try{localStorage.setItem("sb-intro-seen:"+currentUser,"1")}catch{}
   }
 
-  async function handleLogout(){
-    setLoggingOut(true)
-    try{
-      await fetch("/api/logout",{method:"POST"})
-      window.location.href="/login"
-    }catch{setLoggingOut(false)}
-  }
-
   const available=world?worldEvents(world):[]
   const latestTransmission=available.find(event=>event.kind==="transmission")
   const expedition=world?nextExpedition(world):null
@@ -137,10 +127,8 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
       <header className="sb-world-home-top">
         <div>
           <p className="sb-world-overline">ŁĄCZNOŚĆ NAWIĄZANA</p>
-          <h1>Witaj, {currentUser}<span className="sb-green-dot">.</span></h1>
           <p>Strefa B trwa. Jej przyszłość zależy od naszej codziennej pracy.</p>
         </div>
-        <ProfileMenu name={currentUser} onLogout={handleLogout} loggingOut={loggingOut}/>
       </header>
 
       {showWelcome&&<section className="sb-world-welcome" aria-label="Szybki start w Strefie B">
