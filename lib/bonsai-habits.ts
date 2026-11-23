@@ -1,4 +1,4 @@
-export type Habit = { title: string; action: string; category: string }
+export type Habit = { title: string; action: string; category: string; why?: string; recommended?: boolean }
 export const habits: Habit[] = [
   { title: "Zasada dwóch minut", action: "Otwórz zeszyt na dwie minuty.", category: "Rozpoczynanie" },
   { title: "Telefon poza zasięgiem", action: "Odłóż telefon poza zasięg ręki przed nauką.", category: "Rozpoczynanie" },
@@ -30,10 +30,33 @@ export const habits: Habit[] = [
   { title: "Jedna poprawka", action: "Nazwij jedną zmianę, która pomoże Ci się uczyć.", category: "Samodyscyplina" },
   { title: "Plan na jutro", action: "Zapisz jeden priorytet na następny dzień.", category: "Samodyscyplina" },
   { title: "Przygotowanie do snu", action: "Ustaw przypomnienie o wieczornym wyciszeniu.", category: "Samodyscyplina" },
+  // Current catalog: indices 30–51. Older records must retain their historical indices.
+  { title: "Pierwsze pięć minut", action: "Przez pięć minut naprawdę pracuj nad zadaniem, które odkładasz.", category: "Rozpoczynanie działania", why: "Mały początek ułatwia przełamanie odkładania.", recommended: true },
+  { title: "Telefon poza zasięgiem", action: "Odłóż telefon poza zasięg ręki na pierwsze 15 minut nauki.", category: "Rozpoczynanie działania", why: "Mniej rozproszeń ułatwia skupienie.", recommended: true },
+  { title: "Jeden konkretny cel", action: "Przed nauką zapisz, co konkretnie chcesz dziś zrobić.", category: "Rozpoczynanie działania", why: "Łatwiej zacząć, gdy wiadomo, co oznacza koniec zadania." },
+  { title: "Gotowy start", action: "Wieczorem przygotuj materiały do pierwszego zadania na jutro.", category: "Rozpoczynanie działania", why: "Przygotowane otoczenie ogranicza przeszkody na starcie." },
+  { title: "Trzy pytania z pamięci", action: "Bez zaglądania do notatek odpowiedz na trzy pytania z materiału.", category: "Skuteczna nauka", why: "Przypominanie sobie wiedzy pomaga ją utrwalać.", recommended: true },
+  { title: "Krótka powtórka", action: "Przez pięć minut przywołaj z pamięci materiał z wcześniejszych dni.", category: "Skuteczna nauka", why: "Powroty do materiału rozłożone w czasie wspierają pamięć." },
+  { title: "Jedno zadanie samodzielnie", action: "Spróbuj samodzielnie rozwiązać jedno zadanie, a potem sprawdź wynik.", category: "Skuteczna nauka", why: "Samodzielna próba pokazuje, co już potrafisz." },
+  { title: "Błąd pod lupą", action: "Wróć do jednego błędu, popraw go i ustal, skąd się wziął.", category: "Skuteczna nauka", why: "Analiza błędów zamienia potknięcia we wskazówki do nauki.", recommended: true },
+  { title: "Wytłumacz to prosto", action: "Wyjaśnij jedno pojęcie własnymi słowami i sprawdź poprawność.", category: "Skuteczna nauka", why: "Wyjaśnianie pomaga dostrzec luki w rozumieniu." },
+  { title: "Pytanie dnia", action: "Zapisz jedno konkretne pytanie o coś, czego jeszcze nie rozumiesz.", category: "Ciekawość i myślenie naukowe", why: "Pytania są początkiem samodzielnego poznawania." },
+  { title: "Sprawdź źródło", action: "Sprawdź autora lub źródło jednej napotkanej informacji.", category: "Ciekawość i myślenie naukowe", why: "Wiarygodność informacji trzeba oceniać, a nie zakładać." },
+  { title: "Dowód czy przypuszczenie?", action: "Wybierz jedno twierdzenie i ustal, co mogłoby je potwierdzić lub podważyć.", category: "Ciekawość i myślenie naukowe", why: "Rozróżnianie dowodów i przypuszczeń ćwiczy krytyczne myślenie." },
+  { title: "Nauka wokół nas", action: "Znajdź praktyczny przykład jednego zagadnienia poznanego w szkole.", category: "Ciekawość i myślenie naukowe", why: "Zastosowania pomagają dostrzec sens wiedzy." },
+  { title: "Rozbij trudność", action: "Podziel trudne zadanie na małe kroki i wykonaj pierwszy.", category: "Samodzielność i sprawczość", why: "Masz wpływ na to, od którego kroku zaczniesz.", recommended: true },
+  { title: "Plan na jutro", action: "Zapisz najważniejsze zadanie na jutro i porę jego rozpoczęcia.", category: "Samodzielność i sprawczość", why: "Konkretny plan pomaga przekuć zamiar w działanie.", recommended: true },
+  { title: "Dokończ sprawę", action: "Doprowadź do końca jedną niewielką zaległość.", category: "Samodzielność i sprawczość", why: "Kończenie rozpoczętych spraw buduje sprawczość." },
+  { title: "Dzienny przegląd", action: "Zapisz, co dziś pomogło Ci działać, i jedną poprawkę na jutro.", category: "Samodzielność i sprawczość", why: "Krótka refleksja pomaga uczyć się na własnym doświadczeniu." },
+  { title: "Przerwa w ruchu", action: "Zrób 5–10 minut przerwy na spacer lub inny ruch.", category: "Energia i zdrowie", why: "Ruch jest sposobem na zadbanie o siebie w trakcie dnia." },
+  { title: "Wyciszenie przed snem", action: "Odłóż ekran co najmniej 20 minut przed planowanym snem.", category: "Energia i zdrowie", why: "Wieczorne wyciszenie ułatwia przygotowanie do odpoczynku." },
+  { title: "Posiłek bez przewijania", action: "Zjedz jeden posiłek bez korzystania z telefonu.", category: "Energia i zdrowie", why: "Ćwiczysz uważność poza ekranem." },
+  { title: "Uważne słuchanie", action: "W jednej rozmowie wysłuchaj drugiej osoby bez przerywania i zadaj pytanie.", category: "Relacje i współpraca", why: "Uważne słuchanie wzmacnia relacje." },
+  { title: "Uczymy się razem", action: "Zadaj komuś pytanie powtórkowe i wspólnie sprawdźcie odpowiedź.", category: "Relacje i współpraca", why: "Rozmowa o wiedzy wspiera uczenie się i współpracę." },
 ]
 
 // These habits remain indexed for historical trees, but can no longer be selected.
 // Do not delete or renumber items: saved trees reference their original indices.
-export const retiredHabitIndices = new Set([6, 8, 21, 26])
+export const retiredHabitIndices = new Set(Array.from({length: 30}, (_, index) => index))
 export const availableHabits = habits.map((habit, index) => ({...habit, index}))
   .filter(item => !retiredHabitIndices.has(item.index))

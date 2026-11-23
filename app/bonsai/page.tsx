@@ -19,7 +19,7 @@ const LEGACY_KEY = "strefa-b-bonsai-v1"
 const storageKey = (name: string) => "strefa-b-bonsai-v2:" + encodeURIComponent(name)
 const GROWTH_DAYS = 28
 const PLANTING_INTERVAL = 14
-const categories = ["Wszystkie", "Rozpoczynanie", "Skuteczna nauka", "Ciekawość", "Wspólnota", "Samodyscyplina"]
+const categories = ["Polecane na start", "Wszystkie", "Rozpoczynanie działania", "Skuteczna nauka", "Ciekawość i myślenie naukowe", "Samodzielność i sprawczość", "Energia i zdrowie", "Relacje i współpraca"]
 const cues = ["Po śniadaniu", "Po pierwszej lekcji", "Po powrocie ze szkoły", "Po kolacji", "Przed snem"]
 
 function validLegacy(value: unknown): value is LegacyTree {
@@ -87,9 +87,9 @@ export default function BonsaiPage() {
   const [storageWarning, setStorageWarning] = useState(false)
   const [cloudError, setCloudError] = useState("")
   const [busy, setBusy] = useState(false)
-  const [chosen, setChosen] = useState(1)
+  const [chosen, setChosen] = useState(30)
   const [cue, setCue] = useState("Po kolacji")
-  const [category, setCategory] = useState("Wszystkie")
+  const [category, setCategory] = useState("Polecane na start")
   const [tab, setTab] = useState<"today" | "catalog" | "progress">("today")
   const [nowMs, setNowMs] = useState(0)
   const [expandedTree, setExpandedTree] = useState<string|null>(null)
@@ -199,21 +199,24 @@ export default function BonsaiPage() {
   const recentlyFinished = latestFinished &&
     daysBetween(latestFinished.started, plantingDay) < GROWTH_DAYS + 14
   function repeatHabit(habitIndex: number) {
-    setChosen(habitIndex)
-    setCategory("Wszystkie")
+    const selectable=availableHabits.some(habit=>habit.index===habitIndex)
+    setChosen(selectable?habitIndex:30)
+    setCategory(selectable?"Wszystkie":"Polecane na start")
     setTab("catalog")
   }
   function chooseNextHabit() {
-    setCategory("Wszystkie")
+    setChosen(30)
+    setCategory("Polecane na start")
     setTab("catalog")
   }
   const filtered = useMemo(() => availableHabits
-    .filter(habit => category === "Wszystkie" || habit.category === category), [category])
+    .filter(habit => category === "Wszystkie" ||
+      (category === "Polecane na start" ? habit.recommended : habit.category === category)), [category])
 
   async function plantTree() {
     if (!user || busy || !canPlant) return
     const success = await post("plant",{habitIndex:chosen,cue})
-    if (success) { setTab("today"); setCategory("Wszystkie") }
+    if (success) { setTab("today"); setCategory("Polecane na start") }
   }
 
   async function markDone(treeId: string) {
@@ -364,12 +367,20 @@ export default function BonsaiPage() {
 
       {tab === "catalog" && <section className="sb-surface" style={surface}>
         <h2 style={{ marginTop: 0 }}>Wybierz swój nawyk</h2>
-        <p>Jedna uprawa trwa 28 dni. Możesz prowadzić maksymalnie dwa nawyki naraz. Nową uprawę rozpoczniesz po 14 dniach.
+        <p>Jedna uprawa trwa 28 dni. Zacznij od jednego małego, rzeczywistego działania. Możesz prowadzić maksymalnie dwa nawyki naraz, a kolejny rozpocząć po 14 dniach.
           {newTreeDay && !canPlant ? ` Następny start: ${readableDate(newTreeDay)}.` : ""}
         </p>
-        <label style={{ display: "block", marginBottom: 8, fontWeight: 750 }}>Obszar rozwoju</label>
+        <p style={{ color: "#426f56", fontSize: 14, lineHeight: 1.6 }}>
+           Na start polecamy sześć nawyków. Inne znajdziesz w obszarach rozwoju albo w zakładce „Wszystkie”.
+         </p>
+         <label style={{ display: "block", marginBottom: 8, fontWeight: 750 }}>Obszar rozwoju</label>
         <div className="sb-bio-categories" role="group" aria-label="Kategorie nawyków">
-          {categories.map(value=><button type="button" key={value} onClick={()=>setCategory(value)}
+          {categories.map(value=><button type="button" key={value} onClick={()=>{
+             setCategory(value)
+             const first=availableHabits.find(habit=>value==="Wszystkie" ||
+               (value==="Polecane na start"?habit.recommended:habit.category===value))
+             if(first)setChosen(first.index)
+           }}
             aria-pressed={category===value}
             className={category===value?"active":""}>{value}</button>)}
         </div>
@@ -380,7 +391,12 @@ export default function BonsaiPage() {
           }}>
             <input type="radio" name="habit" checked={chosen === habit.index}
               onChange={() => setChosen(habit.index)}/>
-            <span><strong>{habit.title}</strong><span style={{ display: "block", marginTop: 4, color: "#537565", fontSize: 13 }}>{habit.action}</span></span>
+            <span><strong>{habit.title}</strong>
+               <span style={{display:"block",marginTop:4,color:"#355e48",fontSize:14}}>{habit.action}</span>
+               {habit.why&&<span style={{display:"block",marginTop:5,color:"#637f70",fontSize:12,lineHeight:1.45}}>
+                 Po co? {habit.why}
+               </span>}
+             </span>
           </label>)}
         </div>
         <label htmlFor="bonsaiCue" style={{ display: "block", margin: "18px 0 6px" }}>Kiedy będziesz wykonywać nawyk?</label>
@@ -388,7 +404,7 @@ export default function BonsaiPage() {
           style={{ padding: 12, borderRadius: 12, width: "100%", marginBottom: 14 }}>
           {cues.map(value => <option key={value} value={value}>{value}</option>)}
         </select>
-        <p style={{ color: "#537565", fontSize: 13 }}>Nawyk możesz wykonać o dowolnej porze. Potwierdzasz go dopiero wieczorem.</p>
+        <p style={{ color: "#537565", fontSize: 13 }}>Wykonaj nawyk o wybranej porze. Potwierdź go raz dziennie, gdy rzeczywiście zrobisz opisane zadanie.</p>
         <button disabled={!canPlant || busy} style={{ ...button, opacity: canPlant && !busy ? 1 : .55, cursor: canPlant && !busy ? "pointer" : "not-allowed" }}
           onClick={plantTree}>{trees.length === 0 ? "Rozpoczynam pierwszą uprawę" : "Rozpoczynam kolejną uprawę"}</button>
         {!canPlant && newTreeDay && activeTrees.length < 2 && <p style={{ color: "#527460" }}>Nową uprawę możesz rozpocząć od {readableDate(newTreeDay)}.</p>}

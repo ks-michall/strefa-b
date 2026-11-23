@@ -2,7 +2,7 @@
 
 import { type TreeAchievement, harvestBadges, RECOGNITION_THRESHOLD } from "../lib/bonsai-rewards"
 import { BiostationPlot } from "./biostation-plot"
-import { habits } from "../lib/bonsai-habits"
+import { habits, availableHabits } from "../lib/bonsai-habits"
 
 export function BonsaiHarvest({
   tree, earlier, today, canPlant, onRepeat, onNew,
@@ -16,6 +16,7 @@ export function BonsaiHarvest({
 }) {
   const earned = harvestBadges(tree,earlier,today)
   const count = tree.checks.length
+  const repeatable = availableHabits.some(habit=>habit.index===tree.habitIndex)
   return <section className="sb-bio-harvest" style={{
     background:"linear-gradient(160deg,#fbfff9,#e8f5e9)",border:"1px solid #b9dec1",
     borderRadius:24,padding:22,boxShadow:"0 9px 28px rgba(33,104,61,.09)",
@@ -59,16 +60,19 @@ export function BonsaiHarvest({
     </div>}
     <p style={{fontWeight:700,color:"#2c6242",margin:"22px 0 10px"}}>Co dalej?</p>
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:10}}>
-      <button type="button" disabled={!canPlant} onClick={onRepeat} style={{
+      {repeatable && <button type="button" disabled={!canPlant} onClick={onRepeat} style={{
         background:canPlant?"#276948":"#d8e2d9",color:canPlant?"white":"#52675a",
         padding:"13px 15px",border:0,borderRadius:14,fontWeight:700,cursor:canPlant?"pointer":"not-allowed",
-      }}>↻ Utrwalam ten nawyk</button>
+      }}>↻ Utrwalam ten nawyk</button>}
       <button type="button" disabled={!canPlant} onClick={onNew} style={{
         background:canPlant?"white":"#e5ece5",color:"#285b3e",
         padding:"13px 15px",border:"1px solid #b4d7bf",borderRadius:14,fontWeight:700,
         cursor:canPlant?"pointer":"not-allowed",
       }}>🌱 Rozpoczynam nową uprawę</button>
     </div>
+    {!repeatable && <p style={{fontSize:13,color:"#5c7867",marginBottom:0}}>
+      Ten nawyk pochodzi z wcześniejszego katalogu. Dotychczasowe postępy zostają zachowane; nową uprawę wybierzesz z aktualnej listy.
+    </p>}
     {!canPlant && <p style={{fontSize:13,color:"#5c7867",marginBottom:0}}>
       Następną uprawę będzie można rozpocząć po upływie 14 dni od ostatniego sadzenia.
     </p>}
