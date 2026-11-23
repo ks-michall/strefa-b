@@ -213,7 +213,7 @@ export default function BohaterowiePage(){
     <div className="sb-heroes-inner">
       <header className="sb-heroes-header">
         <div>
-          <p className="sb-small-label" style={{margin:"0 0 10px"}}>STREFA B / BIULETYN OCALAŁYCH</p>
+          <p className="sb-small-label" style={{margin:"0 0 10px"}}>BIULETYN</p>
           <h1>✳ Biuletyn</h1>
           <p>Doceniamy konkretną pomoc i budujemy morale Strefy B. Każde wyróżnienie to +1 morale dla naszej wspólnoty.</p>
         </div>
