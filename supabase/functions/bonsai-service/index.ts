@@ -39,8 +39,7 @@ function daysBetween(a: string,b: string) {
 function days(now: Date) {
   const p = parts(now)
   const today = dayKey(p.year,p.month,p.day)
-  const active = p.hour >= 20 ? today : p.hour < 3 ? addDays(today,-1) : null
-  return { evening: active, planting: active ?? today }
+  return { evening: today, planting: today }
 }
 function reply(payload: unknown,status=200) {
   return Response.json(payload,{status,headers:{"Cache-Control":"private, no-store"}})
@@ -59,12 +58,54 @@ Deno.serve(async (req: Request) => {
     const input: unknown = await req.json()
     if (!input || typeof input !== "object" || Array.isArray(input)) return reply({error:"Bad input"},400)
     const { action, name, habitIndex, cue, treeId, trees, helped, nextTime } = input as Record<string,unknown>
-    if (!validName(name) || !["read","plant","check","import","readReflection","saveReflection"].includes(String(action))) return reply({error:"Bad input"},400)
+    if (!validName(name) || !["read","plant","check","import","readReflection","saveReflection","stats"].includes(String(action))) return reply({error:"Bad input"},400)
     const dbUrl = Deno.env.get("SUPABASE_URL")
     const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
     if (!dbUrl || !secret) throw new Error("Supabase runtime is not configured")
     const db = createClient(dbUrl, secret, { auth: {persistSession:false, autoRefreshToken:false} })
     const current = days(new Date())
+
+    if (action === "stats") {
+      if (name !== "ks. Michał") return reply({error:"Brak dostępu"},403)
+      const {data:allTrees,error:treeError}=await db.from("bonsai_trees")
+        .select("id,student_name,started").limit(5000)
+      if(treeError)throw treeError
+      const {data:allChecks,error:checksError}=await db.from("bonsai_checkins")
+        .select("tree_id,check_day").limit(20000)
+      if(checksError)throw checksError
+      const owned=new Map((allTrees??[]).map(tree=>[tree.id,tree.student_name]))
+      const sorted=new Map<string,string[]>()
+      const weekStart=addDays(current.planting,-6)
+      const weekly=new Set<string>()
+      const returned=new Set<string>()
+      for(const check of allChecks??[]){
+        const owner=owned.get(check.tree_id)
+        if(!owner||owner==="ks. Michał")continue
+        const history=sorted.get(owner)??[]
+        history.push(check.check_day)
+        sorted.set(owner,history)
+        if(check.check_day>=weekStart&&check.check_day<=current.planting)weekly.add(owner)
+      }
+      for(const [student,rawDays] of sorted){
+        const days=[...new Set(rawDays)].sort()
+        for(let i=1;i<days.length;i++){
+          if(days[i]>=weekStart&&days[i]<=current.planting&&daysBetween(days[i-1],days[i])>=3){
+            returned.add(student)
+            break
+          }
+        }
+      }
+      const checksPerTree=new Map<string,number>()
+      for(const check of allChecks??[])checksPerTree.set(check.tree_id,(checksPerTree.get(check.tree_id)??0)+1)
+      const matured=(allTrees??[]).filter(tree=>tree.student_name!=="ks. Michał"
+        &&daysBetween(tree.started,current.planting)>=28)
+      const successful=matured.filter(tree=>(checksPerTree.get(tree.id)??0)>=21).length
+      return reply({stats:{
+        weeklyActive:weekly.size,returnedAfterBreak:returned.size,
+        completedCycles:successful,finishedCycles:matured.length,
+        startedCycles:(allTrees??[]).filter(tree=>tree.student_name!=="ks. Michał").length,
+      }})
+    }
 
     if (action === "read") {
       const {data: records,error} = await db.from("bonsai_trees")
@@ -138,7 +179,6 @@ Deno.serve(async (req: Request) => {
     }
 
     if (action === "check") {
-      if (!current.evening) return reply({error:"Potwierdzanie jest dostępne od 20:00."},409)
       if (!validUuid(treeId)) return reply({error:"Nieprawidłowe drzewko."},400)
       const { data:tree,error:readError } = await db.from("bonsai_trees")
         .select("started").eq("id",treeId).eq("student_name",name).maybeSingle()

@@ -541,3 +541,82 @@ body{background:var(--sb-night);color:#e5ecd9;}
   .sb-frontier-fog-retract,.sb-world-reveal-smoke,.sb-world-reveal-content{animation:none;}
   .sb-world-accordion-chevron,.sb-bio-mission-confirm{transition:none;}
 }
+
+
+/* Daily-use enhancements: one action before adventure. */
+.sb-world-welcome{border:1px solid #729177;background:linear-gradient(125deg,#223f39,#1b3448);
+  border-radius:19px;padding:20px 24px;margin:0 0 17px;color:#eff9e5;}
+.sb-world-welcome h2{font-size:24px;letter-spacing:-.6px;margin:0 0 9px;}
+.sb-world-welcome>p:not(.sb-world-overline){color:#d2e2d4;line-height:1.65;font-size:13px;max-width:720px;}
+.sb-world-welcome-actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:16px;}
+.sb-world-welcome-actions a{background:#d0f3a7;color:#1d392a;padding:11px 16px;border-radius:11px;
+  text-decoration:none;font-weight:850;font-size:13px;}
+.sb-world-welcome-actions button{border:0;background:transparent;color:#b8cabc;text-decoration:underline;font-size:12px;}
+.sb-world-daily{display:flex;justify-content:space-between;align-items:center;gap:14px;
+  border:1px solid #497863;background:linear-gradient(110deg,#223f35,#203b42);
+  border-radius:20px;padding:22px 25px;margin:0 0 20px;box-shadow:0 9px 30px rgba(0,0,0,.13);}
+.sb-world-daily h2{color:#f4ffe9;letter-spacing:-.7px;margin:0 0 8px;font-size:clamp(21px,3vw,27px);}
+.sb-world-daily p:not(.sb-world-overline){font-size:13px;line-height:1.6;color:#d4e5d7;margin:0;}
+.sb-world-daily-action{display:flex;flex-direction:column;align-items:flex-end;gap:12px;flex-shrink:0;}
+.sb-world-daily-action a{background:#c5f19c;border:0;border-radius:11px;padding:13px 18px;
+  color:#19382a;text-decoration:none;font-size:13px;font-weight:900;white-space:nowrap;}
+.sb-world-daily-status{font:800 10px/1.3 ui-monospace,monospace;letter-spacing:.8px;color:#ffe6b5;}
+.sb-world-daily-status.done{color:#caefa5;}
+.sb-bio-impact-card{padding:18px 21px;background:#daefdd;border-radius:15px;
+  border:1px solid #a4d7ad;margin:0 0 15px;color:#21553a;}
+.sb-bio-impact-card>strong{font-size:15px;display:block;color:#20583e;}
+.sb-bio-impact-card>a{display:inline-block;color:#215c39;font-size:12px;
+  font-weight:900;margin-top:12px;text-decoration:underline;}
+.sb-bio-impact-data{margin-top:12px;display:grid;gap:7px;}
+.sb-bio-impact-data>span{color:#46735a;font-size:12px;font-weight:700;}
+.sb-bio-impact-resource{display:flex;justify-content:space-between;align-items:center;gap:10px;
+  color:#24583a;font-size:12px;}
+.sb-bio-impact-resource strong{font-variant-numeric:tabular-nums;}
+.sb-bio-impact-meter{height:8px;background:#bfdac5;border-radius:99px;overflow:hidden;}
+.sb-bio-impact-meter span{display:block;height:100%;border-radius:99px;background:#6da96b;transition:width .3s ease;}
+.sb-bio-impact-data>p{margin:3px 0 0;font-size:11px;color:#456c54;}
+.sb-bio-comeback{border-left:3px solid #c5eaa0;background:#274f43;border-radius:7px;
+  padding:10px 13px;font-weight:750;color:#e1f4da;font-size:13px;line-height:1.6;margin:4px 0 12px;}
+.sb-busola-class-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+.sb-busola-class-grid>div{display:flex;flex-direction:column;gap:8px;background:#e6f4eb;
+  padding:16px;border-radius:14px;}
+.sb-busola-class-grid strong{font-size:31px;color:#1b6542;font-variant-numeric:tabular-nums;}
+.sb-busola-class-grid span{font-size:11px;color:#365e4f;line-height:1.6;}
+.sb-world-quest-documents{border:1px solid #50706d;background:#102836;border-radius:10px;
+  padding:12px 14px;margin:12px 0;}
+.sb-world-quest-documents p{color:#dbeadf!important;font-family:ui-monospace,Consolas,monospace;
+  font-size:11px!important;line-height:1.65;margin:0 0 10px;padding-bottom:9px;border-bottom:1px dashed #57716f;}
+.sb-world-quest-documents p:last-child{margin:0;padding:0;border:0;}
+.sb-world-quest-solve{display:flex;flex-direction:column;align-items:stretch;gap:8px;margin-top:12px;}
+.sb-world-quest-solve label{font-size:11px;font-weight:850;color:#bfdcae;}
+.sb-world-quest-solve input{width:100%;background:#e9f0e6;color:#16352a;
+  border:1px solid #a4c5af;border-radius:10px;padding:11px;font-size:15px;}
+.sb-world-quest-solve>button[type=submit]{background:#c4efa2;color:#173a29;border:0;
+  border-radius:10px;padding:11px 13px;font-weight:900;font-size:12px;}
+.sb-world-quest-solve .sb-world-quest-hint{border:1px solid #516e69;border-radius:9px;
+  background:transparent;color:#c4ddc9;font-size:11px;padding:9px;}
+.sb-world-quest-hint-text{font-size:11px!important;color:#d0efb6!important;padding:9px;
+  background:#284438;border-radius:8px;margin:0!important;}
+.sb-world-quest-solve small[role=alert]{color:#ffbdb8;font-size:11px;}
+@media(max-width:720px){
+ .sb-world-daily{padding:18px;align-items:stretch;flex-direction:column;}
+ .sb-world-daily-action{align-items:stretch;gap:9px;}
+ .sb-world-daily-action a{text-align:center;}
+ .sb-busola-class-grid{grid-template-columns:1fr;}
+ .sb-world-welcome{padding:19px;}
+}
+@media(prefers-reduced-motion:reduce){.sb-bio-impact-meter span{transition:none;}}
+
+/* Good actions deserve the spotlight more than the counters. */
+.sb-heroes-page .sb-heroes-story{
+  background:linear-gradient(135deg,#27473c,#253f48 70%,#354a43);
+  border:1px solid #6d9a7e;color:#f2f9e9;padding:26px 28px;
+  box-shadow:0 15px 35px rgba(4,15,18,.19);margin-bottom:20px;
+}
+.sb-heroes-page .sb-heroes-story .sb-small-label{
+  color:#c8f3a8!important;font-size:11px;letter-spacing:1.1px;
+}
+.sb-heroes-page .sb-heroes-story .sb-heroes-story-text{
+  font-size:clamp(18px,2.9vw,23px);line-height:1.52;color:#f4ffe9;
+}
+.sb-heroes-page .sb-heroes-story span{color:#c9dfcf;}

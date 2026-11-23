@@ -63,6 +63,31 @@ export const WORLD_TRANSMISSIONS=[
   ]},
 ] as const
 
+/** Neutral weekly patrol transmissions beyond the opening four chapters.
+ * They continue the atmosphere without revealing evidence in still-locked sectors.
+ * The actual investigation and ending remain tied to class-wide discoveries.
+ */
+const PATROL_MESSAGES=[
+ {title:"Głos za murem",body:["Zwiadowcy wrócili z obserwacji najbliższych ruin. Na skraju widocznego terenu odnaleźli świeże ślady, których nie było na poprzednim patrolu.","Ktoś jeszcze może korzystać z Bezdroży. Brakuje danych, by ustalić kto. Strefa B potrzebuje więcej zapasów na dłuższą wyprawę."]},
+ {title:"Nocny patrol",body:["W nocy na północnym niebie przez chwilę migało pojedyncze światło. Świadkowie nie zgadzają się co do kierunku.","Dyżurny zanotował to wydarzenie, ale odmawia wskazania źródła bez dokładniejszego rozpoznania terenu."]},
+ {title:"Znaki na szlaku",body:["Patrol znalazł trzy kamienie ułożone w równy trójkąt. Ktoś mógł zostawić znak dla następnej grupy wędrowców.","Nie wiemy, czy to ostrzeżenie, wskazówka czy przypadek. Osada gromadzi zasoby przed następną wyprawą."]},
+ {title:"Cisza w eterze",body:["Radiostacja odebrała szum o nietypowym rytmie. Nie udało się odczytać słów ani potwierdzić, czy ktokolwiek nadawał.","W raporcie technika pojawia się jedno zdanie: «Nie dopowiadajmy tego, czego jeszcze nie wiemy»."]},
+ {title:"Porzucone ślady",body:["Ulewa odsłoniła na poboczu fragment starej metalowej tablicy. Nie ma na niej nazwy miejsca, tylko zatarty symbol.","Dalsza droga biegnie przez obszar ukryty pod mgłą. Nie podejmujemy wyprawy bez odpowiednich zapasów."]},
+ {title:"Warta o świcie",body:["Wczesnym rankiem wartownik widział cień przesuwający się między ruinami. Drugi obserwator niczego nie zauważył.","Strefa B nie wydaje pochopnych rozkazów. Zapis trafia do dziennika, a zwiadowcy przygotowują kolejny rekonesans."]},
+ {title:"Nieznany odgłos",body:["Poza widocznym terenem rozległ się metaliczny huk. Echo wracało przez kilkanaście sekund.","Czy uruchomiono dawną maszynę? A może zawalił się opuszczony budynek? Bez wyprawy pozostają tylko pytania."]},
+ {title:"Dopisek do mapy",body:["Kartograf dostrzegł, że jeden z dawnych traktów nie zgadza się z zapisami ocalałych map. Ktoś mógł zmienić jego przebieg.","Na razie oznaczyliśmy teren znakiem zapytania. Prawdę poznamy, gdy Strefa B sięgnie dalej."]},
+] as const
+
+function patrolMondayUtc(week:number){
+  // Convert each Monday at 18:00 Warsaw time separately: DST can change.
+  const noonUtc=new Date(Date.UTC(2026,11,21+week*7,12))
+  const offsetPart=new Intl.DateTimeFormat("en-GB",{
+    timeZone:"Europe/Warsaw",timeZoneName:"shortOffset",
+  }).formatToParts(noonUtc).find(p=>p.type==="timeZoneName")?.value??"GMT+1"
+  const hour=Number(offsetPart.match(/GMT([+-]\d+)/)?.[1]??"1")
+  return Date.UTC(noonUtc.getUTCFullYear(),noonUtc.getUTCMonth(),noonUtc.getUTCDate(),18-hour)
+}
+
 export function nextExpedition(state:WorldState){
   const found=new Set(state.unlocked.map(x=>x.sector))
   return WORLD_SECTORS.find(s=>s.id!=="baza"&&!found.has(s.id))??null
@@ -72,6 +97,18 @@ export function worldEvents(state:WorldState):WorldEvent[]{
   const weekly:WorldEvent[]=WORLD_TRANSMISSIONS
     .filter(e=>Date.parse(e.at)<=now)
     .map(e=>({...e,kind:"transmission" as const,body:[...e.body]}))
+  const finale=state.unlocked.find(item=>item.sector==="wezel")
+  const finaleAt=finale?Date.parse(finale.unlocked_at):Infinity
+  for(let week=0;week<52;week++){
+    const time=patrolMondayUtc(week)
+    if(time>now||time>finaleAt)break
+    const episode=PATROL_MESSAGES[week%PATROL_MESSAGES.length]
+    weekly.push({
+      id:"patrol-"+(week+5),kind:"transmission",at:new Date(time).toISOString(),
+      eyebrow:"RAPORT PATROLU • TYDZIEŃ "+(week+5),
+      title:episode.title,body:[...episode.body],
+    })
+  }
   const discovered:WorldEvent[]=state.unlocked.flatMap(item=>{
     const sector=WORLD_SECTORS.find(s=>s.id===item.sector)
     if(!sector)return []

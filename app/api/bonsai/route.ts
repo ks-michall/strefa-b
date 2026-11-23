@@ -22,6 +22,13 @@ function sameOrigin(request: NextRequest): boolean {
 export async function GET(request: NextRequest) {
   const session = await getLoggedInSession()
   if (!session || session.mode !== "full") return noStore({error:"Brak dostępu."},401)
+  if(request.nextUrl.searchParams.get("summary")==="1"){
+    if(session.name!=="ks. Michał")return noStore({error:"Brak dostępu."},403)
+    try{
+      const result=await bonsaiRequest("stats",session.name)
+      return noStore({stats:result.stats??null})
+    }catch{return noStore({error:"Nie udało się pobrać statystyk klasy."},503)}
+  }
   const requested = request.nextUrl.searchParams.get("student")
   if (requested && (!students.some(student => student === requested) ||
       (requested !== session.name && session.name !== "ks. Michał"))) {

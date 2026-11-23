@@ -9,17 +9,30 @@ import {WORLD_SECTORS,WORLD_TRANSMISSIONS,WORLD_EMPTY,worldEvents,nextExpedition
 
 const sidequests=[
   {id:"q-pompa",sector:"przepompownia",name:"Dziennik dyżurnego",
-    question:"Co wydarzyło się wcześniej?",answers:["Wielka Cisza","Ręczne odłączenie B-03","Odnalezienie mapy"],
-    correct:1,reveal:"O godzinie 03:16 ktoś świadomie odłączył lokalną sieć. Katastrofa nastąpiła minutę później. Odłączenie mogło być próbą ratunku."},
-  {id:"q-radio",sector:"wieza",name:"Przechwycona rozmowa",
-    question:"Jakiego oznaczenia użyła nieznajoma, zanim zerwała połączenie?",
-    answers:["B-03","R-99","W-17"],correct:0,
-    reveal:"Oznaczenie B-03 jest znane także poza Strefą B. Nieznajoma nie odrzuciła rozmowy przypadkowo — rozpoznała naszą osadę."},
-  {id:"q-archiwum",sector:"archiwum",name:"Sprawa KASKADA",
-    question:"Jak nazywał się system, którego awarie wywołały reakcję łańcuchową?",
-    answers:["LATARNIA","KASKADA","BEZDROŻA"],correct:1,
-    reveal:"Usterka węzła KASKADA przenosiła się dalej. Odcięcie B-03 mogło ocalić Strefę B, ale odizolowało inne społeczności."},
+    documents:["DZIENNIK 1: 03:17 — zanik łączności w całym regionie.",
+      "DZIENNIK 2: 03:16 — operator ręcznie odłączył sektor B-03."],
+    question:"O której godzinie odłączono sektor B-03? Wpisz godzinę z dokumentu.",
+    code:"03:16",hint:"Wydarzenie, którego szukasz, zapisano w drugim dzienniku.",
+    reveal:"Odłączenie nastąpiło minutę PRZED Wielką Ciszą. To nie jest zwykły zbieg okoliczności."},
+  {id:"q-radio",sector:"wieza",name:"Szyfr na obudowie nadajnika",
+    documents:["Odnaleziono znak: C-14.",
+      "Notatka technika: «Przesuń każdą literę i cyfrę o jedno miejsce WSTECZ, żeby odczytać identyfikator».",
+      "Przykład: D-25 → C-14."],
+    question:"Jak brzmi prawdziwy identyfikator nadajnika? Wpisz kod.",
+    code:"B-03",hint:"C cofasz do B, a 1 i 4 również o jeden wstecz.",
+    reveal:"Nadajnik ma oznaczenie B-03 — to ten sam identyfikator, którego używają inni ocaleni wobec Strefy B."},
+  {id:"q-archiwum",sector:"archiwum",name:"Ostatnie słowo",
+    documents:["W raporcie ocalał tylko ciąg: LBTLBEB.",
+      "Na okładce widnieje instrukcja: «Każdą literę przesunięto o jedno miejsce w PRAWO w alfabecie».",
+      "Przykład: EPN = DOM."],
+    question:"Odczytaj nazwę systemu, cofając litery o jedno miejsce.",
+    code:"KASKADA",hint:"L to K, B to A. Odczytaj pozostałe litery podobnie.",
+    reveal:"KASKADA — system infrastruktury. To jego błędy mogły rozprzestrzenić awarię na cały region."},
 ] as const
+
+function normalizeSolution(value:string){
+  return value.normalize("NFKD").toLowerCase().replace(/[^a-z0-9]/g,"")
+}
 
 function dateLabel(value:string){
   return new Intl.DateTimeFormat("pl-PL",{
@@ -36,7 +49,9 @@ export default function BezdrozaPage(){
   const [openEvent,setOpenEvent]=useState<WorldEvent|null>(null)
   const [seen,setSeen]=useState<string[]>([])
   const [completed,setCompleted]=useState<string[]>([])
-  const [quizAnswers,setQuizAnswers]=useState<Record<string,number>>({})
+  const [questAnswers,setQuestAnswers]=useState<Record<string,string>>({})
+  const [questWrong,setQuestWrong]=useState<string|null>(null)
+  const [questHints,setQuestHints]=useState<string[]>([])
   const discoveryRef=useRef<string|null>(null)
   const logDetails=useRef<HTMLDetailsElement>(null)
 
@@ -127,14 +142,15 @@ export default function BezdrozaPage(){
     void load()
   }
 
-  function solve(id:string,choice:number){
-    setQuizAnswers(prev=>({...prev,[id]:choice}))
+  function solve(id:string){
     const quest=sidequests.find(q=>q.id===id)
-    if(quest&&choice===quest.correct){
+    if(!quest)return
+    if(normalizeSolution(questAnswers[id]||"")===normalizeSolution(quest.code)){
       const solved=[...new Set([...completed,id])]
       setCompleted(solved)
+      setQuestWrong(null)
       try{localStorage.setItem("sb-world-quests:"+name,JSON.stringify(solved))}catch{}
-    }
+    }else setQuestWrong(id)
   }
 
   return <main className="sb-world sb-world-expedition">
@@ -149,7 +165,7 @@ export default function BezdrozaPage(){
           <h1>Bezdroża<span className="sb-green-dot">.</span></h1>
           <p>Wspólnie zdobywamy zasoby, odkrywamy teren i szukamy prawdy o Wielkiej Ciszy.</p>
         </div>
-        <div className="sb-world-season"><span>ODCINEK</span><strong>{String(Math.max(1,storyProgress)).padStart(2,"0")}/04</strong><small>Transmisje uwalniane automatycznie</small></div>
+        <div className="sb-world-season"><span>TRANSMISJE</span><strong>{String(storyProgress).padStart(2,"0")}</strong><small>Co poniedziałek nowy meldunek, a odkrycia po osiągnięciu progów.</small></div>
       </header>
 
       <section className="sb-world-resource-bar" aria-label="Wspólne zasoby Strefy B">
@@ -267,14 +283,22 @@ export default function BezdrozaPage(){
               <h3>{ready?quest.name:"Zaszyfrowany dokument"}</h3>
               {!ready?<p>Odblokuj odpowiedni sektor Bezdroży, żeby poznać zagadkę.</p>:
               <>
-                <p>{quest.question}</p>
-                {!done&&<div className="sb-world-quest-options">
-                  {quest.answers.map((answer,i)=><button key={answer} type="button"
-                    className={quizAnswers[quest.id]===i&&i!==quest.correct?"wrong":""}
-                    onClick={()=>solve(quest.id,i)}>{answer}</button>)}
-                </div>}
+                <div className="sb-world-quest-documents">
+                  {quest.documents.map((document,i)=><p key={i}>{document}</p>)}
+                </div>
+                <p><strong>{quest.question}</strong></p>
+                {!done&&<form className="sb-world-quest-solve" onSubmit={event=>{event.preventDefault();solve(quest.id)}}>
+                  <label htmlFor={"answer-"+quest.id}>Twoje rozwiązanie</label>
+                  <input id={"answer-"+quest.id} value={questAnswers[quest.id]||""} maxLength={60}
+                    onChange={event=>{setQuestAnswers(old=>({...old,[quest.id]:event.target.value}));setQuestWrong(null)}}
+                    placeholder="Wpisz odpowiedź…" autoComplete="off"/>
+                  <button type="submit">Sprawdź trop ↗</button>
+                  {questWrong===quest.id&&<small role="alert">Jeszcze nie. Porównaj informacje z dokumentów.</small>}
+                  <button type="button" className="sb-world-quest-hint"
+                    onClick={()=>setQuestHints(old=>[...new Set([...old,quest.id])])}>Pokaż wskazówkę</button>
+                  {questHints.includes(quest.id)&&<p className="sb-world-quest-hint-text">{quest.hint}</p>}
+                </form>}
                 {done&&<div className="sb-world-quest-reveal"><strong>✦ ODSZYFROWANO</strong><p>{quest.reveal}</p></div>}
-                {quizAnswers[quest.id]!==undefined&&!done&&<small className="sb-world-muted">To nie ten trop. Spróbuj ponownie.</small>}
               </>}
             </article>
           })}

@@ -7,6 +7,7 @@ import { harvestBadges, RECOGNITION_THRESHOLD } from "../../lib/bonsai-rewards"
 import { addDays, currentPlantingDay, daysBetween, readableDate } from "../../lib/bonsai-time"
 import { sortedStudents } from "../../lib/students"
 
+type ClassStats={weeklyActive:number;returnedAfterBreak:number;completedCycles:number;finishedCycles:number;startedCycles:number}
 type Tree = { id: string; habitIndex: number; cue: string; started: string; checks: string[] }
 const pupils = sortedStudents.filter(name => name !== "ks. Michał")
 const surface: React.CSSProperties = {
@@ -27,10 +28,27 @@ function Calendar({tree,cutoff}:{tree:Tree;cutoff:string}) {
 }
 export default function BusolaPage() {
   const [student,setStudent]=useState("")
+  const [classStats,setClassStats]=useState<ClassStats|null>(null)
+  const [classStatsError,setClassStatsError]=useState("")
   const [trees,setTrees]=useState<Tree[]>([])
   const [loading,setLoading]=useState(false)
   const [error,setError]=useState("")
   const [asOf,setAsOf]=useState("")
+  useEffect(()=>{
+    let active=true
+    async function readClass(){
+      try{
+        const response=await fetch("/api/bonsai?summary=1",{cache:"no-store"})
+        const data=await response.json()
+        if(!response.ok)throw Error(data.error||"Nie udało się pobrać statystyk klasy.")
+        if(active&&data.stats)setClassStats(data.stats)
+      }catch(error){
+        if(active)setClassStatsError(error instanceof Error?error.message:"Błąd odczytu statystyk.")
+      }
+    }
+    void readClass()
+    return()=>{active=false}
+  },[])
   useEffect(()=>{
     const update=()=>setAsOf(currentPlantingDay(new Date()))
     update()
@@ -75,6 +93,20 @@ export default function BusolaPage() {
           Wybierz ucznia: zobaczysz jego aktualne nawyki, regularność i zakończone wyzwania wymagające rozmowy.
         </p>
       </header>
+      <section className="sb-surface" style={{...surface,marginBottom:18}} aria-label="Zbiorcza aktywność klasy">
+        <h2 style={{margin:"0 0 6px",fontSize:22}}>Klasa — ostatnie 7 dni</h2>
+        <p style={{margin:"0 0 18px",color:"#607786",lineHeight:1.6,fontSize:13}}>
+          Dane wyłącznie dla wychowawcy. Bez rankingu uczniów i bez porównywania ich wyników.
+        </p>
+        {classStatsError&&<p role="alert" style={{color:"#9a2d39"}}>{classStatsError}</p>}
+        {classStats?<div className="sb-busola-class-grid">
+          <div><strong>{classStats.weeklyActive}</strong><span>uczniów aktywnych w ostatnich 7 dniach</span></div>
+          <div><strong>{classStats.returnedAfterBreak}</strong><span>uczniów, którzy wrócili po przerwie co najmniej 2 dni</span></div>
+          <div><strong>{classStats.finishedCycles?Math.round(classStats.completedCycles/classStats.finishedCycles*100):"—"}{classStats.finishedCycles?"%":""}</strong>
+            <span>ukończonych z wynikiem 21/28 spośród {classStats.finishedCycles} zakończonych czasowo upraw</span>
+          </div>
+        </div>:!classStatsError?<p>Pobieram zbiorcze wyniki…</p>:null}
+      </section>
       <section className="sb-surface" style={{...surface,marginBottom:18}}>
         <label htmlFor="student" style={{display:"block",fontWeight:700,marginBottom:10}}>Wybierz ucznia</label>
         <select id="student" value={student} onChange={event=>setStudent(event.target.value)}
