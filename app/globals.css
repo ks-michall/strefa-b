@@ -439,3 +439,26 @@ input::placeholder,textarea::placeholder { color:#718098; opacity:1; }
 @media(prefers-reduced-motion:reduce){
   .sb-heroes-progress span,.sb-heroes-primary {transition:none!important;}
 }
+
+/* Profile dropdown occupies the header status position on every authenticated page. */
+.sb-header-profile{margin-left:auto;min-width:0;flex-shrink:1;}
+.sb-profile-trigger{
+  display:flex;align-items:center;gap:9px;min-width:0;max-width:100%;
+  padding:5px 12px 5px 5px;border-radius:999px;
+  border:1px solid #466a53;background:#182f32;color:#e8f5db;
+  box-shadow:0 5px 17px rgba(14,33,33,.22);font-weight:750;font-size:14px;
+  transition:border-color .18s ease,background .18s ease;
+}
+.sb-profile-trigger:hover{background:#25453e;border-color:#a6d889;}
+.sb-profile-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:165px;}
+.sb-profile-chevron{color:#c5ef9b;font-size:11px;flex-shrink:0;}
+@media(max-width:450px){
+  .sb-site-inner{gap:10px;}
+  .sb-profile-trigger{gap:6px;padding-right:9px;font-size:12px;}
+  .sb-profile-name{max-width:83px;}
+}
+@media(max-width:360px){
+  .sb-brand{gap:8px;font-size:18px;}
+  .sb-brand-caption{letter-spacing:.7px;font-size:8px;}
+  .sb-profile-name{max-width:64px;}
+}
