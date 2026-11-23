@@ -463,7 +463,7 @@ export default function GaleriaPage() {
             }}
           >
             <div style={{ maxWidth: "620px" }}>
-              <p className="sb-small-label" style={{margin:"0 0 10px"}}>STREFA B / ARCHIWUM WSPOMNIEŃ</p>
+              <p className="sb-small-label" style={{margin:"0 0 10px"}}>BAZA ARCHIWALNA</p>
               <h1
                 style={{
                   margin: 0,
