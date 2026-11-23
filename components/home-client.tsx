@@ -152,9 +152,9 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
       </section>
 
       <section className="sb-world-home-supplies" aria-label="Wspólny dorobek Strefy B">
-        <div><strong>{world?.food??"—"}</strong><span><small>ŻYWNOŚĆ</small><br/>Z upraw Biostacji</span></div>
-        <div><strong>{world?.morale??"—"}</strong><span><small>MORALE</small><br/>Z wpisów Biuletynu</span></div>
-        <div><strong>{world?world.unlocked.length+1:"—"}</strong><span><small>ODKRYCIA</small><br/>{expedition?"Następny sektor czeka":"Strefa B poszerzona"}</span></div>
+        <div><strong>{world?.food??"…"}</strong><span><small>ŻYWNOŚĆ</small><br/>Z upraw Biostacji</span></div>
+        <div><strong>{world?.morale??"…"}</strong><span><small>MORALE</small><br/>Z wpisów Biuletynu</span></div>
+        <div><strong>{world?world.unlocked.length+1:"…"}</strong><span><small>ODKRYCIA</small><br/>{expedition?"Następny sektor czeka":"Strefa B poszerzona"}</span></div>
       </section>
 
       {teacherAccess && currentUser==="ks. Michał"&&<Link href="/busola" className="sb-teacher-link"
