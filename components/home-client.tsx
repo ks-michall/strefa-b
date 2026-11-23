@@ -2,19 +2,17 @@
 
 import Link from "next/link"
 import { useEffect,useMemo,useState } from "react"
-import { BiostationPlot } from "../components/biostation-plot"
 import { habits } from "../lib/bonsai-habits"
 import { currentPlantingDay,daysBetween } from "../lib/bonsai-time"
 import { WORLD_EMPTY,worldEvents,nextExpedition,type WorldState } from "../lib/world-story"
 
 type TreeBrief={started:string;habitIndex:number;checks?:string[]}
-type BioBrief={count:number;hasTrees:boolean;active:boolean;doneToday:boolean;habit:string;action:string}
+type BioBrief={hasTrees:boolean;active:boolean;doneToday:boolean;habit:string;action:string}
 
 export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
   const [currentUser,setCurrentUser]=useState("")
   const [userLoaded,setUserLoaded]=useState(false)
-  const [newRecognition,setNewRecognition]=useState(false)
-  const [bio,setBio]=useState<BioBrief>({count:0,hasTrees:false,active:false,doneToday:false,habit:"",action:""})
+  const [bio,setBio]=useState<BioBrief>({hasTrees:false,active:false,doneToday:false,habit:"",action:""})
   const [bioLoaded,setBioLoaded]=useState(false)
   const [showWelcome,setShowWelcome]=useState(false)
   const [world,setWorld]=useState<WorldState|null>(null)
@@ -47,7 +45,7 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
             if(latest){
               const habit=habits[latest.habitIndex]
               const checked=Array.isArray(latest.checks)?latest.checks:[]
-              setBio({count:checked.length,hasTrees:true,active:!!current,
+              setBio({hasTrees:true,active:!!current,
                 doneToday:checked.includes(today),habit:habit?.title||"Twoja uprawa",action:habit?.action||""})
             }else if(me.name!=="ks. Michał"){
               try{setShowWelcome(localStorage.getItem("sb-intro-seen:"+me.name)!=="1")}catch{}
@@ -82,26 +80,6 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
     return()=>{active=false;window.clearInterval(timer)}
   },[currentUser])
 
-  useEffect(()=>{
-    if(!currentUser)return
-    let active=true
-    async function checkRecognition(){
-      try{
-        const response=await fetch("/api/thanks?summary=1",{cache:"no-store"})
-        if(!response.ok)return
-        const data=await response.json()
-        if(!active||!data.latestReceived?.created_at)return
-        const latest=Date.parse(data.latestReceived.created_at)
-        let seen=0
-        try{const stored=localStorage.getItem("sb_heroes_seen:"+currentUser);seen=stored?Date.parse(stored):0}catch{}
-        if(Number.isFinite(latest)&&latest>Date.now()-30*86400000&&latest>seen)
-          setNewRecognition(true)
-      }catch{/* Odczyt powiadomień nie blokuje strony. */}
-    }
-    void checkRecognition()
-    return()=>{active=false}
-  },[currentUser])
-
   function dismissWelcome(){
     setShowWelcome(false)
     try{localStorage.setItem("sb-intro-seen:"+currentUser,"1")}catch{}
@@ -121,8 +99,7 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
   return <main className="sb-world-home">
     <div className="sb-world-container">
       <div className="sb-world-eyebrow">
-        <span className="sb-world-live-dot"/> STREFA B / CENTRUM OPERACYJNE
-        <span className="sb-world-eyebrow-right">SEZON 01 • WIELKA CISZA</span>
+        <span className="sb-world-live-dot"/> CENTRUM OPERACYJNE
       </div>
       <header className="sb-world-home-top">
         <div>
@@ -180,29 +157,6 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
         <div><strong>{world?world.unlocked.length+1:"—"}</strong><span><small>ODKRYCIA</small><br/>{expedition?"Następny sektor czeka":"Strefa B poszerzona"}</span></div>
       </section>
 
-      <p className="sb-world-overline" style={{margin:"29px 0 12px"}}>CZTERY FILARY STREFY B</p>
-      <section className="sb-world-module-grid" aria-label="Moduły Strefy B">
-        <Link href="/bonsai" className="sb-world-module sb-world-module-bio">
-          <div className="sb-world-module-top"><span className="sb-world-module-num">01 / WYTRWAŁOŚĆ</span><span className="sb-world-module-symbol">✺</span></div>
-          <BiostationPlot count={bio.count} compact/>
-          <div><h2>Biostacja</h2><p>{bio.hasTrees?`Aktywna uprawa: ${bio.habit}. ${bio.action}`:
-            "Zbuduj pierwszy nawyk. Każdy potwierdzony dzień dostarcza żywność całej Strefie B."}</p></div>
-        </Link>
-        <Link href={newRecognition?"/podziekowania?widok=dla-mnie":"/podziekowania"}
-          className="sb-world-module sb-world-module-bulletin">
-          <div className="sb-world-module-top"><span className="sb-world-module-num">02 / WSPÓLNOTA</span><span className="sb-world-module-symbol">✳</span></div>
-          <div><h2>Biuletyn</h2><p>{newRecognition?"Ktoś zauważył Twoje dobro! Otwórz nowy wpis.":
-            "Zobacz, kto pomógł innym. Każde wyróżnienie wzmacnia morale społeczności."}</p></div>
-        </Link>
-        <Link href="/galeria" className="sb-world-module sb-world-module-archive">
-          <div className="sb-world-module-top"><span className="sb-world-module-num">03 / PAMIĘĆ</span><span className="sb-world-module-symbol">▤</span></div>
-          <div><h2>Baza Archiwalna</h2><p>Fotografie i zapiski ze wspólnego życia. Dowody, że Strefa B to ludzie, a nie tylko mury.</p></div>
-        </Link>
-        <Link href="/bezdroza" className="sb-world-module sb-world-module-frontier">
-          <div className="sb-world-module-top"><span className="sb-world-module-num">04 / EKSPEDYCJE</span><span className="sb-world-module-symbol">⌖</span></div>
-          <div><h2>Bezdroża</h2><p>Mapa zakrytego świata, zasoby całej klasy, transmisje i odkrycia.</p></div>
-        </Link>
-      </section>
       {teacherAccess && currentUser==="ks. Michał"&&<Link href="/busola" className="sb-teacher-link"
         style={{background:"#223c3c",borderColor:"#446657",color:"#e3f2db",marginTop:20}}>
         <span className="sb-teacher-link-icon" aria-hidden="true">🧭</span>
