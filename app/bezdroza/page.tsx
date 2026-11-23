@@ -155,12 +155,8 @@ export default function BezdrozaPage(){
 
   return <main className="sb-world sb-world-expedition">
     <div className="sb-world-container">
-      <div className="sb-world-eyebrow">
-        <span className="sb-world-live-dot"/> BEZDROŻA
-      </div>
-      <header className="sb-frontier-header">
+      <header className="sb-frontier-header sb-module-heading">
         <div>
-          <p className="sb-world-overline">DZIAŁ OPERACYJNY // 04</p>
           <h1>Bezdroża<span className="sb-green-dot">.</span></h1>
           <p>Wspólnie zdobywamy zasoby, odkrywamy teren i szukamy prawdy o Wielkiej Ciszy.</p>
         </div>
