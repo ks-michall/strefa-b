@@ -26,18 +26,14 @@ export function ProfileMenu({name,onLogout,loggingOut}:{
     void fetchAvatar()
     return()=>{active=false}
   },[name])
-  return <div style={{position:"relative",zIndex:30}}>
+  return <div className="sb-header-profile" style={{position:"relative",zIndex:30}}>
     <button type="button" aria-expanded={open} aria-haspopup="menu"
       onClick={()=>setOpen(prev=>!prev)}
-      style={{
-        display:"flex",gap:9,alignItems:"center",padding:"5px 11px 5px 5px",
-        border:"1px solid #e2e8f0",background:"white",borderRadius:999,
-        boxShadow:"0 8px 20px rgba(0,0,0,.06)",cursor:"pointer",
-        fontWeight:700,color:"#374151",fontSize:15,
-      }}>
+      className="sb-profile-trigger">
+
       <AvatarFace name={name} avatar={avatar} size={37}/>
-      <span>Witaj {name}</span>
-      <span style={{color:"#64748b",fontSize:12}}>{open?"▲":"▼"}</span>
+      <span className="sb-profile-name">{name}</span>
+      <span className="sb-profile-chevron" aria-hidden="true">{open?"▲":"▼"}</span>
     </button>
     {open && <>
       <button type="button" aria-label="Zamknij menu" onClick={()=>setOpen(false)}
