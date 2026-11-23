@@ -55,6 +55,7 @@ Deno.serve(async req=>{
       })
       if(error){
         if(error.message.includes("MONTHLY_LIMIT"))return reply({error:"Możesz dodać maksymalnie 7 wyróżnień w miesiącu."},409)
+        if(error.message.includes("DUPLICATE_THANK"))return reply({error:"Podobne wyróżnienie dla tej osoby zostało już dodane w tym miesiącu. Opisz inne konkretne zdarzenie."},409)
         if(error.message.includes("PERSON_LIMIT"))return reply({error:"Tej samej osobie możesz podziękować najwyżej 2 razy w miesiącu."},409)
         if(error.message.includes("INVALID_THANK"))return reply({error:"Sprawdź treść i osobę wyróżnienia."},400)
         throw error
