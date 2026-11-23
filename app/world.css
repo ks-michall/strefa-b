@@ -409,3 +409,135 @@ body{background:var(--sb-night);color:#e5ecd9;}
 .sb-bio-page .sb-bio-harvest{color:#214b34 !important;}
 .sb-bio-page .sb-bio-harvest h2,.sb-bio-page .sb-bio-harvest strong{color:#214b34;}
 .sb-bio-page .sb-bio-footer{color:#b8d1c2 !important;line-height:1.6;}
+
+
+/* === Season 1 UX: mission first, map first, surprise first === */
+.sb-bio-unified-mission {max-width:100%;padding:27px 28px 22px;}
+.sb-bio-unified-mission .sb-bio-plot.compact{
+  max-width:560px;width:100%;margin:18px auto 15px;
+}
+.sb-bio-unified-mission .sb-bio-plot.compact svg{border-radius:18px;}
+.sb-bio-mission-progress{display:flex;justify-content:space-between;align-items:center;
+  gap:9px;flex-wrap:wrap;margin:14px 0 16px;padding-top:13px;
+  border-top:1px solid rgba(206,239,198,.26);color:#d4eecb;}
+.sb-bio-mission-progress strong{font-size:23px;font-variant-numeric:tabular-nums;}
+.sb-bio-mission-progress strong small{font-size:12px;font-weight:650;color:#bfdbc3;}
+.sb-bio-mission-progress>span{font-size:12px;color:#b8d5c1;}
+.sb-bio-mission-confirm{display:block;width:100%;border:0;border-radius:14px;
+  padding:17px 15px;background:#c5f39a;color:#193524;font-size:clamp(14px,2.6vw,17px);
+  font-weight:900;box-shadow:0 11px 30px rgba(117,213,124,.16);
+  cursor:pointer;transition:transform .16s ease,background .16s ease;}
+.sb-bio-mission-confirm:not(:disabled):hover{background:#d5ffb1;transform:translateY(-2px);}
+.sb-bio-mission-confirm:disabled{opacity:.67;cursor:wait;}
+.sb-bio-mission-complete{display:flex;flex-direction:column;gap:6px;
+  background:#d7f2d6;border:1px solid #a3d6a6;border-radius:13px;
+  padding:16px 18px;color:#1e5836;}
+.sb-bio-mission-complete strong{font-size:16px;}
+.sb-bio-mission-complete span{font-size:12px;}
+.sb-bio-mission-wait{display:flex;align-items:center;justify-content:space-between;
+  gap:12px;flex-wrap:wrap;border:1px solid #466c63;border-radius:13px;padding:14px 18px;
+  background:#172f36;color:#d5e7d6;font-size:13px;}
+.sb-bio-mission-wait strong{font-size:23px;color:#d4f4ad;font-variant-numeric:tabular-nums;}
+.sb-bio-mission-encourage{font-size:12px;color:#b1cbbb;line-height:1.55;text-align:center;margin:13px 0 0;}
+.sb-world-expedition .sb-world-eyebrow{margin-bottom:23px;}
+.sb-world-expedition .sb-frontier-header{margin-bottom:18px;}
+.sb-world-expedition .sb-world-season{padding:11px 15px;}
+.sb-world-expedition .sb-world-resource-bar{margin-bottom:19px;}
+.sb-frontier-stage{position:relative;isolation:isolate;}
+.sb-frontier-fog-retract{position:absolute;z-index:5;width:170px;height:170px;
+  pointer-events:none;transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(circle,rgba(221,247,174,.25) 0%,
+    rgba(151,197,160,.12) 32%,rgba(217,232,227,.41) 57%,transparent 77%);
+  box-shadow:0 0 0 1px rgba(191,238,167,.2),0 0 45px rgba(188,236,164,.25);
+  animation:sb-frontier-fog-recede 2.7s ease-out forwards;}
+@keyframes sb-frontier-fog-recede{
+  0%{transform:translate(-50%,-50%) scale(.4);opacity:1;filter:blur(13px);}
+  45%{opacity:.85;}
+  100%{transform:translate(-50%,-50%) scale(4.4);opacity:0;filter:blur(42px);}
+}
+.sb-world-below-map.sb-world-below-map-lean{display:flex;flex-direction:column;gap:12px;}
+.sb-world-below-map-lean .sb-world-mission-compact{order:-1;}
+.sb-world-mission-compact{padding:19px 23px;background:linear-gradient(115deg,#24463c,#1d3a3e);
+  display:grid;grid-template-columns:1fr 1.1fr;gap:5px 19px;align-items:center;}
+.sb-world-mission-compact>.sb-world-overline{grid-column:1/-1;margin:0;}
+.sb-world-mission-compact h2{margin:3px 0 4px;font-size:22px;}
+.sb-world-mission-compact>p{margin:0;grid-column:1;line-height:1.5!important;}
+.sb-world-next-goal{grid-column:2;grid-row:2/4;margin:0;padding:0;border:0;display:grid;gap:13px;}
+.sb-world-next-resource{display:grid;grid-template-columns:1fr auto;gap:6px;font-size:11px;}
+.sb-world-next-resource>span{color:#c2e1c7;font-size:10px;font-weight:900;letter-spacing:.7px;}
+.sb-world-next-resource strong{font-size:14px;font-variant-numeric:tabular-nums;color:#f1ffdd;}
+.sb-world-next-resource .sb-frontier-meter{grid-column:1/-1;margin:0;}
+.sb-world-mission-compact .sb-world-mission-links{grid-column:1/-1;margin-top:9px;}
+.sb-world-below-map-lean .sb-world-sector-card{order:1;padding:22px;}
+.sb-world-accordion{border:1px solid #3b555d;border-radius:18px;background:#182b3b;
+  margin-top:17px;overflow:hidden;}
+.sb-world-accordion-heading{display:flex;align-items:center;justify-content:space-between;
+  gap:15px;cursor:pointer;list-style:none;padding:22px 24px;}
+.sb-world-accordion-heading::-webkit-details-marker{display:none;}
+.sb-world-accordion-heading .sb-world-overline{margin-bottom:8px;}
+.sb-world-accordion-heading h2{margin:0 0 5px;color:#f0f7e9;font-size:23px;}
+.sb-world-accordion-heading p:not(.sb-world-overline){margin:0;color:#acc1c0;font-size:12px;line-height:1.5;}
+.sb-world-accordion-side{display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.sb-world-accordion-chevron{font-size:24px;font-weight:800;color:#c4e69a;
+  transition:transform .2s ease;}
+.sb-world-accordion[open] .sb-world-accordion-chevron{transform:rotate(180deg);}
+.sb-world-accordion-content{padding:0 17px 18px;}
+.sb-world-accordion-content .sb-world-log-list{margin-top:8px;}
+.sb-world-accordion-content .sb-world-quest-grid{margin-top:8px;}
+.sb-world-accordion .sb-world-unread{display:inline-block;}
+.sb-world-accordion-heading:focus-visible{outline:2px solid #c1ec9d;outline-offset:-4px;}
+/* The reveal belongs to the shared world, but is acknowledged per device. */
+.sb-world-reveal{position:fixed;z-index:1250;inset:0;overflow:auto;padding:24px;
+  display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% 35%,rgba(33,69,61,.75),rgba(5,13,23,.93) 69%);
+  color:#eef8e9;}
+.sb-world-reveal-smoke{position:absolute;inset:-26%;pointer-events:none;
+  background:radial-gradient(ellipse at 30% 40%,rgba(178,197,183,.4),transparent 30%),
+    radial-gradient(ellipse at 75% 65%,rgba(128,162,149,.3),transparent 36%);
+  filter:blur(24px);animation:sb-world-mist-clear 2.7s ease-out both;}
+@keyframes sb-world-mist-clear{
+  0%{transform:scale(1);opacity:1;}
+  55%{opacity:.55;}
+  100%{transform:scale(1.55);opacity:.08;}
+}
+.sb-world-reveal-content{position:relative;max-width:560px;width:100%;
+  border:1px solid rgba(195,239,159,.56);border-radius:24px;
+  padding:34px 33px;text-align:center;
+  background:linear-gradient(155deg,rgba(26,57,53,.95),rgba(13,30,45,.98));
+  box-shadow:0 0 0 15px rgba(161,217,175,.045),0 26px 100px rgba(0,0,0,.58);
+  animation:sb-world-reveal-enter .65s ease both;}
+@keyframes sb-world-reveal-enter{
+  from{opacity:0;transform:translateY(24px) scale(.98);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+.sb-world-reveal-signal{font:800 10px ui-monospace,monospace;letter-spacing:2px;color:#c7ecaa;}
+.sb-world-reveal-icon{display:block;font-size:66px;color:#d2f9ae;
+  text-shadow:0 0 35px rgba(208,245,176,.38);margin:14px 0 4px;}
+.sb-world-reveal-content h2{color:#f5ffeb;font-size:clamp(30px,6vw,44px);
+  font-weight:900;letter-spacing:-1.4px;margin:6px 0 9px;}
+.sb-world-reveal-sector{color:#cdf5a7!important;font-size:20px!important;font-weight:850!important;}
+.sb-world-reveal-content>p:not(.sb-world-reveal-sector){font-size:14px;line-height:1.65;color:#c3dacd;margin:15px 0 26px;}
+.sb-world-reveal-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;}
+.sb-world-reveal-actions button{border-radius:12px;padding:13px 18px;font-size:13px;font-weight:850;cursor:pointer;}
+.sb-world-reveal-actions button:first-child{background:#c8f19e;border:0;color:#1a3927;}
+.sb-world-reveal-actions button:last-child{background:transparent;border:1px solid #759b85;color:#e2f0e6;}
+@media(max-width:720px){
+  .sb-bio-unified-mission{padding:22px 18px;}
+  .sb-bio-unified-mission .sb-bio-plot.compact{max-width:100%;margin:16px auto;}
+  .sb-world-expedition .sb-frontier-header{gap:12px;}
+  .sb-world-mission-compact{grid-template-columns:1fr;padding:19px;}
+  .sb-world-mission-compact>p,.sb-world-next-goal,.sb-world-mission-compact .sb-world-mission-links{
+    grid-column:1;grid-row:auto;}
+  .sb-world-next-goal{margin:9px 0 0;}
+  .sb-world-accordion-heading{padding:17px 16px;}
+  .sb-world-accordion-heading h2{font-size:19px;}
+  .sb-world-accordion-side{gap:6px;}
+  .sb-world-accordion .sb-world-unread{font-size:10px;padding:6px 9px;}
+  .sb-world-accordion-content{padding:0 11px 14px;}
+  .sb-world-reveal{padding:15px;}
+  .sb-world-reveal-content{padding:29px 19px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .sb-frontier-fog-retract,.sb-world-reveal-smoke,.sb-world-reveal-content{animation:none;}
+  .sb-world-accordion-chevron,.sb-bio-mission-confirm{transition:none;}
+}
