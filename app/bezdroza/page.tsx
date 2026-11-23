@@ -165,7 +165,7 @@ export default function BezdrozaPage(){
           <h1>Bezdroża<span className="sb-green-dot">.</span></h1>
           <p>Wspólnie zdobywamy zasoby, odkrywamy teren i szukamy prawdy o Wielkiej Ciszy.</p>
         </div>
-        <div className="sb-world-season"><span>ODCINEK</span><strong>{String(Math.max(1,storyProgress)).padStart(2,"0")}/04</strong><small>Transmisje uwalniane automatycznie</small></div>
+        <div className="sb-world-season"><span>TRANSMISJE</span><strong>{String(storyProgress).padStart(2,"0")}</strong><small>Co poniedziałek nowy meldunek, a odkrycia po osiągnięciu progów.</small></div>
       </header>
 
       <section className="sb-world-resource-bar" aria-label="Wspólne zasoby Strefy B">
