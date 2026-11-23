@@ -133,7 +133,7 @@ export default function BonsaiPage() {
   async function refresh() {
     const response = await fetch("/api/bonsai", { cache: "no-store" })
     const data = await response.json()
-    if (!response.ok) throw new Error(data.error || "Nie udało się odświeżyć drzewek.")
+    if (!response.ok) throw new Error(data.error || "Nie udało się odświeżyć upraw.")
     setTrees(Array.isArray(data.trees) ? data.trees as BonsaiTree[] : [])
     setCloudError("")
   }
@@ -261,19 +261,40 @@ export default function BonsaiPage() {
       </nav>
 
       {tab === "today" && activeTrees.length>0 && <section className="sb-bio-missions" aria-label="Twoje aktywne nawyki">
-        {activeTrees.map(tree=><div className="sb-bio-active-mission" key={tree.id}>
-          <div className="sb-bio-mission-heading">
-            <span className="sb-bio-signal">◉ TWOJA AKTYWNA MISJA</span>
-            <span>DZIEŃ {Math.min(28,daysBetween(tree.started,plantingDay)+1)} / 28</span>
-          </div>
-          <h2>{habits[tree.habitIndex].title}</h2>
-          <p className="sb-bio-action">{habits[tree.habitIndex].action}</p>
-          <p className="sb-bio-cue">⌁ Twój sygnał: {tree.cue.toLowerCase()}</p>
-          <div className="sb-bio-mission-bottom">
-            <span>{tree.checks.length} potwierdzonych dni</span>
-            <span>{windowDay?"Okno potwierdzeń otwarte":"Potwierdzanie od 20:00"}</span>
-          </div>
-        </div>)}
+        {activeTrees.map(tree=>{
+          const eligible=!!windowDay && daysBetween(tree.started,windowDay)>=0 &&
+            daysBetween(tree.started,windowDay)<GROWTH_DAYS
+          const checked=Boolean(windowDay && tree.checks.includes(windowDay))
+          return <article className="sb-bio-active-mission sb-bio-unified-mission" key={tree.id}>
+            <div className="sb-bio-mission-heading">
+              <span className="sb-bio-signal">◉ TWOJA AKTYWNA MISJA</span>
+              <span>DZIEŃ {Math.min(GROWTH_DAYS,daysBetween(tree.started,plantingDay)+1)} / {GROWTH_DAYS}</span>
+            </div>
+            <h2>{habits[tree.habitIndex].title}</h2>
+            <p className="sb-bio-action">{habits[tree.habitIndex].action}</p>
+            <p className="sb-bio-cue">⌁ Twój sygnał: {tree.cue.toLowerCase()}</p>
+            <BiostationPlot count={tree.checks.length} compact/>
+            <div className="sb-bio-mission-progress">
+              <strong>{tree.checks.length} / 28 <small>potwierdzonych dni</small></strong>
+              <span>Jedno potwierdzenie = +1 żywność</span>
+            </div>
+            {checked
+              ? <div className="sb-bio-mission-complete" role="status">
+                  <strong>✓ Dzisiejszy nawyk potwierdzony!</strong>
+                  <span>Następna możliwość potwierdzenia za {countdown(nextOpening)}</span>
+                </div>
+              : eligible
+                ? <button type="button" onClick={()=>void markDone(tree.id)} disabled={busy}
+                    className="sb-bio-mission-confirm">
+                    {busy?"Zapisuję plon…":"✓ Potwierdź dzisiejszy nawyk · +1 żywność"}
+                  </button>
+                : <div className="sb-bio-mission-wait">
+                    Potwierdzenie dostępne od 20:00
+                    <strong>{countdown(nextOpening)}</strong>
+                  </div>}
+            <p className="sb-bio-mission-encourage">Przerwa nie przekreśla postępu. Liczy się powrót do działania.</p>
+          </article>
+        })}
       </section>}
       {tab === "today" && <div style={{ display: "grid", gap: 16 }}>
         {recentlyFinished && latestFinished && <BonsaiHarvest
@@ -294,37 +315,6 @@ export default function BonsaiPage() {
           <h2 style={{ marginTop: 0 }}>Twoje poprzednie uprawy są zakończone</h2>
           <p>Znajdziesz je w Moim ogrodzie. Nową uprawę możesz rozpocząć po 14 dniach od ostatniej.</p>
         </section>}
-        {activeTrees.map((tree, index) => {
-          const dayIndex = daysBetween(tree.started, plantingDay) + 1
-          const eligible = !!windowDay &&
-            daysBetween(tree.started, windowDay) >= 0 &&
-            daysBetween(tree.started, windowDay) < GROWTH_DAYS
-          const checked = Boolean(windowDay && tree.checks.includes(windowDay))
-          return <section key={tree.id} className="sb-surface" style={surface}>
-            <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 10, color: "#527460" }}>
-              <strong>Uprawa {trees.indexOf(tree) + 1}</strong>
-              <span><strong>Dzień {Math.min(GROWTH_DAYS, dayIndex)} z {GROWTH_DAYS}</strong> · {tree.checks.length} wykonanych dni</span>
-            </div>
-            <BiostationPlot count={tree.checks.length}/>
-            <p className="sb-bio-plot-caption">{habits[tree.habitIndex].title} • {habits[tree.habitIndex].action}</p>
-            
-            <p style={{ textAlign: "center", color: "#5e7969" }}>Mój sygnał: {tree.cue.toLowerCase()}</p>
-            {checked
-              ? <div style={{ textAlign: "center", padding: 15, borderRadius: 14, background: "#c7ead2", color: "#205636", fontWeight: 700 }}>
-                  ✓ Potwierdzone! Następne potwierdzenie od 20:00
-                  <div style={{ fontSize: 20, marginTop: 5, fontVariantNumeric: "tabular-nums" }}>{countdown(nextOpening)}</div>
-                </div>
-              : eligible
-                ? <button onClick={() => markDone(tree.id)} disabled={busy} className="sb-pill-button sb-grow-highlight" style={{ ...button, width: "100%", opacity:busy?.6:1 }}>
-                    ✓ Potwierdzam dzisiejszy nawyk (+1 żywność)
-                  </button>
-                : <div style={{ textAlign: "center", padding: 14, borderRadius: 14, background: "#f1f5f2" }}>
-                    <div>Potwierdzenie dostępne od 20:00 za:</div>
-                    <strong style={{ fontSize: 23, fontVariantNumeric: "tabular-nums" }}>{countdown(nextOpening)}</strong>
-                  </div>}
-            <p style={{ textAlign: "center", color: "#5e7969", fontSize: 13, marginBottom: 0 }}>Każde potwierdzenie to kolejny mały krok. Przerwa nie przekreśla postępu.</p>
-          </section>
-        })}
         {canPlant && trees.length > 0 && <section className="sb-surface" style={{ ...surface, background: "#e6f5e9" }}>
           <h2 style={{ marginTop: 0 }}>🌱 Możesz uruchomić kolejną uprawę!</h2>
           <p>Od ostatniego rozpoczęcia minęły dwa tygodnie. Możesz dodać nowy nawyk i rozwijać dwa poletka równolegle.</p>
