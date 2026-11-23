@@ -1,6 +1,5 @@
-// All Bonsai milestones are calendar dates in Europe/Warsaw, not UTC days.
-// Keeping the 20:00–03:00 window attached to its evening avoids double
-// check-ins after midnight.
+// All Biostacja milestones use calendar days in Europe/Warsaw.
+// One confirmed check-in per crop and local calendar day.
 const TIME_ZONE = "Europe/Warsaw"
 const dateFormatter = new Intl.DateTimeFormat("en-GB", {
   timeZone: TIME_ZONE,
@@ -64,17 +63,13 @@ export function isValidDay(value: unknown): value is string {
     addDays(value, 0) === value
 }
 
-/** The active window is from 20:00 until (but not including) 03:00 Warsaw time. */
-export function currentCheckInDay(now: Date): string | null {
-  const hour = warsawParts(now).hour
-  if (hour >= 20) return dateKey(now)
-  if (hour < 3) return addDays(dateKey(now), -1)
-  return null
+/** A check-in is available all day, once per active crop on the local date. */
+export function currentCheckInDay(now: Date): string {
+  return dateKey(now)
 }
 
-/** A tree planted after midnight belongs to the previous evening's window. */
 export function currentPlantingDay(now: Date): string {
-  return currentCheckInDay(now) ?? dateKey(now)
+  return dateKey(now)
 }
 
 function eveningStartUtcMillis(day: string): number {
