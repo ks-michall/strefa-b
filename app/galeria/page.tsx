@@ -444,7 +444,6 @@ export default function GaleriaPage() {
     >
       <div style={{ maxWidth: "900px", margin: "0 auto" }}>
         <header className="sb-archive-header sb-module-heading" style={{marginBottom:"24px"}}>
-        >
           <div
             style={{
               display: "flex",
