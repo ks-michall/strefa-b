@@ -156,8 +156,7 @@ export default function BezdrozaPage(){
   return <main className="sb-world sb-world-expedition">
     <div className="sb-world-container">
       <div className="sb-world-eyebrow">
-        <span className="sb-world-live-dot"/> STREFA B / SYSTEM ROZPOZNANIA
-        <span className="sb-world-eyebrow-right">SEZON 01 • WIELKA CISZA</span>
+        <span className="sb-world-live-dot"/> BEZDROŻA
       </div>
       <header className="sb-frontier-header">
         <div>

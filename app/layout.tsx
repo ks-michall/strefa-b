@@ -26,7 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <span className="sb-brand-mark" aria-hidden="true">B.</span>
               <span>
                 <span style={{display:"block",lineHeight:1}}>Strefa B</span>
-                <span className="sb-brand-caption">SEKTOR OCALAŁYCH</span>
+                <span className="sb-brand-caption">SEZON 01</span>
               </span>
             </Link>
             <HeaderProfile/>
