@@ -300,7 +300,7 @@ export default function BonsaiPage() {
             daysBetween(tree.started, windowDay) >= 0 &&
             daysBetween(tree.started, windowDay) < GROWTH_DAYS
           const checked = Boolean(windowDay && tree.checks.includes(windowDay))
-          return <section key={tree.id} style={surface}>
+          return <section key={tree.id} className="sb-surface" style={surface}>
             <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 10, color: "#527460" }}>
               <strong>Uprawa {trees.indexOf(tree) + 1}</strong>
               <span><strong>Dzień {Math.min(GROWTH_DAYS, dayIndex)} z {GROWTH_DAYS}</strong> · {tree.checks.length} wykonanych dni</span>
@@ -412,7 +412,7 @@ export default function BonsaiPage() {
         </div>
       </div>}
 
-      <p style={{ color: "#688574", fontSize: 12, lineHeight: 1.6, marginTop: 20 }}>
+      <p className="sb-bio-footer" style={{ fontSize: 12, lineHeight: 1.6, marginTop: 20 }}>
         Uprawy i potwierdzenia zapisują się na Twoim koncie i synchronizują między urządzeniami.
         Wychowawca może zobaczyć wybrane nawyki i dni ich wykonania.
         O godzinie potwierdzenia decyduje zegar serwera.

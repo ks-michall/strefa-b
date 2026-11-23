@@ -16,7 +16,7 @@ export function BonsaiHarvest({
 }) {
   const earned = harvestBadges(tree,earlier,today)
   const count = tree.checks.length
-  return <section style={{
+  return <section className="sb-bio-harvest" style={{
     background:"linear-gradient(160deg,#fbfff9,#e8f5e9)",border:"1px solid #b9dec1",
     borderRadius:24,padding:22,boxShadow:"0 9px 28px rgba(33,104,61,.09)",
   }}>
