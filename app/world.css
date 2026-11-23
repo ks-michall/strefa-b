@@ -289,9 +289,20 @@ body{background:var(--sb-night);color:#e5ecd9;}
 .sb-heroes-goal .sb-small-label{color:#bfe5a9;}
 .sb-heroes-tabs button.active{background:#317057;border-color:#317057;}
 .sb-heroes-new{background:#e1f1d7;color:#326248;}
-.sb-archive-page{background:linear-gradient(180deg,#dbdfd2,#f0efe4)!important;}
-.sb-archive-page .sb-feature-header{border:1px solid #d5d8c8!important;}
-.sb-archive-page .sb-small-label{letter-spacing:1.5px;}
+.sb-archive-page{background:radial-gradient(ellipse at 12% 10%,rgba(66,108,85,.25),transparent 40%),linear-gradient(180deg,#0b1622,#10242a)!important;color:#d5e5d7;}
+.sb-archive-page .sb-small-label{letter-spacing:1.5px;color:#c5efa2;}
+.sb-archive-page .sb-archive-header{border:1px solid #426354;}
+.sb-archive-page .sb-archive-photo-card{background:#1a3236;border-color:#395b52;}
+.sb-archive-page .sb-archive-upload-modal{color:#e6f0e4;border:1px solid #547365;}
+.sb-archive-page .sb-archive-upload-modal label{color:#d8ebdb!important;}
+.sb-archive-page .sb-archive-upload-modal input,.sb-archive-page .sb-archive-upload-modal textarea{color:#17342c;background:#f5f9f2;}
+.sb-archive-page .sb-archive-upload-modal input::placeholder,.sb-archive-page .sb-archive-upload-modal textarea::placeholder{color:#627e6f;}
+.sb-archive-page button:focus-visible,.sb-archive-page .sb-card-pressable:focus-visible{outline:3px solid #c5efa2;outline-offset:3px;}
+@media(max-width:520px){
+ .sb-archive-page{padding:19px 12px 110px!important;}
+ .sb-archive-header{padding:21px!important;}
+ .sb-archive-page .sb-archive-upload-modal{padding:19px!important;}
+}
 /* Installed mobile application: five clear destinations, not hidden in menus. */
 @media(max-width:720px){
  .sb-quicknav{background:rgba(13,27,39,.98)!important;border:1px solid #425a5c!important;
