@@ -487,19 +487,6 @@ export default function GaleriaPage() {
                 Ślady naszego życia. Fotografie, wspomnienia i dowody, że Strefa B to przede wszystkim ludzie.
               </p>
 
-              <div
-                style={{
-                  display: "flex",
-                  gap: "12px",
-                  flexWrap: "wrap",
-                  color: "#374151",
-                  fontSize: "14px",
-                  marginBottom: "1px",
-                }}
-              >
-                
-              </div>
-
               <div style={{ maxWidth: "360px" }}>
                 <div
                   style={{
@@ -717,6 +704,7 @@ export default function GaleriaPage() {
           >
             {visibleItems.map((item) => (
               <article
+                className="sb-archive-photo-card"
                 key={item.id}
                 style={{
                   breakInside: "avoid",
@@ -889,7 +877,7 @@ export default function GaleriaPage() {
             zIndex: 1000,
           }}
         >
-          <div
+          <div className="sb-archive-upload-modal"
             style={{
               width: "100%",
               maxWidth: "620px",
