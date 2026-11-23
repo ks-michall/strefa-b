@@ -434,23 +434,22 @@ export default function GaleriaPage() {
   }
 
   return (
-    <main className="sb-app-page sb-theme-lilac sb-archive-page"
+    <main className="sb-app-page sb-archive-page"
       style={{
         minHeight: "100vh",
         padding: "28px 16px 80px",
         background:
-          "linear-gradient(180deg,#f9fafb 0%,#eef2ff 60%,#eff6ff 100%)",
+          "radial-gradient(ellipse at 12% 10%,rgba(66,108,85,.25),transparent 40%),linear-gradient(180deg,#0b1622 0%,#10242a 100%)",
       }}
     >
       <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-        <section className="sb-feature-header sb-feature-pink"
+        <section className="sb-archive-header"
           style={{
-            background: "rgba(255,255,255,0.75)",
-            backdropFilter: "blur(10px)",
-            borderRadius: "28px",
+            background: "linear-gradient(125deg,#182d38,#203e38)",
+            borderRadius: "24px",
             padding: "28px",
-            boxShadow: "0 18px 50px rgba(0,0,0,0.08)",
-            border: "1px solid rgba(255,255,255,0.85)",
+            boxShadow: "0 18px 50px rgba(0,0,0,0.2)",
+            border: "1px solid #426354",
             marginBottom: "24px",
           }}
         >
@@ -468,9 +467,9 @@ export default function GaleriaPage() {
               <h1
                 style={{
                   margin: 0,
-                  fontSize: "42px",
+                  fontSize: "clamp(30px, 5vw, 42px)",
                   lineHeight: 1.1,
-                  color: "#111827",
+                  color: "#f2f8e9",
                 }}
               >
                 Baza Archiwalna
@@ -480,26 +479,13 @@ export default function GaleriaPage() {
                 style={{
                   marginTop: "14px",
                   marginBottom: "16px",
-                  fontSize: "18px",
+                  fontSize: "16px",
                   lineHeight: 1.7,
-                  color: "#4b5563",
+                  color: "#c1d4c5",
                 }}
               >
                 Ślady naszego życia. Fotografie, wspomnienia i dowody, że Strefa B to przede wszystkim ludzie.
               </p>
-
-              <div
-                style={{
-                  display: "flex",
-                  gap: "12px",
-                  flexWrap: "wrap",
-                  color: "#374151",
-                  fontSize: "14px",
-                  marginBottom: "1px",
-                }}
-              >
-                
-              </div>
 
               <div style={{ maxWidth: "360px" }}>
                 <div
@@ -507,7 +493,7 @@ export default function GaleriaPage() {
                     width: "100%",
                     height: "12px",
                     borderRadius: "999px",
-                    backgroundColor: "#dbeafe",
+                    backgroundColor: "#34534b",
                     overflow: "hidden",
                     marginBottom: "6px",
                   }}
@@ -517,15 +503,15 @@ export default function GaleriaPage() {
                       width: `${dailyPercent}%`,
                       height: "100%",
                       background:
-                        "linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%)",
+                        "linear-gradient(125deg,#4f896a,#295d4e)",
                       borderRadius: "999px",
                       transition: "width 0.3s ease",
                     }}
                   />
                 </div>
 
-                <div style={{ fontSize: "13px", color: "#6b7280" }}>
-                  Dzisiejszy limit zdjęć (max. 3)
+                <div style={{ fontSize: "13px", color: "#bdd2be" }}>
+                  Dzisiejszy limit zdjęć: maksymalnie 3
                 </div>
               </div>
             </div>
@@ -536,7 +522,7 @@ export default function GaleriaPage() {
               style={{
                 border: "none",
                 background:
-                  "linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%)",
+                  "linear-gradient(125deg,#4f896a,#295d4e)",
                 color: "white",
                 borderRadius: "18px",
                 padding: "16px 24px",
@@ -544,10 +530,10 @@ export default function GaleriaPage() {
                 fontWeight: 800,
                 letterSpacing: "0.04em",
                 cursor: "pointer",
-                boxShadow: "0 14px 30px rgba(79,70,229,0.35)",
+                boxShadow: "0 14px 30px rgba(12,50,34,0.3)",
               }}
             >
-              DODAJ
+              + Dodaj zdjęcie
             </button>
           </div>
         </section>
@@ -579,12 +565,12 @@ export default function GaleriaPage() {
           <button
             onClick={() => setFeedFilter("all")}
             style={{
-              border: feedFilter === "all" ? "none" : "1px solid #d1d5db",
+              border: feedFilter === "all" ? "1px solid #94c88a" : "1px solid #41665b",
               background:
                 feedFilter === "all"
-                  ? "linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%)"
-                  : "white",
-              color: feedFilter === "all" ? "white" : "#374151",
+                  ? "linear-gradient(125deg,#4f896a,#295d4e)"
+                  : "#1a3337",
+              color: feedFilter === "all" ? "#f5fbea" : "#d3e5d5",
               borderRadius: "999px",
               padding: "10px 16px",
               cursor: "pointer",
@@ -592,7 +578,7 @@ export default function GaleriaPage() {
               fontSize: "14px",
               boxShadow:
                 feedFilter === "all"
-                  ? "0 8px 20px rgba(79,70,229,0.22)"
+                  ? "0 8px 20px rgba(16,49,38,0.25)"
                   : "none",
             }}
           >
@@ -602,12 +588,12 @@ export default function GaleriaPage() {
           <button
             onClick={() => setFeedFilter("mine")}
             style={{
-              border: feedFilter === "mine" ? "none" : "1px solid #d1d5db",
+              border: feedFilter === "mine" ? "1px solid #94c88a" : "1px solid #41665b",
               background:
                 feedFilter === "mine"
-                  ? "linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%)"
-                  : "white",
-              color: feedFilter === "mine" ? "white" : "#374151",
+                  ? "linear-gradient(125deg,#4f896a,#295d4e)"
+                  : "#1a3337",
+              color: feedFilter === "mine" ? "#f5fbea" : "#d3e5d5",
               borderRadius: "999px",
               padding: "10px 16px",
               cursor: "pointer",
@@ -615,7 +601,7 @@ export default function GaleriaPage() {
               fontSize: "14px",
               boxShadow:
                 feedFilter === "mine"
-                  ? "0 8px 20px rgba(79,70,229,0.22)"
+                  ? "0 8px 20px rgba(16,49,38,0.25)"
                   : "none",
             }}
           >
@@ -625,12 +611,12 @@ export default function GaleriaPage() {
           <button
   onClick={() => setSortMode("added")}
   style={{
-    border: sortMode === "added" ? "none" : "1px solid #d1d5db",
+    border: sortMode === "added" ? "1px solid #94c88a" : "1px solid #41665b",
     background:
       sortMode === "added"
-        ? "linear-gradient(135deg, #111827 0%, #374151 100%)"
-        : "white",
-    color: sortMode === "added" ? "white" : "#374151",
+        ? "linear-gradient(125deg,#4f896a,#295d4e)"
+        : "#1a3337",
+    color: sortMode === "added" ? "#f5fbea" : "#d3e5d5",
     borderRadius: "999px",
     padding: "10px 16px",
     cursor: "pointer",
@@ -638,7 +624,7 @@ export default function GaleriaPage() {
     fontSize: "14px",
     boxShadow:
       sortMode === "added"
-        ? "0 8px 20px rgba(17,24,39,0.18)"
+        ? "0 8px 20px rgba(16,49,38,0.25)"
         : "none",
   }}
 >
@@ -648,12 +634,12 @@ export default function GaleriaPage() {
 <button
   onClick={() => setSortMode("taken")}
   style={{
-    border: sortMode === "taken" ? "none" : "1px solid #d1d5db",
+    border: sortMode === "taken" ? "1px solid #94c88a" : "1px solid #41665b",
     background:
       sortMode === "taken"
-        ? "linear-gradient(135deg, #111827 0%, #374151 100%)"
-        : "white",
-    color: sortMode === "taken" ? "white" : "#374151",
+        ? "linear-gradient(125deg,#4f896a,#295d4e)"
+        : "#1a3337",
+    color: sortMode === "taken" ? "#f5fbea" : "#d3e5d5",
     borderRadius: "999px",
     padding: "10px 16px",
     cursor: "pointer",
@@ -661,7 +647,7 @@ export default function GaleriaPage() {
     fontSize: "14px",
     boxShadow:
       sortMode === "taken"
-        ? "0 8px 20px rgba(17,24,39,0.18)"
+        ? "0 8px 20px rgba(16,49,38,0.25)"
         : "none",
   }}
 >
@@ -673,24 +659,24 @@ export default function GaleriaPage() {
         {!isLoaded ? (
           <div
             style={{
-              backgroundColor: "rgba(255,255,255,0.85)",
+              backgroundColor: "#1a3236",
               borderRadius: "22px",
               padding: "34px 26px",
-              color: "#6b7280",
-              textAlign: "center",
+              color: "#b6ccbd",
+               textAlign: "center",
               boxShadow: "0 12px 30px rgba(0,0,0,0.06)",
             }}
           >
-            Ładowanie bajek...
+            Ładowanie archiwum…
           </div>
         ) : visibleItems.length === 0 ? (
           <div
             style={{
-              backgroundColor: "rgba(255,255,255,0.85)",
+              backgroundColor: "#1a3236",
               borderRadius: "22px",
               padding: "38px 26px",
-              color: "#6b7280",
-              textAlign: "center",
+              color: "#b6ccbd",
+               textAlign: "center",
               boxShadow: "0 12px 30px rgba(0,0,0,0.06)",
             }}
           >
@@ -698,8 +684,8 @@ export default function GaleriaPage() {
             <div
               style={{
                 fontWeight: 700,
-                color: "#374151",
-                marginBottom: "6px",
+                color: "#e8f4e5",
+                 marginBottom: "6px",
                 fontSize: "18px",
               }}
             >
@@ -718,20 +704,21 @@ export default function GaleriaPage() {
           >
             {visibleItems.map((item) => (
               <article
+                className="sb-archive-photo-card"
                 key={item.id}
                 style={{
                   breakInside: "avoid",
                   marginBottom: "16px",
-                  background: "white",
-                  border:
-                    item.id === newEntryId
-                      ? "2px solid #60a5fa"
-                      : "1px solid #e5e7eb",
-                  borderRadius: "22px",
+                  background: "#1a3236",
+                   border:
+                     item.id === newEntryId
+                      ? "2px solid #b7e38c"
+                      : "1px solid #395b52",
+                   borderRadius: "22px",
                   overflow: "hidden",
                   boxShadow:
                     item.id === newEntryId
-                      ? "0 14px 30px rgba(96,165,250,0.28)"
+                      ? "0 14px 30px rgba(166,220,136,0.18)"
                       : "0 10px 26px rgba(0,0,0,0.06)",
                   transition: "transform 0.2s ease, box-shadow 0.2s ease",
                 }}
@@ -783,7 +770,7 @@ export default function GaleriaPage() {
                         top: "12px",
                         right: "12px",
                         background:
-                          "linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)",
+                          "linear-gradient(125deg,#477957,#234a3f)",
                         color: "white",
                         padding: "6px 10px",
                         borderRadius: "999px",
@@ -832,7 +819,7 @@ export default function GaleriaPage() {
                     {item.description && (
                       <div
                         style={{
-                          color: "#4b5563",
+                          color: "#d3e0d3",
                           fontSize: "14px",
                           lineHeight: 1.55,
                           marginBottom:
@@ -890,11 +877,11 @@ export default function GaleriaPage() {
             zIndex: 1000,
           }}
         >
-          <div
+          <div className="sb-archive-upload-modal"
             style={{
               width: "100%",
               maxWidth: "620px",
-              background: "linear-gradient(180deg, #ffffff 0%, #eef2ff 100%)",
+              background: "linear-gradient(145deg,#183039,#233e3b)",
               borderRadius: "28px",
               padding: "28px",
               boxShadow: "0 24px 60px rgba(0,0,0,0.25)",
@@ -911,7 +898,7 @@ export default function GaleriaPage() {
                 marginBottom: "18px",
               }}
             >
-              <h2 style={{ margin: 0, fontSize: "30px", color: "#111827" }}>
+              <h2 style={{ margin: 0, fontSize: "30px", color: "#f1f8ea" }}>
                 Dodaj zdjęcie
               </h2>
 
@@ -956,14 +943,14 @@ export default function GaleriaPage() {
                   onClick={() => fileInputRef.current?.click()}
                   style={{
                     width: "100%",
-                    border: "2px dashed #c7d2fe",
-                    background: "#f8fafc",
+                    border: "2px dashed #779e82",
+                    background: "#dceadc",
                     borderRadius: "16px",
                     padding: "18px 16px",
                     textAlign: "center",
                     cursor: "pointer",
                     fontWeight: 700,
-                    color: "#4338ca",
+                    color: "#234d3c",
                     fontSize: "16px",
                   }}
                 >
@@ -1162,7 +1149,7 @@ export default function GaleriaPage() {
                   style={{
                     border: "none",
                     background:
-                      "linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%)",
+                      "linear-gradient(125deg,#4f896a,#295d4e)",
                     color: "white",
                     borderRadius: "14px",
                     padding: "12px 18px",

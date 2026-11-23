@@ -20,8 +20,14 @@ function monthKey(date:Date){
   const p=monthParts.formatToParts(date)
   return p.find(v=>v.type==="year")!.value+"-"+p.find(v=>v.type==="month")!.value
 }
+const monthLocative = [
+  "styczniu", "lutym", "marcu", "kwietniu", "maju", "czerwcu",
+  "lipcu", "sierpniu", "wrześniu", "październiku", "listopadzie", "grudniu",
+] as const
 function monthLabel(date:Date){
-  return new Intl.DateTimeFormat("pl-PL",{timeZone:"Europe/Warsaw",month:"long"}).format(date)
+  // The comparison uses "w", so month names need the Polish locative case.
+  const month=Number(monthKey(date).slice(5,7))
+  return monthLocative[month-1]
 }
 function formatDate(raw:string){
   return new Intl.DateTimeFormat("pl-PL",{
@@ -174,7 +180,7 @@ export default function BohaterowiePage(){
     }
   }
   async function report(row:Recognition){
-    const reason=window.prompt("Co jest nieodpowiednie w tym wpisie? Zgłoszenie zobaczy tylko wychowawca.","")
+    const reason=window.prompt("Co jest nieodpowiednie w tym wpisie? Uzasadnienie zobaczy tylko wychowawca.","")
     if(reason===null)return
     try{
       await post({action:"report",id:row.id,reason:reason.trim()})
@@ -245,7 +251,7 @@ export default function BohaterowiePage(){
           <h2>{toRecord===0?"Pobiliśmy wynik! 🎉":
             `Jeszcze ${toRecord} do nowego rekordu! 🌟`}</h2>
           <p>{`Spróbujmy razem dostrzec więcej dobra niż w ${monthLabel(prevDate)}.`}
-            {" "}Nie ma podium — liczy się każdy zauważony czyn.</p>
+            {" "}Nie ma podium. Liczy się każdy zauważony czyn.</p>
           <div className="sb-heroes-progress" aria-label={`Postęp: ${currentCount} z ${aim} do rekordu`}>
             <span style={{width:`${Math.min(100,currentCount/aim*100)}%`}}/>
           </div>
@@ -304,12 +310,13 @@ export default function BohaterowiePage(){
       <div className="sb-heroes-bottom">
         <p>W tym miesiącu dostrzegłeś(-aś) dobro {ownCount} razy. Limit: 7 wyróżnień, maksymalnie 2 dla tej samej osoby.</p>
         {isAdmin&&<button type="button" onClick={()=>void loadReports()}>
-          {showReports?"Ukryj zgłoszenia":"Zgłoszenia do wychowawcy"} {reports.length>0?`(${reports.length})`:""}
+          {showReports?"Ukryj moderację":"Moderacja wpisów"} {reports.length>0?`(${reports.length})`:""}
         </button>}
       </div>
 
       {isAdmin&&showReports&&<section className="sb-heroes-moderation">
-        <h2>Zgłoszenia do rozpatrzenia</h2>
+        <h2>Wpisy zgłoszone do sprawdzenia</h2>
+        <p>Uczniowie mogą zgłaszać nieodpowiednie treści w Biuletynie. Tylko wychowawca widzi zgłoszenia i decyduje, czy ukryć wpis, czy pozostawić go w Biuletynie.</p>
         {reports.length===0?<p>Brak nierozpatrzonych zgłoszeń.</p>:
           reports.map(row=><div key={row.id} className="sb-heroes-report">
             <p>Wpis: {items.find(item=>item.id===row.thank_id)?.message||"Wpis nie jest już widoczny"}</p>
