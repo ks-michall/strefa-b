@@ -142,7 +142,7 @@ export default function BezdrozaPage(){
         <div>
           <p className="sb-world-overline">DZIAŁ OPERACYJNY // 04</p>
           <h1>Bezdroża<span className="sb-green-dot">.</span></h1>
-          <p>Każdy dobry czyn i każdy wykonany nawyk poszerzają granice Strefy B. Poza znanym terenem czeka odpowiedź na pytanie, co stało się ze światem.</p>
+          <p>Wspólnie zdobywamy zasoby, odkrywamy teren i szukamy prawdy o Wielkiej Ciszy.</p>
         </div>
         <div className="sb-world-season"><span>ODCINEK</span><strong>{String(Math.max(1,storyProgress)).padStart(2,"0")}/04</strong><small>Transmisje uwalniane automatycznie</small></div>
       </header>
@@ -159,10 +159,28 @@ export default function BezdrozaPage(){
         <div><p className="sb-world-overline">KARTOGRAFIA / ZASIĘG ZWIADU</p><h2>Mapa Strefy B</h2></div>
         <span>{1+unlocked.size} ODKRYTYCH SEKTORÓW</span>
       </div>
-      <FrontierMap selected={selected} unlocked={unlocked} onSelect={id=>setSelected(id)}/>
+      <div className="sb-frontier-stage">
+        <FrontierMap selected={selected} unlocked={unlocked} onSelect={id=>setSelected(id)}
+          revealing={discovery}/>
+        {discoveryPlace&&<div className="sb-world-reveal" role="dialog" aria-modal="true"
+          aria-labelledby="sb-reveal-title">
+          <div className="sb-world-reveal-smoke" aria-hidden="true"/>
+          <div className="sb-world-reveal-content">
+            <span className="sb-world-reveal-signal">✦ NOWY SYGNAŁ ZE STREFY B</span>
+            <span className="sb-world-reveal-icon" aria-hidden="true">⌖</span>
+            <h2 id="sb-reveal-title">MGŁA USTĘPUJE</h2>
+            <p className="sb-world-reveal-sector">{discoveryPlace.name}</p>
+            <p>Zebrane zasoby pozwoliły zwiadowcom poszerzyć granice Strefy B. Odkryto nowy obszar i raport z wyprawy.</p>
+            <div className="sb-world-reveal-actions">
+              <button type="button" onClick={()=>closeDiscovery(true)}>Odczytaj raport ↗</button>
+              <button type="button" onClick={()=>closeDiscovery(false)}>Później</button>
+            </div>
+          </div>
+        </div>}
+      </div>
 
-      <section className="sb-world-below-map" aria-label="Opis wybranego terenu i następna wyprawa">
-        <div className="sb-world-sector-card">
+      <section className="sb-world-below-map sb-world-below-map-lean" aria-label="Następna wyprawa i szczegóły sektora">
+        {selected&&<div className="sb-world-sector-card">
           <p className="sb-world-overline">{isOpen?place.tag:"NIEZBADANY OBSZAR / BRAK DANYCH"}</p>
           <h2>{isOpen?place.name:"Nieznany sektor"}</h2>
           {isOpen?<>
@@ -181,14 +199,20 @@ export default function BezdrozaPage(){
               <div className="sb-frontier-meter morale"><span style={{width:moralePercent+"%"}}/></div>
             </div>
           </>:<p>Ten teren pozostaje pod mgłą. Najpierw trzeba dotrzeć do bliższych obszarów Strefy B.</p>}
-        </div>
-        <div className="sb-world-mission-card">
+        </div>}
+        <div className="sb-world-mission-card sb-world-mission-compact">
           <p className="sb-world-overline">AKTUALNA OPERACJA</p>
-          <span className="sb-world-mission-symbol">◎</span>
-          <h2>{next?"Poszerz granice Strefy B":"Strefa B odkryta!"}</h2>
-          <p>{next?"Wspólnie zbierajcie żywność w Biostacji i wzmacniajcie morale w Biuletynie. Następna ekspedycja odblokuje nowy fragment mapy i historię.":"Wszystkie zaplanowane sektory są już odkryte. Możecie wrócić do zdobytych znalezisk."}</p>
-          {next&&<div className="sb-world-mission-count"><span>DO WYPRAWY BRAKUJE</span>
-            <strong>{Math.max(0,next.food-world.food)}<small> 🌾 </small> / {Math.max(0,next.morale-world.morale)}<small> ✳</small></strong>
+          <h2>{next?"Cel: następna ekspedycja":"Wszystkie sektory odkryte!"}</h2>
+          <p>{next?"Zbierajcie żywność i morale. Wyprawa odblokuje się sama po osiągnięciu obu progów. Dotknij punktu na mapie, aby poznać teren.":"Możecie ponownie odczytać wszystkie zdobyte raporty."}</p>
+          {next&&<div className="sb-world-mission-count sb-world-next-goal">
+            <div className="sb-world-next-resource">
+              <span>🌾 ŻYWNOŚĆ</span><strong>{world.food} / {next.food}</strong>
+              <div className="sb-frontier-meter"><span style={{width:foodPercent+"%"}}/></div>
+            </div>
+            <div className="sb-world-next-resource">
+              <span>✳ MORALE</span><strong>{world.morale} / {next.morale}</strong>
+              <div className="sb-frontier-meter morale"><span style={{width:moralePercent+"%"}}/></div>
+            </div>
           </div>}
           <div className="sb-world-mission-links">
             <Link href="/bonsai">Otwórz Biostację ↗</Link>
