@@ -4,12 +4,12 @@ import { createClient } from "npm:@supabase/supabase-js@2.103.0"
 const EXPECTED_SECRET_SHA256="5be6c1b74805a1e91ae9680aeaed6b348b9251e079e31647803ab016341b0471"
 const enc=new TextEncoder()
 const thresholds=[
-  {id:"przepompownia",food:15,morale:1},
-  {id:"obwodnica",food:45,morale:3},
-  {id:"wieza",food:100,morale:6},
-  {id:"latarnia",food:180,morale:10},
-  {id:"archiwum",food:300,morale:16},
-  {id:"wezel",food:480,morale:25},
+  {id:"przepompownia",food:15,morale:2},
+  {id:"obwodnica",food:45,morale:4},
+  {id:"wieza",food:100,morale:8},
+  {id:"latarnia",food:180,morale:14},
+  {id:"archiwum",food:300,morale:23},
+  {id:"wezel",food:480,morale:36},
 ]
 function response(body:unknown,status=200){
   return Response.json(body,{status,headers:{"Cache-Control":"private, no-store"}})

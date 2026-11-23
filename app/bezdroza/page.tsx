@@ -31,13 +31,14 @@ export default function BezdrozaPage(){
   const name=useWorldSession()
   const [state,setState]=useState<WorldState|null>(null)
   const [failed,setFailed]=useState(false)
-  const [selected,setSelected]=useState("baza")
+  const [selected,setSelected]=useState("")
+  const [discovery,setDiscovery]=useState<string|null>(null)
   const [openEvent,setOpenEvent]=useState<WorldEvent|null>(null)
   const [seen,setSeen]=useState<string[]>([])
   const [completed,setCompleted]=useState<string[]>([])
   const [quizAnswers,setQuizAnswers]=useState<Record<string,number>>({})
-  const [notice,setNotice]=useState("")
-  const previous=useRef<Set<string>|null>(null)
+  const discoveryRef=useRef<string|null>(null)
+  const logDetails=useRef<HTMLDetailsElement>(null)
 
   useEffect(()=>{
     try{
@@ -56,29 +57,35 @@ export default function BezdrozaPage(){
       const next=data as WorldState
       if(!Array.isArray(next.unlocked)||typeof next.food!=="number")
         throw Error("Nieprawidłowe dane mapy.")
-      const ids=new Set(next.unlocked.map(item=>item.sector))
-      if(previous.current){
-        const newly=next.unlocked.filter(item=>!previous.current?.has(item.sector))
-        if(newly.length){
-          const sector=WORLD_SECTORS.find(s=>s.id===newly[0].sector)
-          setNotice(sector?"Odkryto nowy obszar: "+sector.name+"!":"Nowy sektor został odkryty!")
-          if(sector)setSelected(sector.id)
+      // Discoveries belong to the whole class, but each pupil can witness
+      // the reveal independently on their own device and at their own pace.
+      let witnessed:string[]=[]
+      try{
+        const saved=JSON.parse(localStorage.getItem("sb-world-revealed:"+name)||"[]")
+        if(Array.isArray(saved))witnessed=saved.filter((id:unknown):id is string=>typeof id==="string")
+      }catch{/* A private-storage failure never blocks the world. */}
+      const unseen=next.unlocked
+        .filter(item=>!witnessed.includes(item.sector))
+        .sort((a,b)=>Date.parse(a.unlocked_at)-Date.parse(b.unlocked_at))
+      if(unseen.length>0 && !discoveryRef.current){
+        const first=WORLD_SECTORS.find(item=>item.id===unseen[0].sector)
+        if(first){
+          discoveryRef.current=first.id
+          setDiscovery(first.id)
+          setSelected(first.id)
         }
       }
-      previous.current=ids
       setState(next);setFailed(false)
     }catch{setFailed(true)}
-  },[])
+  },[name])
   useEffect(()=>{
     void load()
     const timer=window.setInterval(()=>void load(),45000)
     return ()=>window.clearInterval(timer)
   },[load])
   useEffect(()=>{
-    if(!notice)return
-    const timer=window.setTimeout(()=>setNotice(""),6500)
-    return ()=>window.clearTimeout(timer)
-  },[notice])
+    if(window.location.hash==="#dziennik")logDetails.current?.setAttribute("open","")
+  },[])
 
   const world=state??WORLD_EMPTY
   const unlocked=useMemo(()=>new Set(world.unlocked.map(item=>item.sector)),[world])
@@ -92,6 +99,7 @@ export default function BezdrozaPage(){
   const foodPercent=next?Math.min(100,Math.floor(world.food/next.food*100)):100
   const moralePercent=next?Math.min(100,Math.floor(world.morale/next.morale*100)):100
   const storyProgress=availableWeekly.length
+  const discoveryPlace=WORLD_SECTORS.find(place=>place.id===discovery)
 
   function showEvent(event:WorldEvent){
     setOpenEvent(event)
@@ -99,6 +107,26 @@ export default function BezdrozaPage(){
     setSeen(nextSeen)
     try{localStorage.setItem("sb-world-seen:"+name,JSON.stringify(nextSeen))}catch{}
   }
+  function closeDiscovery(readReport=false){
+    if(!discovery)return
+    try{
+      const stored=JSON.parse(localStorage.getItem("sb-world-revealed:"+name)||"[]")
+      const witnessed=Array.isArray(stored)?stored.filter((id:unknown):id is string=>typeof id==="string"):[]
+      localStorage.setItem("sb-world-revealed:"+name,JSON.stringify([...new Set([...witnessed,discovery])]))
+    }catch{/* A missing local store does not prevent closing. */}
+    const report=events.find(event=>event.id==="sector-"+discovery)
+    discoveryRef.current=null
+    setDiscovery(null)
+    if(readReport && report)showEvent(report)
+    else void load()
+    // Other discoveries will appear after the expedition report closes.
+  }
+
+  function closeReport(){
+    setOpenEvent(null)
+    void load()
+  }
+
   function solve(id:string,choice:number){
     setQuizAnswers(prev=>({...prev,[id]:choice}))
     const quest=sidequests.find(q=>q.id===id)
@@ -119,7 +147,7 @@ export default function BezdrozaPage(){
         <div>
           <p className="sb-world-overline">DZIAŁ OPERACYJNY // 04</p>
           <h1>Bezdroża<span className="sb-green-dot">.</span></h1>
-          <p>Każdy dobry czyn i każdy wykonany nawyk poszerzają granice Strefy B. Poza znanym terenem czeka odpowiedź na pytanie, co stało się ze światem.</p>
+          <p>Wspólnie zdobywamy zasoby, odkrywamy teren i szukamy prawdy o Wielkiej Ciszy.</p>
         </div>
         <div className="sb-world-season"><span>ODCINEK</span><strong>{String(Math.max(1,storyProgress)).padStart(2,"0")}/04</strong><small>Transmisje uwalniane automatycznie</small></div>
       </header>
@@ -130,17 +158,34 @@ export default function BezdrozaPage(){
         <div className="sb-world-resource"><span className="sb-world-resource-icon">⌖</span><div><small>STREFA B</small><strong>{1+unlocked.size}<em> / {WORLD_SECTORS.length}</em></strong><span>odkrytych obszarów</span></div></div>
       </section>
 
-      {notice&&<div className="sb-world-toast" role="status">✦ {notice} <button onClick={()=>setNotice("")} aria-label="Zamknij">×</button></div>}
       {failed&&<div role="alert" className="sb-world-alert">Nie udało się odświeżyć wspólnych zasobów. <button onClick={()=>void load()}>Spróbuj ponownie</button></div>}
 
       <div className="sb-frontier-title-row">
         <div><p className="sb-world-overline">KARTOGRAFIA / ZASIĘG ZWIADU</p><h2>Mapa Strefy B</h2></div>
         <span>{1+unlocked.size} ODKRYTYCH SEKTORÓW</span>
       </div>
-      <FrontierMap selected={selected} unlocked={unlocked} onSelect={id=>setSelected(id)}/>
+      <div className="sb-frontier-stage" style={discovery?{zIndex:1400}:undefined}>
+        <FrontierMap selected={selected} unlocked={unlocked} onSelect={id=>setSelected(id)}
+          revealing={discovery}/>
+        {discoveryPlace&&<div className="sb-world-reveal" role="dialog" aria-modal="true"
+          aria-labelledby="sb-reveal-title">
+          <div className="sb-world-reveal-smoke" aria-hidden="true"/>
+          <div className="sb-world-reveal-content">
+            <span className="sb-world-reveal-signal">✦ NOWY SYGNAŁ ZE STREFY B</span>
+            <span className="sb-world-reveal-icon" aria-hidden="true">⌖</span>
+            <h2 id="sb-reveal-title">MGŁA USTĘPUJE</h2>
+            <p className="sb-world-reveal-sector">{discoveryPlace.name}</p>
+            <p>Zebrane zasoby pozwoliły zwiadowcom poszerzyć granice Strefy B. Odkryto nowy obszar i raport z wyprawy.</p>
+            <div className="sb-world-reveal-actions">
+              <button type="button" onClick={()=>closeDiscovery(true)}>Odczytaj raport ↗</button>
+              <button type="button" onClick={()=>closeDiscovery(false)}>Później</button>
+            </div>
+          </div>
+        </div>}
+      </div>
 
-      <section className="sb-world-below-map" aria-label="Opis wybranego terenu i następna wyprawa">
-        <div className="sb-world-sector-card">
+      <section className="sb-world-below-map sb-world-below-map-lean" aria-label="Następna wyprawa i szczegóły sektora">
+        {selected&&<div className="sb-world-sector-card">
           <p className="sb-world-overline">{isOpen?place.tag:"NIEZBADANY OBSZAR / BRAK DANYCH"}</p>
           <h2>{isOpen?place.name:"Nieznany sektor"}</h2>
           {isOpen?<>
@@ -159,14 +204,20 @@ export default function BezdrozaPage(){
               <div className="sb-frontier-meter morale"><span style={{width:moralePercent+"%"}}/></div>
             </div>
           </>:<p>Ten teren pozostaje pod mgłą. Najpierw trzeba dotrzeć do bliższych obszarów Strefy B.</p>}
-        </div>
-        <div className="sb-world-mission-card">
+        </div>}
+        <div className="sb-world-mission-card sb-world-mission-compact">
           <p className="sb-world-overline">AKTUALNA OPERACJA</p>
-          <span className="sb-world-mission-symbol">◎</span>
-          <h2>{next?"Poszerz granice Strefy B":"Strefa B odkryta!"}</h2>
-          <p>{next?"Wspólnie zbierajcie żywność w Biostacji i wzmacniajcie morale w Biuletynie. Następna ekspedycja odblokuje nowy fragment mapy i historię.":"Wszystkie zaplanowane sektory są już odkryte. Możecie wrócić do zdobytych znalezisk."}</p>
-          {next&&<div className="sb-world-mission-count"><span>DO WYPRAWY BRAKUJE</span>
-            <strong>{Math.max(0,next.food-world.food)}<small> 🌾 </small> / {Math.max(0,next.morale-world.morale)}<small> ✳</small></strong>
+          <h2>{next?"Cel: następna ekspedycja":"Wszystkie sektory odkryte!"}</h2>
+          <p>{next?"Zbierajcie żywność i morale. Wyprawa odblokuje się sama po osiągnięciu obu progów. Dotknij punktu na mapie, aby poznać teren.":"Możecie ponownie odczytać wszystkie zdobyte raporty."}</p>
+          {next&&<div className="sb-world-mission-count sb-world-next-goal">
+            <div className="sb-world-next-resource">
+              <span>🌾 ŻYWNOŚĆ</span><strong>{world.food} / {next.food}</strong>
+              <div className="sb-frontier-meter"><span style={{width:foodPercent+"%"}}/></div>
+            </div>
+            <div className="sb-world-next-resource">
+              <span>✳ MORALE</span><strong>{world.morale} / {next.morale}</strong>
+              <div className="sb-frontier-meter morale"><span style={{width:moralePercent+"%"}}/></div>
+            </div>
           </div>}
           <div className="sb-world-mission-links">
             <Link href="/bonsai">Otwórz Biostację ↗</Link>
@@ -175,14 +226,16 @@ export default function BezdrozaPage(){
         </div>
       </section>
 
-      <section className="sb-world-log" id="dziennik">
-        <div className="sb-world-log-header">
+      <details id="dziennik" ref={logDetails} className="sb-world-log sb-world-accordion">
+        <summary className="sb-world-accordion-heading">
           <div><p className="sb-world-overline">CENTRUM KOMUNIKACJI / ARCHIWUM ZDARZEŃ</p>
-            <h2>Dziennik odkryć</h2>
-            <p>Komunikaty pojawiają się co tydzień i po odkryciu nowych sektorów. Są wspólne dla całej klasy.</p>
-          </div>
-          {unread>0&&<span className="sb-world-unread">✦ {unread} nieodczytanych</span>}
-        </div>
+            <h2>Dziennik odkryć</h2><p>Transmisje oraz raporty z wypraw Strefy B.</p></div>
+          <span className="sb-world-accordion-side">
+            {unread>0&&<span className="sb-world-unread">✦ {unread} nowych</span>}
+            <span className="sb-world-accordion-chevron" aria-hidden="true">⌄</span>
+          </span>
+        </summary>
+        <div className="sb-world-accordion-content">
         {!state?<p className="sb-world-muted">Łączenie z centralą Strefy B…</p>:events.length===0?
           <p className="sb-world-muted">Na razie brak nowych transmisji.</p>:
           <div className="sb-world-log-list">
@@ -194,11 +247,16 @@ export default function BezdrozaPage(){
             </button>)}
           </div>
         }
-      </section>
+        </div>
+      </details>
 
-      <section className="sb-world-sidequests">
-        <div><p className="sb-world-overline">OPERACJE POBOCZNE / DLA CIEKAWYCH</p><h2>Znaleziska i zagadki</h2>
-          <p>Dobrowolne zagadki. Nie zmieniają wyniku klasy i nie blokują głównej historii.</p></div>
+      <details className="sb-world-sidequests sb-world-accordion">
+        <summary className="sb-world-accordion-heading">
+          <div><p className="sb-world-overline">OPERACJE POBOCZNE / DLA CIEKAWYCH</p>
+            <h2>Znaleziska i zagadki</h2><p>Dobrowolne szyfry z odkrytych sektorów.</p></div>
+          <span className="sb-world-accordion-chevron" aria-hidden="true">⌄</span>
+        </summary>
+        <div className="sb-world-accordion-content">
         <div className="sb-world-quest-grid">
           {sidequests.map(quest=>{
             const ready=unlocked.has(quest.sector)
@@ -221,16 +279,17 @@ export default function BezdrozaPage(){
             </article>
           })}
         </div>
-      </section>
+        </div>
+      </details>
     </div>
 
     {openEvent&&<div className="sb-world-modal-backdrop" role="presentation" onMouseDown={e=>{
-      if(e.target===e.currentTarget)setOpenEvent(null)
+      if(e.target===e.currentTarget)closeReport()
     }}>
       <article className="sb-world-modal" role="dialog" aria-modal="true" aria-labelledby="sb-world-event-title">
         <div className="sb-world-modal-top">
           <p className="sb-world-overline">{openEvent.eyebrow}</p>
-          <button type="button" onClick={()=>setOpenEvent(null)} aria-label="Zamknij transmisję">✕</button>
+          <button type="button" onClick={closeReport} aria-label="Zamknij transmisję">✕</button>
         </div>
         <div className="sb-world-signal-icon">⌁</div>
         <h2 id="sb-world-event-title">{openEvent.title}</h2>
@@ -238,7 +297,7 @@ export default function BezdrozaPage(){
         <div className="sb-world-transcript">
           {openEvent.body.map((paragraph,i)=><p key={i} className={paragraph.startsWith("[")?"signal-lost":""}>{paragraph}</p>)}
         </div>
-        <button type="button" className="sb-world-modal-close" onClick={()=>setOpenEvent(null)}>Zamknij raport ↗</button>
+        <button type="button" className="sb-world-modal-close" onClick={closeReport}>Zamknij raport ↗</button>
       </article>
     </div>}
   </main>
