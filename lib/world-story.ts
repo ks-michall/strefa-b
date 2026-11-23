@@ -41,26 +41,25 @@ export const WORLD_TRANSMISSIONS=[
     "CEL: rozwijać uprawy i rozpoznać tereny wokół Strefy B. Każde potwierdzenie nawyku dostarcza żywność, każde dostrzeżone dobro wzmacnia morale.",
   ]},
  {id:"radio-002",at:"2026-11-30T18:00:00+01:00",eyebrow:"TRANSMISJA 002 • TYDZIEŃ DRUGI",
-  title:"Ktoś wiedział wcześniej",body:[
-    "Do centrali dociera fragment starej instrukcji obsługi sieci. W jednym miejscu ktoś ręcznie dopisał: «Kiedy usłyszysz trzeci sygnał, odłącz B-03».",
-    "Analiza znanych zapisów pokazuje coś dziwnego: lokalne odłączenie wykonano o 03:16. Wielka Cisza nastąpiła o 03:17.",
-    "Czy Strefa B próbowała zatrzymać katastrofę? Czy może ją rozpoczęła? Ktoś wyraźnie wiedział, co się zbliża.",
-    "W archiwum pojawia się pierwszy ślad nazwy KASKADA.",
+  title:"Brakujące minuty",body:[
+    "Stary zegar w radiostacji uruchomił się na chwilę, ale jego wskazówki stanęły o godzinie 03:17. Tyle wiemy. Z pozostałych rejestrów zostały tylko uszkodzone znaczniki czasu.",
+    "W nocy ktoś nadał trzy krótkie impulsy. Sygnał był zbyt słaby, by ustalić kierunek.",
+    "«Jeśli szukacie odpowiedzi, nie szukajcie ich w radiu» — to jedyny fragment, jaki udało się odzyskać.",
+    "Zwiadowcy proszą o większe zapasy. Dopiero wyprawa poza mury Strefy B może wyjaśnić, co działo się tuż przed Wielką Ciszą.",
   ]},
  {id:"radio-003",at:"2026-12-07T18:00:00+01:00",eyebrow:"TRANSMISJA 003 • TYDZIEŃ TRZECI",
-  title:"Inni ocaleńcy",body:[
-    "Na falach krótkich słychać obcą rozmowę. Głos kobiety powtarza nazwę «Latarnia». Potem padają słowa: «Nie odpowiadajcie na sygnały z B-03».",
-    "To pierwszy dowód, że poza Strefą B istnieją inni ludzie. Nie wiadomo jednak, czy potrzebują pomocy, czy ostrzegają przed nami.",
-    "W dziennikach dawnych operatorów znaleziono nazwę systemu KASKADA. Jedna linijka jest zamazana.",
-    "«Najgroźniejszy jest węzeł, którego nie da się wyłączyć».",
+  title:"Głos w zakłóceniach",body:[
+    "Odbiornik zarejestrował coś, co przypomina ludzką mowę. Analiza nie daje pewności: to może być żywy nadawca, dawne nagranie albo przypadkowe zakłócenie.",
+    "Słychać tylko: «...nie wracajcie...». Potem cisza.",
+    "W Strefie B pojawiają się dwa pytania. Czy poza osadą ktoś jeszcze żyje? A jeśli tak — dlaczego nie chce zostać odnaleziony?",
+    "Wyprawy na Bezdroża pozostają jedyną szansą na sprawdzenie, skąd pochodzi sygnał.",
   ]},
  {id:"radio-004",at:"2026-12-14T18:00:00+01:00",eyebrow:"TRANSMISJA 004 • TYDZIEŃ CZWARTY",
-  title:"Protokół B",body:[
-    "Odzyskana wiadomość techniczna wyjaśnia część wydarzeń. KASKADA sterowała energią, transportem i dostawami. Jej uszkodzone polecenia wywołały reakcję łańcuchową.",
-    "B-03 odłączono celowo. Prawdopodobnie uratowało to tę część regionu, ale skazało sąsiednie obszary na izolację.",
-    "To wciąż nie jest cała prawda. Ostateczne zapisy znajdują się w Węźle Zero, głęboko na Bezdrożach.",
-    "Ostatni odczyt: «WYKRYTO AKTYWNOŚĆ. ŹRÓDŁO: POZA ZBADANĄ STREFĄ».",
-    "Wyprawa do Węzła Zero odsłoni finał pierwszego sezonu.",
+  title:"Ostatnia współrzędna",body:[
+    "W trakcie nocnego dyżuru urządzenia zanotowały impuls podobny do tego, który poprzedził Wielką Ciszę. Tym razem trwał zaledwie sekundę.",
+    "Zespół zwiadowców odczytał fragment współrzędnych, ale reszta mapy jest uszkodzona. Nie znamy źródła sygnału ani tego, czy stanowi zagrożenie.",
+    "«Nie ufajcie gotowym odpowiedziom» — ktoś dopisał ręcznie do odnalezionego formularza.",
+    "Strefa B może poznać prawdę tylko przez kolejne odkrycia na mapie. Najważniejsze dokumenty nie znajdują się w tej transmisji.",
   ]},
 ] as const
 
