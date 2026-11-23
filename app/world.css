@@ -404,3 +404,8 @@ body{background:var(--sb-night);color:#e5ecd9;}
     text-overflow:ellipsis;
   }
 }
+
+/* Readability for non-surface harvest panels and the informational footer. */
+.sb-bio-page .sb-bio-harvest{color:#214b34 !important;}
+.sb-bio-page .sb-bio-harvest h2,.sb-bio-page .sb-bio-harvest strong{color:#214b34;}
+.sb-bio-page .sb-bio-footer{color:#b8d1c2 !important;line-height:1.6;}
