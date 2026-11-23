@@ -31,13 +31,14 @@ export default function BezdrozaPage(){
   const name=useWorldSession()
   const [state,setState]=useState<WorldState|null>(null)
   const [failed,setFailed]=useState(false)
-  const [selected,setSelected]=useState("baza")
+  const [selected,setSelected]=useState("")
+  const [discovery,setDiscovery]=useState<string|null>(null)
   const [openEvent,setOpenEvent]=useState<WorldEvent|null>(null)
   const [seen,setSeen]=useState<string[]>([])
   const [completed,setCompleted]=useState<string[]>([])
   const [quizAnswers,setQuizAnswers]=useState<Record<string,number>>({})
-  const [notice,setNotice]=useState("")
-  const previous=useRef<Set<string>|null>(null)
+  const discoveryRef=useRef<string|null>(null)
+  const logDetails=useRef<HTMLDetailsElement>(null)
 
   useEffect(()=>{
     try{
@@ -56,29 +57,35 @@ export default function BezdrozaPage(){
       const next=data as WorldState
       if(!Array.isArray(next.unlocked)||typeof next.food!=="number")
         throw Error("Nieprawidłowe dane mapy.")
-      const ids=new Set(next.unlocked.map(item=>item.sector))
-      if(previous.current){
-        const newly=next.unlocked.filter(item=>!previous.current?.has(item.sector))
-        if(newly.length){
-          const sector=WORLD_SECTORS.find(s=>s.id===newly[0].sector)
-          setNotice(sector?"Odkryto nowy obszar: "+sector.name+"!":"Nowy sektor został odkryty!")
-          if(sector)setSelected(sector.id)
+      // Discoveries belong to the whole class, but each pupil can witness
+      // the reveal independently on their own device and at their own pace.
+      let witnessed:string[]=[]
+      try{
+        const saved=JSON.parse(localStorage.getItem("sb-world-revealed:"+name)||"[]")
+        if(Array.isArray(saved))witnessed=saved.filter((id:unknown):id is string=>typeof id==="string")
+      }catch{/* A private-storage failure never blocks the world. */}
+      const unseen=next.unlocked
+        .filter(item=>!witnessed.includes(item.sector))
+        .sort((a,b)=>Date.parse(a.unlocked_at)-Date.parse(b.unlocked_at))
+      if(unseen.length>0 && !discoveryRef.current){
+        const first=WORLD_SECTORS.find(item=>item.id===unseen[0].sector)
+        if(first){
+          discoveryRef.current=first.id
+          setDiscovery(first.id)
+          setSelected(first.id)
         }
       }
-      previous.current=ids
       setState(next);setFailed(false)
     }catch{setFailed(true)}
-  },[])
+  },[name])
   useEffect(()=>{
     void load()
     const timer=window.setInterval(()=>void load(),45000)
     return ()=>window.clearInterval(timer)
   },[load])
   useEffect(()=>{
-    if(!notice)return
-    const timer=window.setTimeout(()=>setNotice(""),6500)
-    return ()=>window.clearTimeout(timer)
-  },[notice])
+    if(window.location.hash==="#dziennik")logDetails.current?.setAttribute("open","")
+  },[])
 
   const world=state??WORLD_EMPTY
   const unlocked=useMemo(()=>new Set(world.unlocked.map(item=>item.sector)),[world])
@@ -92,6 +99,7 @@ export default function BezdrozaPage(){
   const foodPercent=next?Math.min(100,Math.floor(world.food/next.food*100)):100
   const moralePercent=next?Math.min(100,Math.floor(world.morale/next.morale*100)):100
   const storyProgress=availableWeekly.length
+  const discoveryPlace=WORLD_SECTORS.find(place=>place.id===discovery)
 
   function showEvent(event:WorldEvent){
     setOpenEvent(event)
@@ -99,6 +107,21 @@ export default function BezdrozaPage(){
     setSeen(nextSeen)
     try{localStorage.setItem("sb-world-seen:"+name,JSON.stringify(nextSeen))}catch{}
   }
+  function closeDiscovery(readReport=false){
+    if(!discovery)return
+    try{
+      const stored=JSON.parse(localStorage.getItem("sb-world-revealed:"+name)||"[]")
+      const witnessed=Array.isArray(stored)?stored.filter((id:unknown):id is string=>typeof id==="string"):[]
+      localStorage.setItem("sb-world-revealed:"+name,JSON.stringify([...new Set([...witnessed,discovery])]))
+    }catch{/* A missing local store does not prevent closing. */}
+    const report=events.find(event=>event.id==="sector-"+discovery)
+    discoveryRef.current=null
+    setDiscovery(null)
+    if(readReport && report)showEvent(report)
+    // Additional discoveries earned while offline appear one by one.
+    void load()
+  }
+
   function solve(id:string,choice:number){
     setQuizAnswers(prev=>({...prev,[id]:choice}))
     const quest=sidequests.find(q=>q.id===id)
@@ -130,7 +153,6 @@ export default function BezdrozaPage(){
         <div className="sb-world-resource"><span className="sb-world-resource-icon">⌖</span><div><small>STREFA B</small><strong>{1+unlocked.size}<em> / {WORLD_SECTORS.length}</em></strong><span>odkrytych obszarów</span></div></div>
       </section>
 
-      {notice&&<div className="sb-world-toast" role="status">✦ {notice} <button onClick={()=>setNotice("")} aria-label="Zamknij">×</button></div>}
       {failed&&<div role="alert" className="sb-world-alert">Nie udało się odświeżyć wspólnych zasobów. <button onClick={()=>void load()}>Spróbuj ponownie</button></div>}
 
       <div className="sb-frontier-title-row">
