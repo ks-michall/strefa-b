@@ -9,14 +9,16 @@ import { currentPlantingDay,daysBetween } from "../lib/bonsai-time"
 import { WORLD_EMPTY,worldEvents,nextExpedition,type WorldState } from "../lib/world-story"
 
 type TreeBrief={started:string;habitIndex:number;checks?:string[]}
-type BioBrief={count:number;hasTrees:boolean;habit:string;action:string}
+type BioBrief={count:number;hasTrees:boolean;active:boolean;doneToday:boolean;habit:string;action:string}
 
 export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
   const [currentUser,setCurrentUser]=useState("")
   const [userLoaded,setUserLoaded]=useState(false)
   const [loggingOut,setLoggingOut]=useState(false)
   const [newRecognition,setNewRecognition]=useState(false)
-  const [bio,setBio]=useState<BioBrief>({count:0,hasTrees:false,habit:"",action:""})
+  const [bio,setBio]=useState<BioBrief>({count:0,hasTrees:false,active:false,doneToday:false,habit:"",action:""})
+  const [bioLoaded,setBioLoaded]=useState(false)
+  const [showWelcome,setShowWelcome]=useState(false)
   const [world,setWorld]=useState<WorldState|null>(null)
   const [worldUnread,setWorldUnread]=useState(0)
 
@@ -46,10 +48,14 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
             const latest=current??trees[0]
             if(latest){
               const habit=habits[latest.habitIndex]
-              setBio({count:Array.isArray(latest.checks)?latest.checks.length:0,hasTrees:true,
-                habit:habit?.title||"Twoja uprawa",action:habit?.action||""})
+              const checked=Array.isArray(latest.checks)?latest.checks:[]
+              setBio({count:checked.length,hasTrees:true,active:!!current,
+                doneToday:checked.includes(today),habit:habit?.title||"Twoja uprawa",action:habit?.action||""})
+            }else if(me.name!=="ks. Michał"){
+              try{setShowWelcome(localStorage.getItem("sb-intro-seen:"+me.name)!=="1")}catch{}
             }
           }catch{/* Nie blokujemy strony głównej. */}
+          finally{if(active)setBioLoaded(true)}
         })()
       }catch{if(active)setUserLoaded(true)}
     }
@@ -98,6 +104,11 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
     return()=>{active=false}
   },[currentUser])
 
+  function dismissWelcome(){
+    setShowWelcome(false)
+    try{localStorage.setItem("sb-intro-seen:"+currentUser,"1")}catch{}
+  }
+
   async function handleLogout(){
     setLoggingOut(true)
     try{
@@ -131,6 +142,34 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
         </div>
         <ProfileMenu name={currentUser} onLogout={handleLogout} loggingOut={loggingOut}/>
       </header>
+
+      {showWelcome&&<section className="sb-world-welcome" aria-label="Szybki start w Strefie B">
+        <p className="sb-world-overline">PIERWSZA MISJA / 30 SEKUND</p>
+        <h2>Witaj w Strefie B. Zaczynamy?</h2>
+        <p>① Wybierz nawyk w Biostacji. ② Dostrzegaj dobro w Biuletynie.
+          ③ Wspólnie zbierajcie zasoby i odkrywajcie Bezdroża.</p>
+        <div className="sb-world-welcome-actions">
+          <Link href="/bonsai?start=1" onClick={dismissWelcome}>Wybierz pierwszy nawyk ↗</Link>
+          <button type="button" onClick={dismissWelcome}>Pomiń wprowadzenie</button>
+        </div>
+      </section>}
+      {bioLoaded&&<section className="sb-world-daily" aria-label="Twoja misja na dziś">
+        <div>
+          <p className="sb-world-overline">TWÓJ DZISIEJSZY KROK</p>
+          <h2>{bio.active?bio.habit:bio.hasTrees?"Nowa uprawa czeka":"Rozpocznij pierwszą uprawę"}</h2>
+          <p>{bio.active?bio.action:
+            bio.hasTrees?"Twoje dotychczasowe uprawy już się zakończyły. Możesz podjąć kolejne wyzwanie.":
+            "Wybierz jeden niewielki nawyk, który chcesz rozwijać przez 28 dni."}</p>
+        </div>
+        <div className="sb-world-daily-action">
+          {bio.active&&<span className={bio.doneToday?"sb-world-daily-status done":"sb-world-daily-status"}>
+            {bio.doneToday?"✓ Potwierdzono dzisiaj":"◉ Do potwierdzenia"}
+          </span>}
+          <Link href={bio.active?"/bonsai":"/bonsai?start=1"}>
+            {bio.active?(bio.doneToday?"Zobacz uprawę ↗":"Potwierdź nawyk ↗"):"Wybierz nawyk ↗"}
+          </Link>
+        </div>
+      </section>}
 
       <section className="sb-world-home-hero" aria-labelledby="sb-frontier-home-title">
         <div>
