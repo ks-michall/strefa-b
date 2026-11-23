@@ -4,9 +4,10 @@ import { usePathname } from "next/navigation"
 
 const destinations = [
   {href:"/", icon:"⌂", label:"Start"},
-  {href:"/bonsai", icon:"🌱", label:"Bonsai"},
-  {href:"/podziekowania", icon:"💙", label:"Bohaterowie"},
-  {href:"/galeria", icon:"📸", label:"Bajki"},
+  {href:"/bonsai", icon:"🌾", label:"Biostacja"},
+  {href:"/podziekowania", icon:"✳", label:"Biuletyn"},
+  {href:"/galeria", icon:"▤", label:"Baza"},
+  {href:"/bezdroza", icon:"⌖", label:"Bezdroża"},
 ] as const
 
 export function QuickNav() {

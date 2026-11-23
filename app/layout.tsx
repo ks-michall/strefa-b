@@ -1,10 +1,11 @@
 import "./globals.css"
+import "./world.css"
 import Link from "next/link"
 import { QuickNav } from "../components/quick-nav"
 
 export const metadata = {
   title: "Strefa B — przestrzeń klasy",
-  description: "Bonsai, Bohaterowie, Bajki. Nasze miejsce, nasze historie.",
+  description: "Biostacja, Biuletyn, Baza Archiwalna i Bezdroża. Odkrywaj świat Strefy B.",
   applicationName: "Strefa B",
   manifest: "/manifest.json",
   appleWebApp: {capable: true, title: "Strefa B", statusBarStyle: "default" },
@@ -24,10 +25,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <span className="sb-brand-mark" aria-hidden="true">B.</span>
               <span>
                 <span style={{display:"block",lineHeight:1}}>Strefa B</span>
-                <span className="sb-brand-caption">NASZA PRZESTRZEŃ</span>
+                <span className="sb-brand-caption">SEKTOR OCALAŁYCH</span>
               </span>
             </Link>
-            <span className="sb-site-meta">3B • TO MY</span>
+            <span className="sb-site-meta">SEKTOR 3B • ONLINE</span>
           </div>
         </header>
         <div className="sb-page-frame">{children}</div>

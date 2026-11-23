@@ -35,6 +35,6 @@ export function makeStrefaBIcon(size: number) {
         paddingRight: Math.round(size * .02), paddingBottom: Math.round(size * .022),
       }}>B.</div>
     </div>,
-    { width: size, height: size, contentType: "image/png" },
+    { width: size, height: size },
   )
 }
