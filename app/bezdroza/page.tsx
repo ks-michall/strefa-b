@@ -221,14 +221,16 @@ export default function BezdrozaPage(){
         </div>
       </section>
 
-      <section className="sb-world-log" id="dziennik">
-        <div className="sb-world-log-header">
+      <details id="dziennik" ref={logDetails} className="sb-world-log sb-world-accordion">
+        <summary className="sb-world-accordion-heading">
           <div><p className="sb-world-overline">CENTRUM KOMUNIKACJI / ARCHIWUM ZDARZEŃ</p>
-            <h2>Dziennik odkryć</h2>
-            <p>Komunikaty pojawiają się co tydzień i po odkryciu nowych sektorów. Są wspólne dla całej klasy.</p>
-          </div>
-          {unread>0&&<span className="sb-world-unread">✦ {unread} nieodczytanych</span>}
-        </div>
+            <h2>Dziennik odkryć</h2><p>Transmisje oraz raporty z wypraw Strefy B.</p></div>
+          <span className="sb-world-accordion-side">
+            {unread>0&&<span className="sb-world-unread">✦ {unread} nowych</span>}
+            <span className="sb-world-accordion-chevron" aria-hidden="true">⌄</span>
+          </span>
+        </summary>
+        <div className="sb-world-accordion-content">
         {!state?<p className="sb-world-muted">Łączenie z centralą Strefy B…</p>:events.length===0?
           <p className="sb-world-muted">Na razie brak nowych transmisji.</p>:
           <div className="sb-world-log-list">
@@ -240,11 +242,16 @@ export default function BezdrozaPage(){
             </button>)}
           </div>
         }
-      </section>
+        </div>
+      </details>
 
-      <section className="sb-world-sidequests">
-        <div><p className="sb-world-overline">OPERACJE POBOCZNE / DLA CIEKAWYCH</p><h2>Znaleziska i zagadki</h2>
-          <p>Dobrowolne zagadki. Nie zmieniają wyniku klasy i nie blokują głównej historii.</p></div>
+      <details className="sb-world-sidequests sb-world-accordion">
+        <summary className="sb-world-accordion-heading">
+          <div><p className="sb-world-overline">OPERACJE POBOCZNE / DLA CIEKAWYCH</p>
+            <h2>Znaleziska i zagadki</h2><p>Dobrowolne szyfry z odkrytych sektorów.</p></div>
+          <span className="sb-world-accordion-chevron" aria-hidden="true">⌄</span>
+        </summary>
+        <div className="sb-world-accordion-content">
         <div className="sb-world-quest-grid">
           {sidequests.map(quest=>{
             const ready=unlocked.has(quest.sector)
@@ -267,7 +274,8 @@ export default function BezdrozaPage(){
             </article>
           })}
         </div>
-      </section>
+        </div>
+      </details>
     </div>
 
     {openEvent&&<div className="sb-world-modal-backdrop" role="presentation" onMouseDown={e=>{
