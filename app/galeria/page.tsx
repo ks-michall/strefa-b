@@ -523,7 +523,7 @@ export default function GaleriaPage() {
                   />
                 </div>
 
-                <div style={{ fontSize: "13px", color: "#6b7280" }}>
+                <div style={{ fontSize: "13px", color: "#bdd2be" }}>
                   Dzisiejszy limit zdjęć: maksymalnie 3
                 </div>
               </div>
@@ -582,7 +582,7 @@ export default function GaleriaPage() {
               background:
                 feedFilter === "all"
                   ? "linear-gradient(125deg,#4f896a,#295d4e)"
-                  : "white",
+                  : "#1a3337",
               color: feedFilter === "all" ? "#f5fbea" : "#d3e5d5",
               borderRadius: "999px",
               padding: "10px 16px",
@@ -605,7 +605,7 @@ export default function GaleriaPage() {
               background:
                 feedFilter === "mine"
                   ? "linear-gradient(125deg,#4f896a,#295d4e)"
-                  : "white",
+                  : "#1a3337",
               color: feedFilter === "mine" ? "#f5fbea" : "#d3e5d5",
               borderRadius: "999px",
               padding: "10px 16px",
@@ -628,7 +628,7 @@ export default function GaleriaPage() {
     background:
       sortMode === "added"
         ? "linear-gradient(125deg,#4f896a,#295d4e)"
-        : "white",
+        : "#1a3337",
     color: sortMode === "added" ? "#f5fbea" : "#d3e5d5",
     borderRadius: "999px",
     padding: "10px 16px",
@@ -651,7 +651,7 @@ export default function GaleriaPage() {
     background:
       sortMode === "taken"
         ? "linear-gradient(125deg,#4f896a,#295d4e)"
-        : "white",
+        : "#1a3337",
     color: sortMode === "taken" ? "#f5fbea" : "#d3e5d5",
     borderRadius: "999px",
     padding: "10px 16px",
@@ -672,11 +672,11 @@ export default function GaleriaPage() {
         {!isLoaded ? (
           <div
             style={{
-              backgroundColor: "rgba(255,255,255,0.85)",
+              backgroundColor: "#1a3236",
               borderRadius: "22px",
               padding: "34px 26px",
-              color: "#6b7280",
-              textAlign: "center",
+              color: "#b6ccbd",
+               textAlign: "center",
               boxShadow: "0 12px 30px rgba(0,0,0,0.06)",
             }}
           >
@@ -685,11 +685,11 @@ export default function GaleriaPage() {
         ) : visibleItems.length === 0 ? (
           <div
             style={{
-              backgroundColor: "rgba(255,255,255,0.85)",
+              backgroundColor: "#1a3236",
               borderRadius: "22px",
               padding: "38px 26px",
-              color: "#6b7280",
-              textAlign: "center",
+              color: "#b6ccbd",
+               textAlign: "center",
               boxShadow: "0 12px 30px rgba(0,0,0,0.06)",
             }}
           >
@@ -697,8 +697,8 @@ export default function GaleriaPage() {
             <div
               style={{
                 fontWeight: 700,
-                color: "#374151",
-                marginBottom: "6px",
+                color: "#e8f4e5",
+                 marginBottom: "6px",
                 fontSize: "18px",
               }}
             >
@@ -721,12 +721,12 @@ export default function GaleriaPage() {
                 style={{
                   breakInside: "avoid",
                   marginBottom: "16px",
-                  background: "white",
-                  border:
-                    item.id === newEntryId
+                  background: "#1a3236",
+                   border:
+                     item.id === newEntryId
                       ? "2px solid #b7e38c"
-                      : "1px solid #e5e7eb",
-                  borderRadius: "22px",
+                      : "1px solid #395b52",
+                   borderRadius: "22px",
                   overflow: "hidden",
                   boxShadow:
                     item.id === newEntryId
