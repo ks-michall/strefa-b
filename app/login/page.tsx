@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { sortedStudents } from "../../lib/students"
 
 export default function LoginPage() {
   const [name, setName] = useState("")
@@ -84,34 +83,42 @@ export default function LoginPage() {
           <div>
           
 
-            <select
-  value={name}
-  onChange={(e) => setName(e.target.value)}
-  style={{
-    width: "100%",
-    padding: "14px",
-    borderRadius: "16px",
-    border: "1px solid #d1d5db",
-    fontSize: "16px",
-    boxSizing: "border-box",
-    backgroundColor: "white",
-    color: "#111827",
-    opacity: 1,
-  }}
->
-              <option value="">Wybierz swoje imię</option>
-              {sortedStudents.map((student) => (
-                <option key={student} value={student}>
-                  {student}
-                </option>
-              ))}
-            </select>
+            <label htmlFor="login-name" style={{display:"block",fontWeight:750,color:"#253a55",marginBottom:8}}>Pełne imię</label>
+            <input
+              id="login-name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Wpisz swoje pełne imię"
+              autoComplete="username"
+              autoCapitalize="words"
+              spellCheck={false}
+              required
+              maxLength={100}
+              style={{
+                width: "100%",
+                padding: "14px",
+                borderRadius: "16px",
+                border: "1px solid #d1d5db",
+                fontSize: "16px",
+                boxSizing: "border-box",
+                backgroundColor: "white",
+                color: "#111827",
+              }}
+            />
+            <p style={{fontSize:13,color:"#566981",margin:"8px 0 0"}}>
+              Wpisz pełne imię, bez zdrobnień. Wychowawca wpisuje „Michał”.
+            </p>
           </div>
 
           <div>
 
 
+            <label htmlFor="login-password" style={{display:"block",fontWeight:750,color:"#253a55",marginBottom:8}}>Hasło</label>
             <input
+              id="login-password"
+              autoComplete="current-password"
+              required
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
