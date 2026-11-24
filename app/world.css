@@ -278,7 +278,7 @@ body{background:var(--sb-night);color:#e5ecd9;}
 .sb-world-module-bio>div:last-child{position:relative;z-index:1;}
 .sb-world-home-foot{color:#6e928f;text-align:center;padding:23px 0;font-size:11px;}
 /* Companion modules: adapt visual framing without changing stored records. */
-.sb-heroes-page{background:radial-gradient(ellipse at 12% 10%,rgba(66,108,85,.25),transparent 40%),linear-gradient(180deg,#0b1622,#10242a)!important;}
+.sb-app-page.sb-heroes-page{background:radial-gradient(ellipse at 12% 10%,rgba(66,108,85,.25),transparent 40%),linear-gradient(180deg,#0b1622,#10242a)!important;}
 .sb-heroes-header{background:linear-gradient(135deg,#223d4b,#1b3445)!important;border-color:#44645f!important;}
 .sb-heroes-header h1{color:#f0f6e9!important;}
 .sb-heroes-header .sb-small-label{color:#c5efa2!important;}
