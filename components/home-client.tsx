@@ -98,12 +98,9 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
 
   return <main className="sb-world-home">
     <div className="sb-world-container">
-      <div className="sb-world-eyebrow">
-        <span className="sb-world-live-dot"/> CENTRUM OPERACYJNE
-      </div>
-      <header className="sb-world-home-top">
+      <header className="sb-world-home-top sb-module-heading">
         <div>
-          <p className="sb-world-overline">ŁĄCZNOŚĆ NAWIĄZANA</p>
+          <h1 className="sb-bio-title">Centrum operacyjne<span className="sb-green-dot">.</span></h1>
           <p>Strefa B trwa. Jej przyszłość zależy od naszej codziennej pracy.</p>
         </div>
       </header>

@@ -47,10 +47,6 @@ export function ProfileMenu({name,onLogout,loggingOut}:{
           style={{display:"block",padding:12,color:"#253a55",textDecoration:"none",fontWeight:700}}>
           👤 Mój profil
         </Link>
-        <Link role="menuitem" href="/profil#awatar" onClick={()=>setOpen(false)}
-          style={{display:"block",padding:12,color:"#253a55",textDecoration:"none"}}>
-          🖼️ Zmień awatar
-        </Link>
         <div style={{height:1,background:"#e2e8f0",margin:"5px 0"}}/>
         <button role="menuitem" type="button" disabled={loggingOut} onClick={onLogout}
           style={{width:"100%",border:0,background:"white",textAlign:"left",padding:12,
