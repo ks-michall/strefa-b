@@ -680,3 +680,11 @@ body{background:var(--sb-night);color:#e5ecd9;}
 @media(max-width:470px){
   .sb-heroes-header.sb-module-heading .sb-heroes-primary{width:100%;}
 }
+
+/* One coherent set of outline icons in the four-module mobile navigation. */
+.sb-quicknav-icon{display:flex;align-items:center;justify-content:center;width:25px;height:25px;}
+.sb-quicknav-icon svg{display:block;width:22px;height:22px;stroke:currentColor;flex-shrink:0;}
+@media(max-width:720px){
+  .sb-quicknav-link{gap:5px!important;}
+  .sb-quicknav-link.is-active .sb-quicknav-icon svg{filter:drop-shadow(0 0 5px rgba(197,239,155,.18));}
+}
