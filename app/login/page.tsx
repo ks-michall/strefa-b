@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { sortedStudents } from "../../lib/students"
 
 export default function LoginPage() {
   const [name, setName] = useState("")
@@ -20,7 +19,7 @@ export default function LoginPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name, password }),
+        body: JSON.stringify({ name: name.trim(), password }),
       })
 
       const data = await response.json()
@@ -84,28 +83,33 @@ export default function LoginPage() {
           <div>
           
 
-            <select
-  value={name}
-  onChange={(e) => setName(e.target.value)}
-  style={{
-    width: "100%",
-    padding: "14px",
-    borderRadius: "16px",
-    border: "1px solid #d1d5db",
-    fontSize: "16px",
-    boxSizing: "border-box",
-    backgroundColor: "white",
-    color: "#111827",
-    opacity: 1,
-  }}
->
-              <option value="">Wybierz swoje imię</option>
-              {sortedStudents.map((student) => (
-                <option key={student} value={student}>
-                  {student}
-                </option>
-              ))}
-            </select>
+            <label htmlFor="login-name" style={{display:"block",fontWeight:750,color:"#24364b",marginBottom:8}}>
+              Imię
+            </label>
+            <input
+              id="login-name"
+              type="text"
+              name="username"
+              autoComplete="username"
+              autoCapitalize="words"
+              spellCheck={false}
+              maxLength={100}
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Wpisz pełne imię"
+              style={{
+                width:"100%",
+                padding:"14px",
+                borderRadius:"16px",
+                border:"1px solid #d1d5db",
+                fontSize:"16px",
+                boxSizing:"border-box",
+                backgroundColor:"white",
+                color:"#111827",
+                opacity:1,
+              }}
+            />
           </div>
 
           <div>
@@ -113,6 +117,9 @@ export default function LoginPage() {
 
             <input
               type="password"
+              name="password"
+              autoComplete="current-password"
+              required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Wpisz hasło"
