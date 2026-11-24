@@ -28,12 +28,18 @@ export async function POST(request: NextRequest) {
     if (typeof name !== "string" || typeof password !== "string" || !name || !password || name.length > 100 || password.length > 256) {
       return NextResponse.json({ success: false, error: "Podaj imię i hasło." }, { status: 400 })
     }
+    // Login accepts full first names without exposing the account list.
+    // The teacher types "Michał" but all sessions and existing records retain "ks. Michał".
+    const typedName = name.trim().normalize("NFC")
+    const accountName = typedName.toLocaleLowerCase("pl-PL") === "michał"
+      ? "ks. Michał"
+      : students.find(s => s.toLocaleLowerCase("pl-PL") === typedName.toLocaleLowerCase("pl-PL"))
     // Unify invalid-account and invalid-password responses.
-    const login = await verifyLogin(name, password)
-    if (!login.valid || !students.some(s => s === name)) {
+    const login = await verifyLogin(accountName ?? "", password)
+    if (!login.valid || !accountName) {
       return NextResponse.json({ success: false, error: "Nieprawidłowe dane logowania." }, { status: 401 })
     }
-    await setLoggedInUser(name as (typeof students)[number], login.mustChangePassword ? "setup" : "full")
+    await setLoggedInUser(accountName, login.mustChangePassword ? "setup" : "full")
     return NextResponse.json({ success: true, mustChangePassword: login.mustChangePassword }, { headers: { "Cache-Control": "no-store" } })
   } catch {
     return NextResponse.json({ success: false, error: "Wystąpił błąd logowania." }, { status: 500 })
