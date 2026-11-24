@@ -209,7 +209,7 @@ export default function BohaterowiePage(){
     }catch(error){setNotice(error instanceof Error?error.message:"Nie udało się rozpatrzyć zgłoszenia.")}
   }
 
-  return <main className="sb-app-page sb-theme-blue sb-heroes-page">
+  return <main className="sb-app-page sb-heroes-page">
     <div className="sb-heroes-inner">
       <header className="sb-heroes-header sb-module-heading">
         <div>
