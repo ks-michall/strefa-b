@@ -28,12 +28,17 @@ export async function POST(request: NextRequest) {
     if (typeof name !== "string" || typeof password !== "string" || !name || !password || name.length > 100 || password.length > 256) {
       return NextResponse.json({ success: false, error: "Podaj imię i hasło." }, { status: 400 })
     }
+    // The login form accepts full first names, while account IDs remain unchanged.
+    // "Michał" is only an input alias; the verified session still uses "ks. Michał".
+    const normalized = name.trim().normalize("NFC").toLocaleLowerCase("pl-PL")
+    const account = normalized === "michał" ? "ks. Michał" :
+      students.find(student => student.toLocaleLowerCase("pl-PL") === normalized)
     // Unify invalid-account and invalid-password responses.
-    const login = await verifyLogin(name, password)
-    if (!login.valid || !students.some(s => s === name)) {
+    const login = await verifyLogin(account ?? "", password)
+    if (!login.valid || !account) {
       return NextResponse.json({ success: false, error: "Nieprawidłowe dane logowania." }, { status: 401 })
     }
-    await setLoggedInUser(name as (typeof students)[number], login.mustChangePassword ? "setup" : "full")
+    await setLoggedInUser(account, login.mustChangePassword ? "setup" : "full")
     return NextResponse.json({ success: true, mustChangePassword: login.mustChangePassword }, { headers: { "Cache-Control": "no-store" } })
   } catch {
     return NextResponse.json({ success: false, error: "Wystąpił błąd logowania." }, { status: 500 })
