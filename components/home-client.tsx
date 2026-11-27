@@ -14,7 +14,6 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
   const [userLoaded,setUserLoaded]=useState(false)
   const [bio,setBio]=useState<BioBrief>({hasTrees:false,active:false,doneToday:false,habit:"",action:""})
   const [bioLoaded,setBioLoaded]=useState(false)
-  const [showWelcome,setShowWelcome]=useState(false)
   const [world,setWorld]=useState<WorldState|null>(null)
   const [worldUnread,setWorldUnread]=useState(0)
 
@@ -47,8 +46,8 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
               const checked=Array.isArray(latest.checks)?latest.checks:[]
               setBio({hasTrees:true,active:!!current,
                 doneToday:checked.includes(today),habit:habit?.title||"Twoja uprawa",action:habit?.action||""})
-            }else if(me.name!=="ks. Michał"){
-              try{setShowWelcome(localStorage.getItem("sb-intro-seen:"+me.name)!=="1")}catch{}
+
+            }
             }
           }catch{/* Nie blokujemy strony głównej. */}
           finally{if(active)setBioLoaded(true)}
@@ -80,11 +79,6 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
     return()=>{active=false;window.clearInterval(timer)}
   },[currentUser])
 
-  function dismissWelcome(){
-    setShowWelcome(false)
-    try{localStorage.setItem("sb-intro-seen:"+currentUser,"1")}catch{}
-  }
-
   const available=world?worldEvents(world):[]
   const latestTransmission=available.find(event=>event.kind==="transmission")
   const expedition=world?nextExpedition(world):null
@@ -105,16 +99,6 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
         </div>
       </header>
 
-      {showWelcome&&<section className="sb-world-welcome" aria-label="Szybki start w Strefie B">
-        <p className="sb-world-overline">PIERWSZA MISJA / 30 SEKUND</p>
-        <h2>Witaj w Strefie B. Zaczynamy?</h2>
-        <p>① Wybierz nawyk w Biostacji. ② Dostrzegaj dobro w Biuletynie.
-          ③ Wspólnie zbierajcie zasoby i odkrywajcie Bezdroża.</p>
-        <div className="sb-world-welcome-actions">
-          <Link href="/bonsai?start=1" onClick={dismissWelcome}>Wybierz pierwszy nawyk ↗</Link>
-          <button type="button" onClick={dismissWelcome}>Pomiń wprowadzenie</button>
-        </div>
-      </section>}
       {bioLoaded&&<section className="sb-world-daily" aria-label="Twoja misja na dziś">
         <div>
           <p className="sb-world-overline">TWÓJ DZISIEJSZY KROK</p>
