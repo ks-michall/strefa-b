@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     const cookieStore=await cookies()
     cookieStore.set("sb_first_story_pending","1",{
       httpOnly:true,sameSite:"lax",secure:process.env.NODE_ENV==="production",
-      path:"/",maxAge:60*60,
+      path:"/",maxAge:60*60*24*30,
     })
     return NextResponse.json({ success: true }, { headers: { "Cache-Control": "no-store" } })
   } catch {
