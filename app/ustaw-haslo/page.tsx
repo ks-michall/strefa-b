@@ -32,7 +32,7 @@ export default function SetPasswordPage() {
         setError(data.error || "Nie udało się zmienić hasła.")
         return
       }
-      window.location.replace("/")
+      window.location.replace("/wprowadzenie")
     } catch {
       setError("Błąd połączenia. Spróbuj jeszcze raz.")
     } finally {
@@ -80,7 +80,7 @@ export default function SetPasswordPage() {
               background: "#246b49", color: "white", border: "none", borderRadius: 14,
               padding: "15px 16px", fontSize: 16, fontWeight: 700,
               cursor: loading ? "wait" : "pointer", opacity: loading ? 0.7 : 1,
-            }} type="submit">{loading ? "Zapisywanie…" : "Zapisz hasło i wejdź do Strefy B"}</button>
+            }} type="submit">{loading ? "Zapisywanie…" : "Zapisz hasło i rozpocznij"}</button>
         </form>
       </section>
     </main>
