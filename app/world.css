@@ -688,3 +688,60 @@ body{background:var(--sb-night);color:#e5ecd9;}
   .sb-quicknav-link{gap:5px!important;}
   .sb-quicknav-link.is-active .sb-quicknav-icon svg{filter:drop-shadow(0 0 5px rgba(197,239,155,.18));}
 }
+
+/* Temporary launch board for students. The teacher still uses the full map. */
+.sb-bezdroza-locked{display:grid;place-items:center;min-height:calc(100dvh - 92px);}
+.sb-bezdroza-lock-board{
+  position:relative;isolation:isolate;overflow:hidden;width:min(100%,760px);
+  padding:clamp(25px,5vw,57px);border:1px solid #45665d;border-radius:26px;
+  background:radial-gradient(ellipse at 75% 6%,rgba(110,176,139,.23),transparent 52%),
+    linear-gradient(145deg,#19343b,#101f2e 80%);
+  box-shadow:0 22px 65px rgba(0,0,0,.24);
+}
+.sb-bezdroza-lock-scan{position:absolute;z-index:-1;right:-100px;top:-130px;width:440px;height:440px;
+  border:1px solid rgba(187,239,147,.18);border-radius:50%;
+  box-shadow:0 0 0 55px rgba(187,239,147,.025),0 0 0 125px rgba(187,239,147,.018);}
+.sb-bezdroza-lock-label,.sb-bezdroza-lock-count-label{
+  color:#bfe4af;font:800 11px/1.5 ui-monospace,Consolas,monospace;letter-spacing:1.55px;
+}
+.sb-bezdroza-lock-label{display:flex;align-items:center;gap:12px;margin:0 0 21px;}
+.sb-bezdroza-lock-board h1,.sb-intro-board h1{
+  color:#f1f8e8;font-size:clamp(41px,8vw,72px);line-height:1.04;font-weight:900;
+  letter-spacing:-2.5px;margin:0 0 18px;
+}
+.sb-bezdroza-lock-headline{font-size:clamp(18px,3vw,23px);font-weight:760;color:#d9efdf;margin:0 0 8px;}
+.sb-bezdroza-lock-message{color:#bdcdc7;line-height:1.65;font-size:15px;margin:0 0 33px;}
+.sb-bezdroza-lock-message strong{color:#eaf6de;}
+.sb-bezdroza-lock-count-label{margin:0 0 11px;}
+.sb-bezdroza-lock-clock{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
+.sb-bezdroza-lock-unit{padding:18px 5px 15px;display:grid;place-items:center;gap:6px;min-width:0;
+  background:#102a31;border:1px solid #47685d;border-radius:14px;}
+.sb-bezdroza-lock-unit strong{color:#d7f6a9;font-size:clamp(25px,6vw,48px);font-variant-numeric:tabular-nums;line-height:1;}
+.sb-bezdroza-lock-unit span{color:#a7c3b4;font:800 10px ui-monospace,monospace;letter-spacing:1.2px;}
+.sb-bezdroza-lock-foot{margin:28px 0 0;color:#a6c1b6;line-height:1.65;font-size:13px;}
+
+/* One-time story screen presented immediately after setting a personal password. */
+.sb-intro-page{min-height:calc(100dvh - 92px);padding:30px 16px 95px;
+  display:grid;place-items:center;background:radial-gradient(ellipse at 68% 7%,rgba(64,107,78,.26),transparent 44%),#0b1622;}
+.sb-intro-board{position:relative;isolation:isolate;overflow:hidden;width:min(100%,690px);
+  border:1px solid #496c5b;border-radius:26px;padding:clamp(26px,6vw,58px);
+  background:linear-gradient(145deg,#20363e,#10212c);box-shadow:0 20px 70px rgba(0,0,0,.26);}
+.sb-intro-board:after{content:"";position:absolute;z-index:-1;right:-100px;top:-140px;
+  width:420px;height:420px;border-radius:50%;border:1px solid rgba(191,234,157,.13);
+  box-shadow:0 0 0 65px rgba(191,234,157,.02),0 0 0 150px rgba(191,234,157,.018);}
+.sb-intro-warning{display:flex;align-items:center;gap:11px;color:#c5efa2;
+  font:800 10px/1.4 ui-monospace,Consolas,monospace;letter-spacing:1.7px;margin:0 0 29px;}
+.sb-intro-board h1{margin-bottom:28px;}
+.sb-intro-board p{color:#d4e5da;font-size:clamp(16px,2.5vw,19px);line-height:1.6;margin:0 0 15px;}
+.sb-intro-board p.sb-intro-last{margin-top:27px;color:#e3f6c6;font-weight:750;}
+.sb-intro-board button{margin-top:20px;display:inline-flex;align-items:center;justify-content:center;gap:15px;
+  border:0;border-radius:12px;padding:15px 22px;background:#c5ef9b;color:#153425;font-weight:900;font-size:15px;cursor:pointer;}
+.sb-intro-board button:disabled{opacity:.55;cursor:wait;}
+.sb-intro-board .sb-intro-error{color:#ffd2cb;font-size:13px;}
+@media(max-width:480px){
+  .sb-bezdroza-locked{padding:20px 13px 103px;}
+  .sb-bezdroza-lock-clock{gap:6px;}
+  .sb-bezdroza-lock-unit{padding:14px 3px 12px;}
+  .sb-bezdroza-lock-unit span{font-size:9px;letter-spacing:.5px;}
+  .sb-intro-page{padding:19px 13px 110px;}
+}
