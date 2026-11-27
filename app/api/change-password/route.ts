@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import {cookies} from "next/headers"
 import { getLoggedInSession, setLoggedInUser, verifyLogin } from "../../../lib/auth"
 import { getStoredCredential, hashNewPassword, setStudentPassword } from "../../../lib/password-store"
 
@@ -40,6 +41,11 @@ export async function POST(request: NextRequest) {
     const hash = await hashNewPassword(password)
     await setStudentPassword(session.name, hash)
     await setLoggedInUser(session.name, "full")
+    const cookieStore=await cookies()
+    cookieStore.set("sb_first_story_pending","1",{
+      httpOnly:true,sameSite:"lax",secure:process.env.NODE_ENV==="production",
+      path:"/",maxAge:60*60,
+    })
     return NextResponse.json({ success: true }, { headers: { "Cache-Control": "no-store" } })
   } catch {
     return NextResponse.json(
