@@ -101,7 +101,7 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
       <header className="sb-world-home-top sb-module-heading">
         <div>
           <h1 className="sb-bio-title">Centrum operacyjne<span className="sb-green-dot">.</span></h1>
-          <p>Strefa B trwa. Jej przyszłość zależy od naszej codziennej pracy.</p>
+          <p>Po Wielkiej Ciszy Strefa B jest naszym schronieniem. Nie wiemy, czy ktoś jeszcze ocalał.</p>
         </div>
       </header>
 
