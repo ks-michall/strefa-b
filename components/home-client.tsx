@@ -28,7 +28,7 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
         if(typeof me.name!=="string"||!me.name){setUserLoaded(true);return}
         setCurrentUser(me.name)
         setUserLoaded(true)
-        // Start the two independent class modules without blocking the welcome view.
+        // Start the two independent class modules without blocking the main view.
         void (async()=>{
           try{
             const r=await fetch("/api/bonsai",{cache:"no-store"})
@@ -46,8 +46,6 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
               const checked=Array.isArray(latest.checks)?latest.checks:[]
               setBio({hasTrees:true,active:!!current,
                 doneToday:checked.includes(today),habit:habit?.title||"Twoja uprawa",action:habit?.action||""})
-
-            }
             }
           }catch{/* Nie blokujemy strony głównej. */}
           finally{if(active)setBioLoaded(true)}
