@@ -23,8 +23,8 @@ export function BezdrozaCountdown(){
   },[])
   const left=remaining(now??0)
   useEffect(()=>{
-    if(now!==null&&left.expired){const timer=window.setTimeout(()=>window.location.reload(),15000);return()=>window.clearTimeout(timer)}
-  },[now,left.expired])
+    if(left.expired){const timer=window.setTimeout(()=>window.location.reload(),1500);return()=>window.clearTimeout(timer)}
+  },[left.expired])
   return <main className="sb-world sb-bezdroza-locked">
     <section className="sb-bezdroza-lock-board" aria-labelledby="lock-title">
       <div className="sb-bezdroza-lock-scan" aria-hidden="true"/>
