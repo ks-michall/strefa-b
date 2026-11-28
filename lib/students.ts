@@ -7,6 +7,7 @@ export const students = [
   "Julia",
   "Kamila",
   "Karina",
+  "Kacper",
   "Kinga",
   "Laura",
   "Liliana",
