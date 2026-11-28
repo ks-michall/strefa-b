@@ -5,7 +5,7 @@ import { QuickNav } from "../components/quick-nav"
 import { HeaderProfile } from "../components/header-profile"
 
 export const metadata = {
-  title: "Strefa B — przestrzeń klasy",
+  title: "Strefa B",
   description: "Biostacja, Biuletyn, Baza Archiwalna i Bezdroża. Odkrywaj świat Strefy B.",
   applicationName: "Strefa B",
   manifest: "/manifest.json",
