@@ -35,6 +35,7 @@ function EventCard({e,busy,act,now}:{e:SeasonEvent;busy:boolean;act:(a:Record<st
  <p className="sb-season-kicker">ROZDZIAŁ {e.id}</p><h2>{e.title}<span className="sb-green-dot">.</span></h2>
  {e.context.map((t,i)=><p key={"c"+i} className="sb-season-context">{t}</p>)}
  {e.scene.map((t,i)=><p key={i}>{t}</p>)}
+ {e.images&&e.images.length>1&&<div className="sb-season-image-strip">{e.images.filter(id=>id!==e.asset).map(id=><SceneImage key={id} id={id} alt="Odkrycie związane z wydarzeniem"/>)}</div>}
  {e.forcedMessage&&<p className="sb-season-note">{e.forcedMessage}</p>}
  {vote&&<section className="sb-season-decision">
  <p className="sb-season-kicker">DECYZJA SPOŁECZNOŚCI</p>
