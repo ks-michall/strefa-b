@@ -4,7 +4,7 @@ import Link from "next/link"
 import { habits, availableHabits } from "../../lib/bonsai-habits"
 import { BiostationPlot } from "../../components/biostation-plot"
 import { useBiostationSession } from "../../components/biostation-session"
-import { nextExpedition,type WorldState } from "../../lib/world-story"
+
 import { BonsaiHarvest } from "../../components/bonsai-harvest"
 import { BonsaiReflection } from "../../components/bonsai-reflection"
 import { useEffect, useMemo, useState } from "react"
@@ -94,7 +94,6 @@ export default function BonsaiPage() {
   const [nowMs, setNowMs] = useState(0)
   const [expandedTree, setExpandedTree] = useState<string|null>(null)
   const [harvestNotice, setHarvestNotice] = useState("")
-  const [impact,setImpact]=useState<{food:number;morale:number;targetFood:number;targetMorale:number;name:string}|null>(null)
 
   useEffect(() => {
     setNowMs(Date.now())
@@ -224,15 +223,7 @@ export default function BonsaiPage() {
     const success=await post("check",{treeId})
     if(!success)return
     setHarvestNotice("🌾 Dzisiejszy plon zasilił wspólne zapasy Strefy B!")
-    try{
-      const response=await fetch("/api/world",{cache:"no-store"})
-      if(!response.ok)return
-      const data=await response.json() as WorldState
-      const expedition=Date.parse(data.serverNow)>=Date.parse("2026-12-02T08:30:00Z")?nextExpedition(data):null
-      if(expedition)setImpact({food:data.food,morale:data.morale,
-        targetFood:expedition.food,targetMorale:expedition.morale,name:expedition.name})
-      else setImpact(null)
-    }catch{/* Nie utrudniamy potwierdzenia, jeśli mapa chwilowo nie odpowiada. */}
+
   }
 
   if (!loaded || !nowMs) return <main style={{ padding: 30 }}>Ładowanie Biostacji…</main>
@@ -257,15 +248,7 @@ export default function BonsaiPage() {
       </div>
       {harvestNotice&&<div role="status" className="sb-bio-impact-card">
         <strong>{harvestNotice}</strong>
-        {impact&&<div className="sb-bio-impact-data">
-          <span>Następna wyprawa: {impact.name}</span>
-          <div className="sb-bio-impact-resource"><span>🌾 Żywność</span>
-            <strong>{impact.food} / {impact.targetFood}</strong></div>
-          <div className="sb-bio-impact-meter"><span style={{width:Math.min(100,impact.food/Math.max(1,impact.targetFood)*100)+"%"}}/></div>
-          <div className="sb-bio-impact-resource"><span>✳ Morale</span>
-            <strong>{impact.morale} / {impact.targetMorale}</strong></div>
-          <p>Jeszcze {Math.max(0,impact.targetFood-impact.food)} żywności i {Math.max(0,impact.targetMorale-impact.morale)} morale do celu wyprawy.</p>
-        </div>}
+        
         <Link href="/bezdroza">Sprawdź Bezdroża ↗</Link>
       </div>}
 
