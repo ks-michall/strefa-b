@@ -10,6 +10,7 @@ export type StoredCredential = {
   student_name: string
   password_hash: string
   changed_at: string
+  must_change_password?: boolean
 }
 
 export function isPasswordStoreConfigured(): boolean {
