@@ -1,323 +1,92 @@
 "use client"
+import {useEffect,useRef,useState} from "react"
+import {loadSeason,type SeasonView,type SeasonEvent,type SeasonLocation} from "../../lib/season-view"
 
-import Link from "next/link"
-import {useCallback,useEffect,useMemo,useRef,useState} from "react"
-import {FrontierMap} from "../../components/frontier-map"
-import {useWorldSession} from "../../components/world-session"
-import {WORLD_SECTORS,WORLD_TRANSMISSIONS,WORLD_EMPTY,worldEvents,nextExpedition,
-  type WorldState,type WorldEvent} from "../../lib/world-story"
-
-const sidequests=[
-  {id:"q-pompa",sector:"przepompownia",name:"Dziennik dyżurnego",
-    documents:["DZIENNIK 1: 03:17 — zanik łączności w całym regionie.",
-      "DZIENNIK 2: 03:16 — operator ręcznie odłączył sektor B-03."],
-    question:"O której godzinie odłączono sektor B-03? Wpisz godzinę z dokumentu.",
-    code:"03:16",hint:"Wydarzenie, którego szukasz, zapisano w drugim dzienniku.",
-    reveal:"Odłączenie nastąpiło minutę PRZED Wielką Ciszą. To nie jest zwykły zbieg okoliczności."},
-  {id:"q-radio",sector:"wieza",name:"Szyfr na obudowie nadajnika",
-    documents:["Odnaleziono znak: C-14.",
-      "Notatka technika: «Przesuń każdą literę i cyfrę o jedno miejsce WSTECZ, żeby odczytać identyfikator».",
-      "Przykład: D-25 → C-14."],
-    question:"Jak brzmi prawdziwy identyfikator nadajnika? Wpisz kod.",
-    code:"B-03",hint:"C cofasz do B, a 1 i 4 również o jeden wstecz.",
-    reveal:"Nadajnik ma oznaczenie B-03 — to ten sam identyfikator, którego używają inni ocaleni wobec Strefy B."},
-  {id:"q-archiwum",sector:"archiwum",name:"Ostatnie słowo",
-    documents:["W raporcie ocalał tylko ciąg: LBTLBEB.",
-      "Na okładce widnieje instrukcja: «Każdą literę przesunięto o jedno miejsce w PRAWO w alfabecie».",
-      "Przykład: EPN = DOM."],
-    question:"Odczytaj nazwę systemu, cofając litery o jedno miejsce.",
-    code:"KASKADA",hint:"L to K, B to A. Odczytaj pozostałe litery podobnie.",
-    reveal:"KASKADA — system infrastruktury. To jego błędy mogły rozprzestrzenić awarię na cały region."},
-] as const
-
-function normalizeSolution(value:string){
-  return value.normalize("NFKD").toLowerCase().replace(/[^a-z0-9]/g,"")
+const time=(n:number)=>new Intl.DateTimeFormat("pl-PL",{timeZone:"Europe/Warsaw",day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"}).format(new Date(n))
+function SceneImage({id,alt}:{id:string;alt:string}){
+ const [failed,setFailed]=useState(false)
+ if(failed)return null
+ return <img className="sb-season-image" src={"/api/season/image?asset="+encodeURIComponent(id)} alt={alt} loading="lazy" onError={()=>setFailed(true)}/>
 }
-
-function dateLabel(value:string){
-  return new Intl.DateTimeFormat("pl-PL",{
-    timeZone:"Europe/Warsaw",day:"numeric",month:"short",year:"numeric",
-  }).format(new Date(value))
+function MapBoard({locations}:{locations:SeasonLocation[]}){
+ const [selected,setSelected]=useState("bunker")
+ const current=locations.find(l=>l.id===selected)
+ const scale=68
+ return <section className="sb-season-map">
+ <p className="sb-season-kicker">KARTOGRAFIA / TYLKO ZBADANY TEREN</p>
+ <h2>Nasza mapa</h2>
+ <svg viewBox="0 0 640 460" width="100%" role="img" aria-label="Schemat odkrytych miejsc">
+ <defs><radialGradient id="sbmap"><stop offset="0" stopColor="#28443a"/><stop offset="1" stopColor="#101a22"/></radialGradient><pattern id="sbgrid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" stroke="#718a80" strokeOpacity=".15" fill="none"/></pattern></defs>
+ <rect width="640" height="460" rx="14" fill="url(#sbmap)"/><rect width="640" height="460" rx="14" fill="url(#sbgrid)"/>
+ <g fill="#a5bcae" fontSize="12" fontWeight="bold"><text x="260" y="23">N</text><text x="18" y="245">W</text><text x="620" y="245">E</text><text x="260" y="445">S</text></g>
+ {locations.filter(l=>l.id!=="bunker").map(l=><path key={l.id} d={`M260 244 L${260+l.position[0]*scale} ${244+l.position[1]*scale}`} stroke="#a3d6a0" strokeOpacity=".48" strokeDasharray="5 6" fill="none"/>)}
+ {locations.map(l=>{const x=260+l.position[0]*scale,y=244+l.position[1]*scale;return <g key={l.id}><circle cx={x} cy={y} r={selected===l.id?25:18} fill="#b9ef9c" opacity=".14"/><circle cx={x} cy={y} r="6" fill="#c5ef9b"/><text x={x} y={y+23} fontSize="12" textAnchor="middle" fill="#e1eddf">{l.name}</text></g>})}
+ </svg>
+ <div className="sb-season-location-list">{locations.map(l=><button key={l.id} type="button" className={selected===l.id?"selected":""} onClick={()=>setSelected(l.id)}>{l.name}</button>)}</div>
+ {current&&<p>Odkryte miejsce: <strong>{current.name}</strong>.</p>}
+ <small>Położenie jest orientacyjne, nie jest to gotowa mapa świata.</small>
+ </section>
 }
-
+function EventCard({e,busy,act,now}:{e:SeasonEvent;busy:boolean;act:(a:Record<string,unknown>)=>void;now:number}){
+ const vote=e.vote,p=e.personal
+ return <article className="sb-season-card" id={"etap-"+e.id}>
+ <SceneImage id={e.asset} alt="Ilustracja wydarzenia"/>
+ <div className="sb-season-card-body">
+ <p className="sb-season-kicker">ROZDZIAŁ {e.id}</p><h2>{e.title}<span className="sb-green-dot">.</span></h2>
+ {e.context.map((t,i)=><p key={"c"+i} className="sb-season-context">{t}</p>)}
+ {e.scene.map((t,i)=><p key={i}>{t}</p>)}
+ {e.images&&e.images.length>1&&<div className="sb-season-image-strip">{e.images.filter(id=>id!==e.asset).map(id=><SceneImage key={id} id={id} alt="Odkrycie związane z wydarzeniem"/>)}</div>}
+ {e.forcedMessage&&<p className="sb-season-note">{e.forcedMessage}</p>}
+ {vote&&<section className="sb-season-decision">
+ <p className="sb-season-kicker">DECYZJA SPOŁECZNOŚCI</p>
+ <h3>{vote.prompt}</h3>
+ {vote.winner?<><p><strong>Wynik:</strong> {vote.options.find(o=>o.id===vote.winner)?.label}</p><p>{vote.outcome}</p><p className="sb-season-note">{vote.reason==="fallback"?"Nie oddano głosów. Zastosowano wariant awaryjny.":vote.reason==="tie"?"Remis rozstrzygnięto według ustalonej kolejności.":"Decyzja większości."}</p>{vote.counts&&vote.options.map(o=><div key={o.id} className="sb-season-result"><span>{o.label}</span><strong>{vote.counts?.[o.id]??0}</strong></div>)}</>:<>
+ <p className="sb-season-note">Głosowanie do {time(vote.deadline)}. Oddano {vote.submitted} głosów. Każdy ma jeden głos.</p>
+ {vote.options.map(o=><button type="button" className={"sb-season-choice"+(vote.myVote===o.id?" chosen":"")} key={o.id} disabled={busy||!!vote.myVote||now>=vote.deadline} onClick={()=>{if(window.confirm("Potwierdzić ten wybór? Nie będzie można go zmienić."))act({action:"vote",stage:e.id,option:o.id})}}>{o.label}{vote.myVote===o.id?" ✓":""}</button>)}
+ <details className="sb-season-note"><summary>Zasada rozstrzygania remisu</summary><p>{vote.tiePriority.map(id=>vote.options.find(o=>o.id===id)?.label).join(" → ")}</p></details>
+ </>}
+ </section>}
+ {p&&<section className="sb-season-personal">
+ <p className="sb-season-kicker">TYLKO DLA CIEBIE / EPIZOD {p.round}/4</p>
+ <h3>{p.title}</h3><p>{p.scene}</p>
+ {p.callbacks.map((t,i)=><p key={i} className="sb-season-context">{t}</p>)}
+ {p.choice?<><p><strong>Twój wybór:</strong> {p.options.find(o=>o.id===p.choice)?.label}</p><p>{p.outcome}</p></>:p.available?<>{p.options.map(o=><button type="button" key={o.id} className="sb-season-choice" disabled={busy} onClick={()=>{if(window.confirm("Potwierdzić osobistą decyzję?"))act({action:"personal",round:p.round,option:o.id})}}>{o.label}</button>)}</>:<p className="sb-season-note">Najpierw dokończ wcześniejszy epizod. Po finale wybory są zamknięte.</p>}
+ </section>}
+ {e.cliffhanger&&<p className="sb-season-cliff">{e.cliffhanger}</p>}
+ </div></article>
+}
 export default function BezdrozaPage(){
-  const name=useWorldSession()
-  const [state,setState]=useState<WorldState|null>(null)
-  const [failed,setFailed]=useState(false)
-  const [selected,setSelected]=useState("")
-  const [discovery,setDiscovery]=useState<string|null>(null)
-  const [openEvent,setOpenEvent]=useState<WorldEvent|null>(null)
-  const [seen,setSeen]=useState<string[]>([])
-  const [completed,setCompleted]=useState<string[]>([])
-  const [questAnswers,setQuestAnswers]=useState<Record<string,string>>({})
-  const [questWrong,setQuestWrong]=useState<string|null>(null)
-  const [questHints,setQuestHints]=useState<string[]>([])
-  const discoveryRef=useRef<string|null>(null)
-  const logDetails=useRef<HTMLDetailsElement>(null)
-
-  useEffect(()=>{
-    try{
-      const saved=localStorage.getItem("sb-world-seen:"+name)
-      const solved=localStorage.getItem("sb-world-quests:"+name)
-      if(saved)setSeen(JSON.parse(saved) as string[])
-      if(solved)setCompleted(JSON.parse(solved) as string[])
-    }catch{/* Nie blokuje odkrywania mapy. */}
-  },[name])
-  const load=useCallback(async()=>{
-    try{
-      const response=await fetch("/api/world",{cache:"no-store"})
-      const data:unknown=await response.json()
-      if(!response.ok||!data||typeof data!=="object"||Array.isArray(data))
-        throw Error("Nie udało się odczytać mapy.")
-      const next=data as WorldState
-      if(!Array.isArray(next.unlocked)||typeof next.food!=="number")
-        throw Error("Nieprawidłowe dane mapy.")
-      // Discoveries belong to the whole class, but each pupil can witness
-      // the reveal independently on their own device and at their own pace.
-      let witnessed:string[]=[]
-      try{
-        const saved=JSON.parse(localStorage.getItem("sb-world-revealed:"+name)||"[]")
-        if(Array.isArray(saved))witnessed=saved.filter((id:unknown):id is string=>typeof id==="string")
-      }catch{/* A private-storage failure never blocks the world. */}
-      const unseen=next.unlocked
-        .filter(item=>!witnessed.includes(item.sector))
-        .sort((a,b)=>Date.parse(a.unlocked_at)-Date.parse(b.unlocked_at))
-      if(unseen.length>0 && !discoveryRef.current){
-        const first=WORLD_SECTORS.find(item=>item.id===unseen[0].sector)
-        if(first){
-          discoveryRef.current=first.id
-          setDiscovery(first.id)
-          setSelected(first.id)
-        }
-      }
-      setState(next);setFailed(false)
-    }catch{setFailed(true)}
-  },[name])
-  useEffect(()=>{
-    void load()
-    const timer=window.setInterval(()=>void load(),45000)
-    return ()=>window.clearInterval(timer)
-  },[load])
-  useEffect(()=>{
-    if(window.location.hash==="#dziennik")logDetails.current?.setAttribute("open","")
-  },[])
-
-  const world=state??WORLD_EMPTY
-  const unlocked=useMemo(()=>new Set(world.unlocked.map(item=>item.sector)),[world])
-  const events=useMemo(()=>state?worldEvents(state):[],[state])
-  const availableWeekly=events.filter(e=>e.kind==="transmission")
-  const unread=events.filter(e=>!seen.includes(e.id)).length
-  const next=state?nextExpedition(state):null
-  const place=WORLD_SECTORS.find(s=>s.id===selected)??WORLD_SECTORS[0]
-  const isOpen=place.id==="baza"||unlocked.has(place.id)
-  const isNext=next?.id===place.id
-  const foodPercent=next?Math.min(100,Math.floor(world.food/next.food*100)):100
-  const moralePercent=next?Math.min(100,Math.floor(world.morale/next.morale*100)):100
-  const storyProgress=availableWeekly.length
-  const discoveryPlace=WORLD_SECTORS.find(place=>place.id===discovery)
-
-  function showEvent(event:WorldEvent){
-    setOpenEvent(event)
-    const nextSeen=[...new Set([...seen,event.id])]
-    setSeen(nextSeen)
-    try{localStorage.setItem("sb-world-seen:"+name,JSON.stringify(nextSeen))}catch{}
-  }
-  function closeDiscovery(readReport=false){
-    if(!discovery)return
-    try{
-      const stored=JSON.parse(localStorage.getItem("sb-world-revealed:"+name)||"[]")
-      const witnessed=Array.isArray(stored)?stored.filter((id:unknown):id is string=>typeof id==="string"):[]
-      localStorage.setItem("sb-world-revealed:"+name,JSON.stringify([...new Set([...witnessed,discovery])]))
-    }catch{/* A missing local store does not prevent closing. */}
-    const report=events.find(event=>event.id==="sector-"+discovery)
-    discoveryRef.current=null
-    setDiscovery(null)
-    if(readReport && report)showEvent(report)
-    else void load()
-    // Other discoveries will appear after the expedition report closes.
-  }
-
-  function closeReport(){
-    setOpenEvent(null)
-    void load()
-  }
-
-  function solve(id:string){
-    const quest=sidequests.find(q=>q.id===id)
-    if(!quest)return
-    if(normalizeSolution(questAnswers[id]||"")===normalizeSolution(quest.code)){
-      const solved=[...new Set([...completed,id])]
-      setCompleted(solved)
-      setQuestWrong(null)
-      try{localStorage.setItem("sb-world-quests:"+name,JSON.stringify(solved))}catch{}
-    }else setQuestWrong(id)
-  }
-
-  return <main className="sb-world sb-world-expedition">
-    <div className="sb-world-container">
-      <header className="sb-frontier-header sb-module-heading">
-        <div>
-          <h1>Bezdroża<span className="sb-green-dot">.</span></h1>
-          <p>Wspólnie zdobywamy zasoby, odkrywamy teren i szukamy prawdy o Wielkiej Ciszy.</p>
-        </div>
-        <div className="sb-world-season"><span>TRANSMISJE</span><strong>{String(storyProgress).padStart(2,"0")}</strong><small>Co poniedziałek nowy meldunek, a odkrycia po osiągnięciu progów.</small></div>
-      </header>
-
-      <section className="sb-world-resource-bar" aria-label="Wspólne zasoby Strefy B">
-        <div className="sb-world-resource"><span className="sb-world-resource-icon">◈</span><div><small>ŻYWNOŚĆ</small><strong>{state?world.food:"—"}</strong><span>z potwierdzeń nawyków</span></div></div>
-        <div className="sb-world-resource"><span className="sb-world-resource-icon">✳</span><div><small>MORALE</small><strong>{state?world.morale:"—"}</strong><span>z Biuletynu</span></div></div>
-        <div className="sb-world-resource"><span className="sb-world-resource-icon">⌖</span><div><small>STREFA B</small><strong>{1+unlocked.size}<em> / {WORLD_SECTORS.length}</em></strong><span>odkrytych obszarów</span></div></div>
-      </section>
-
-      {failed&&<div role="alert" className="sb-world-alert">Nie udało się odświeżyć wspólnych zasobów. <button onClick={()=>void load()}>Spróbuj ponownie</button></div>}
-
-      <div className="sb-frontier-title-row">
-        <div><p className="sb-world-overline">KARTOGRAFIA / ZASIĘG ZWIADU</p><h2>Mapa Strefy B</h2></div>
-        <span>{1+unlocked.size} ODKRYTYCH SEKTORÓW</span>
-      </div>
-      <div className="sb-frontier-stage" style={discovery?{zIndex:1400}:undefined}>
-        <FrontierMap selected={selected} unlocked={unlocked} onSelect={id=>setSelected(id)}
-          revealing={discovery}/>
-        {discoveryPlace&&<div className="sb-world-reveal" role="dialog" aria-modal="true"
-          aria-labelledby="sb-reveal-title">
-          <div className="sb-world-reveal-smoke" aria-hidden="true"/>
-          <div className="sb-world-reveal-content">
-            <span className="sb-world-reveal-signal">✦ NOWY SYGNAŁ ZE STREFY B</span>
-            <span className="sb-world-reveal-icon" aria-hidden="true">⌖</span>
-            <h2 id="sb-reveal-title">MGŁA USTĘPUJE</h2>
-            <p className="sb-world-reveal-sector">{discoveryPlace.name}</p>
-            <p>Zebrane zasoby pozwoliły zwiadowcom poszerzyć granice Strefy B. Odkryto nowy obszar i raport z wyprawy.</p>
-            <div className="sb-world-reveal-actions">
-              <button type="button" onClick={()=>closeDiscovery(true)}>Odczytaj raport ↗</button>
-              <button type="button" onClick={()=>closeDiscovery(false)}>Później</button>
-            </div>
-          </div>
-        </div>}
-      </div>
-
-      <section className="sb-world-below-map sb-world-below-map-lean" aria-label="Następna wyprawa i szczegóły sektora">
-        {selected&&<div className="sb-world-sector-card">
-          <p className="sb-world-overline">{isOpen?place.tag:"NIEZBADANY OBSZAR / BRAK DANYCH"}</p>
-          <h2>{isOpen?place.name:"Nieznany sektor"}</h2>
-          {isOpen?<>
-            <p>{place.description}</p>
-            <div className="sb-world-clue"><span>ODKRYCIE</span><p>{place.clue}</p></div>
-            {place.id!=="baza"&&<button type="button" className="sb-world-outline-button"
-              onClick={()=>{const ev=events.find(e=>e.id==="sector-"+place.id);if(ev)showEvent(ev)}}>
-              ◈ Odczytaj raport zwiadowców
-            </button>}
-          </>:isNext?<>
-            <p>Wyprawa zostanie wysłana automatycznie, gdy Strefa B zgromadzi wymagane zasoby. Nie trzeba niczego zatwierdzać.</p>
-            <div className="sb-frontier-progress">
-              <div><span>ŻYWNOŚĆ</span><strong>{world.food} / {next?.food}</strong></div>
-              <div className="sb-frontier-meter"><span style={{width:foodPercent+"%"}}/></div>
-              <div><span>MORALE</span><strong>{world.morale} / {next?.morale}</strong></div>
-              <div className="sb-frontier-meter morale"><span style={{width:moralePercent+"%"}}/></div>
-            </div>
-          </>:<p>Ten teren pozostaje pod mgłą. Najpierw trzeba dotrzeć do bliższych obszarów Strefy B.</p>}
-        </div>}
-        <div className="sb-world-mission-card sb-world-mission-compact">
-          <p className="sb-world-overline">AKTUALNA OPERACJA</p>
-          <h2>{next?"Cel: następna ekspedycja":"Wszystkie sektory odkryte!"}</h2>
-          <p>{next?"Zbierajcie żywność i morale. Wyprawa odblokuje się sama po osiągnięciu obu progów. Dotknij punktu na mapie, aby poznać teren.":"Możecie ponownie odczytać wszystkie zdobyte raporty."}</p>
-          {next&&<div className="sb-world-mission-count sb-world-next-goal">
-            <div className="sb-world-next-resource">
-              <span>🌾 ŻYWNOŚĆ</span><strong>{world.food} / {next.food}</strong>
-              <div className="sb-frontier-meter"><span style={{width:foodPercent+"%"}}/></div>
-            </div>
-            <div className="sb-world-next-resource">
-              <span>✳ MORALE</span><strong>{world.morale} / {next.morale}</strong>
-              <div className="sb-frontier-meter morale"><span style={{width:moralePercent+"%"}}/></div>
-            </div>
-          </div>}
-          <div className="sb-world-mission-links">
-            <Link href="/bonsai">Otwórz Biostację ↗</Link>
-            <Link href="/podziekowania">Otwórz Biuletyn ↗</Link>
-          </div>
-        </div>
-      </section>
-
-      <details id="dziennik" ref={logDetails} className="sb-world-log sb-world-accordion">
-        <summary className="sb-world-accordion-heading">
-          <div><p className="sb-world-overline">CENTRUM KOMUNIKACJI / ARCHIWUM ZDARZEŃ</p>
-            <h2>Dziennik odkryć</h2><p>Transmisje oraz raporty z wypraw Strefy B.</p></div>
-          <span className="sb-world-accordion-side">
-            {unread>0&&<span className="sb-world-unread">✦ {unread} nowych</span>}
-            <span className="sb-world-accordion-chevron" aria-hidden="true">⌄</span>
-          </span>
-        </summary>
-        <div className="sb-world-accordion-content">
-        {!state?<p className="sb-world-muted">Łączenie z centralą Strefy B…</p>:events.length===0?
-          <p className="sb-world-muted">Na razie brak nowych transmisji.</p>:
-          <div className="sb-world-log-list">
-            {events.map(event=><button type="button" key={event.id} onClick={()=>showEvent(event)}
-              className={"sb-world-log-item"+(seen.includes(event.id)?"":" unread")}>
-              <span className="sb-world-log-icon">{event.kind==="transmission"?"⌁":"✦"}</span>
-              <span><small>{event.eyebrow} • {dateLabel(event.at)}</small><strong>{event.title}</strong></span>
-              <span className="sb-world-log-arrow">{seen.includes(event.id)?"→":"NOWE ↗"}</span>
-            </button>)}
-          </div>
-        }
-        </div>
-      </details>
-
-      <details className="sb-world-sidequests sb-world-accordion">
-        <summary className="sb-world-accordion-heading">
-          <div><p className="sb-world-overline">OPERACJE POBOCZNE / DLA CIEKAWYCH</p>
-            <h2>Znaleziska i zagadki</h2><p>Dobrowolne szyfry z odkrytych sektorów.</p></div>
-          <span className="sb-world-accordion-chevron" aria-hidden="true">⌄</span>
-        </summary>
-        <div className="sb-world-accordion-content">
-        <div className="sb-world-quest-grid">
-          {sidequests.map(quest=>{
-            const ready=unlocked.has(quest.sector)
-            const done=completed.includes(quest.id)
-            return <article key={quest.id} className={"sb-world-quest"+(!ready?" locked":"")}>
-              <div className="sb-world-quest-number">{ready?"◈":"?"}</div>
-              <p className="sb-world-overline">{ready?"ZNALEZIONY DOKUMENT":"NIEODKRYTY SEKTOR"}</p>
-              <h3>{ready?quest.name:"Zaszyfrowany dokument"}</h3>
-              {!ready?<p>Odblokuj odpowiedni sektor Bezdroży, żeby poznać zagadkę.</p>:
-              <>
-                <div className="sb-world-quest-documents">
-                  {quest.documents.map((document,i)=><p key={i}>{document}</p>)}
-                </div>
-                <p><strong>{quest.question}</strong></p>
-                {!done&&<form className="sb-world-quest-solve" onSubmit={event=>{event.preventDefault();solve(quest.id)}}>
-                  <label htmlFor={"answer-"+quest.id}>Twoje rozwiązanie</label>
-                  <input id={"answer-"+quest.id} value={questAnswers[quest.id]||""} maxLength={60}
-                    onChange={event=>{setQuestAnswers(old=>({...old,[quest.id]:event.target.value}));setQuestWrong(null)}}
-                    placeholder="Wpisz odpowiedź…" autoComplete="off"/>
-                  <button type="submit">Sprawdź trop ↗</button>
-                  {questWrong===quest.id&&<small role="alert">Jeszcze nie. Porównaj informacje z dokumentów.</small>}
-                  <button type="button" className="sb-world-quest-hint"
-                    onClick={()=>setQuestHints(old=>[...new Set([...old,quest.id])])}>Pokaż wskazówkę</button>
-                  {questHints.includes(quest.id)&&<p className="sb-world-quest-hint-text">{quest.hint}</p>}
-                </form>}
-                {done&&<div className="sb-world-quest-reveal"><strong>✦ ODSZYFROWANO</strong><p>{quest.reveal}</p></div>}
-              </>}
-            </article>
-          })}
-        </div>
-        </div>
-      </details>
-    </div>
-
-    {openEvent&&<div className="sb-world-modal-backdrop" role="presentation" onMouseDown={e=>{
-      if(e.target===e.currentTarget)closeReport()
-    }}>
-      <article className="sb-world-modal" role="dialog" aria-modal="true" aria-labelledby="sb-world-event-title">
-        <div className="sb-world-modal-top">
-          <p className="sb-world-overline">{openEvent.eyebrow}</p>
-          <button type="button" onClick={closeReport} aria-label="Zamknij transmisję">✕</button>
-        </div>
-        <div className="sb-world-signal-icon">⌁</div>
-        <h2 id="sb-world-event-title">{openEvent.title}</h2>
-        <p className="sb-world-modal-date">{dateLabel(openEvent.at)} • ARCHIWUM STREFY B</p>
-        <div className="sb-world-transcript">
-          {openEvent.body.map((paragraph,i)=><p key={i} className={paragraph.startsWith("[")?"signal-lost":""}>{paragraph}</p>)}
-        </div>
-        <button type="button" className="sb-world-modal-close" onClick={closeReport}>Zamknij raport ↗</button>
-      </article>
-    </div>}
-  </main>
+ const [view,setView]=useState<SeasonView|null>(null)
+ const [error,setError]=useState("")
+ const [busy,setBusy]=useState(false)
+ const [now,setNow]=useState(Date.now())
+ const [tab,setTab]=useState<"events"|"map"|"journal">("events")
+ const inFlight=useRef(false)
+ async function refresh(){if(inFlight.current)return;inFlight.current=true;try{setView(await loadSeason());setError("")}catch(e){setError(e instanceof Error?e.message:"Brak łączności.")}finally{inFlight.current=false}}
+ useEffect(()=>{void refresh();const a=window.setInterval(()=>void refresh(),25000);const b=window.setInterval(()=>setNow(Date.now()),1000);return()=>{window.clearInterval(a);window.clearInterval(b)}},[])
+ async function action(a:Record<string,unknown>){if(inFlight.current||busy)return;inFlight.current=true;setBusy(true);setError("");try{setView(await loadSeason(a))}catch(e){setError(e instanceof Error?e.message:"Nie udało się zapisać.");}finally{inFlight.current=false;setBusy(false)}}
+ const act=(a:Record<string,unknown>)=>void action(a)
+ return <main className="sb-season"><div className="sb-season-inner">
+ <header><h1>Bezdroża<span className="sb-green-dot">.</span></h1><p>Wielka Cisza / Sezon 01</p></header>
+ {error&&<div className="sb-season-error" role="alert">{error} <button type="button" onClick={()=>void refresh()}>Ponów</button></div>}
+ {!view?<p>Łączymy się ze Strefą B…</p>:<>
+ <div className="sb-season-resources"><div><small>ŻYWNOŚĆ</small><strong>{view.totals.food}</strong></div><div><small>MORALE</small><strong>{view.totals.morale}</strong></div><div><small>ODKRYTE MIEJSCA</small><strong>{view.locations.length}</strong></div></div>
+ {!view.prolog?<p>Odprawa rozpocznie się 2 grudnia o 9:30.</p>:<>
+ <nav className="sb-season-tabs" aria-label="Widok Bezdroży">{([["events","Wydarzenia"],["map","Mapa"],["journal","Mój dziennik"]] as const).map(([id,label])=><button key={id} type="button" className={tab===id?"active":""} onClick={()=>setTab(id)}>{label}</button>)}</nav>
+ {tab==="events"&&<>
+ {view.ending&&<article className="sb-season-card"><div className="sb-season-card-body"><p className="sb-season-kicker">KONIEC SEZONU 01</p><h2>{view.ending.title}</h2><p>{view.ending.text}</p>{view.ending.epilogue.map((t,i)=><p key={i}>{t}</p>)}</div></article>}
+ {[...view.events].reverse().map(e=><EventCard key={e.id} e={e} busy={busy} act={act} now={now}/>)}
+ <article className="sb-season-card"><SceneImage id={view.prolog.image} alt="Wejście do schronienia w lesie"/><div className="sb-season-card-body"><p className="sb-season-kicker">PROLOG</p><h2>{view.prolog.title}</h2>{view.prolog.text.map((t,i)=><p key={i}>{t}</p>)}<p className="sb-season-cliff">{view.prolog.last}</p></div></article>
+ </>}
+ {tab==="map"&&<MapBoard locations={view.locations}/>}
+ {tab==="journal"&&<section className="sb-season-card"><div className="sb-season-card-body"><p className="sb-season-kicker">DZIENNIK ZWIADOWCY / PRYWATNY</p><h2>Twoja historia</h2>
+ {view.events.filter(e=>e.personal).map(e=><div className="sb-season-journal-entry" key={e.id}><h3>{e.personal?.title}</h3><p>{e.personal?.choice?e.personal.outcome:"Decyzja oczekuje w wydarzeniach."}</p></div>)}
+ {!view.events.some(e=>e.personal)&&<p>Twoje osobiste odkrycia pojawią się po pierwszej wyprawie.</p>}
+ <h3>Twoje tropy</h3>{view.myClues.length===0&&<p>Nie masz jeszcze tropów do przekazania.</p>}
+ {view.myClues.map(c=><div className="sb-season-journal-entry" key={c.id}><p>{c.label}</p><button className="sb-season-choice" disabled={busy||c.shared||!!view.ending} onClick={()=>act({action:"share",clue:c.id})}>{c.shared?"Przekazano ✓":"Przekaż do wspólnej odprawy"}</button></div>)}
+ <h3>Wspólna odprawa</h3>{view.commonClues.length?view.commonClues.map(c=><p key={c.id}>• {c.label}</p>):<p>Nie przekazano jeszcze wspólnych tropów.</p>}
+ </div></section>}
+ </>}
+ </>}
+ </div></main>
 }

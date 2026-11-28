@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useEffect,useMemo,useState } from "react"
 import { habits } from "../lib/bonsai-habits"
 import { currentPlantingDay,daysBetween } from "../lib/bonsai-time"
-import { WORLD_EMPTY,worldEvents,nextExpedition,type WorldState } from "../lib/world-story"
+import {loadSeason,type SeasonView} from "../lib/season-view"
 
 type TreeBrief={started:string;habitIndex:number;checks?:string[]}
 type BioBrief={hasTrees:boolean;active:boolean;doneToday:boolean;habit:string;action:string}
@@ -14,8 +14,7 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
   const [userLoaded,setUserLoaded]=useState(false)
   const [bio,setBio]=useState<BioBrief>({hasTrees:false,active:false,doneToday:false,habit:"",action:""})
   const [bioLoaded,setBioLoaded]=useState(false)
-  const [world,setWorld]=useState<WorldState|null>(null)
-  const [worldUnread,setWorldUnread]=useState(0)
+  const [world,setWorld]=useState<SeasonView|null>(null)
 
   useEffect(()=>{
     let active=true
@@ -61,15 +60,8 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
     let active=true
     async function updateWorld(){
       try{
-        const r=await fetch("/api/world",{cache:"no-store"})
-        if(!r.ok)return
-        const data=await r.json() as WorldState
-        if(!active||!Array.isArray(data.unlocked))return
-        setWorld(data)
-        const events=worldEvents(data)
-        let seen:string[]=[]
-        try{seen=JSON.parse(localStorage.getItem("sb-world-seen:"+currentUser)||"[]")}catch{}
-        if(active)setWorldUnread(events.filter(e=>!seen.includes(e.id)).length)
+        const data=await loadSeason()
+        if(active)setWorld(data)
       }catch{/* Wyświetl podgląd mapy bez licznika. */}
     }
     void updateWorld()
@@ -77,9 +69,7 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
     return()=>{active=false;window.clearInterval(timer)}
   },[currentUser])
 
-  const available=world?worldEvents(world):[]
-  const latestTransmission=available.find(event=>event.kind==="transmission")
-  const expedition=world?nextExpedition(world):null
+  const latestEvent=world?.events.at(-1)
 
   if(!userLoaded)return <main className="sb-world-home"><div className="sb-world-container" style={{paddingTop:40}}>Łączymy się ze Strefą B…</div></main>
   if(!currentUser)return <main className="sb-world-home"><div className="sb-world-container" style={{paddingTop:40,textAlign:"center"}}>
@@ -119,21 +109,19 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
         <div>
           <p className="sb-world-overline">BEZDROŻA // ODKRYWANIE NIEZNANEGO</p>
           <h2 id="sb-frontier-home-title">Poza granicami<br/>Strefy B.</h2>
-          <p>{latestTransmission?
-            `Ostatnia transmisja: „${latestTransmission.title}”. Każde odkrycie może przybliżyć nas do prawdy o Wielkiej Ciszy.`:
-            "Z radiostacji dociera sygnał. Odkrywaj otoczenie i poszerzaj Strefę B razem z klasą."}</p>
+          <p>{latestEvent?
+            `Ostatnie wydarzenie: „${latestEvent.title}”. Każde odkrycie może przybliżyć nas do prawdy o Wielkiej Ciszy.`:
+            "Zbierajcie siły i zapasy. Odkrywanie Bezdroży rozpocznie się 2 grudnia o 9:30."}</p>
           <Link className="sb-world-home-cta" href="/bezdroza">Otwórz Bezdroża <span aria-hidden="true">↗</span></Link>
-          {worldUnread>0&&<Link href="/bezdroza#dziennik" className="sb-world-home-new">
-            ✦ {worldUnread} {worldUnread===1?"nowy komunikat":"nowe komunikaty"} do odczytania
-          </Link>}
+          {latestEvent&&<Link href="/bezdroza" className="sb-world-home-new">✦ Zobacz bieżący rozdział</Link>}
         </div>
         <div className="sb-world-home-hero-art" aria-hidden="true"><div className="sb-world-home-radar"><span>⌖</span></div></div>
       </section>
 
       <section className="sb-world-home-supplies" aria-label="Wspólny dorobek Strefy B">
-        <div><strong>{world?.food??"…"}</strong><span><small>ŻYWNOŚĆ</small><br/>Z upraw Biostacji</span></div>
-        <div><strong>{world?.morale??"…"}</strong><span><small>MORALE</small><br/>Z wpisów Biuletynu</span></div>
-        <div><strong>{world?world.unlocked.length+1:"…"}</strong><span><small>ODKRYCIA</small><br/>{expedition?"Następny sektor czeka":"Strefa B poszerzona"}</span></div>
+        <div><strong>{world?.totals.food??"…"}</strong><span><small>ŻYWNOŚĆ</small><br/>Z upraw Biostacji</span></div>
+        <div><strong>{world?.totals.morale??"…"}</strong><span><small>MORALE</small><br/>Z wpisów Biuletynu</span></div>
+        <div><strong>{world?world.locations.length:"…"}</strong><span><small>ODKRYCIA</small><br/>Odkryte miejsca</span></div>
       </section>
 
       {teacherAccess && currentUser==="ks. Michał"&&<Link href="/busola" className="sb-teacher-link"

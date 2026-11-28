@@ -6,6 +6,7 @@ import { BiostationPlot } from "../../components/biostation-plot"
 import { harvestBadges, RECOGNITION_THRESHOLD } from "../../lib/bonsai-rewards"
 import { addDays, currentPlantingDay, daysBetween, readableDate } from "../../lib/bonsai-time"
 import { sortedStudents } from "../../lib/students"
+import {SeasonThresholds} from "../../components/season-thresholds"
 
 type ClassStats={weeklyActive:number;returnedAfterBreak:number;completedCycles:number;finishedCycles:number;startedCycles:number}
 type Tree = { id: string; habitIndex: number; cue: string; started: string; checks: string[] }
@@ -93,6 +94,7 @@ export default function BusolaPage() {
           Wybierz ucznia: zobaczysz jego aktualne nawyki, regularność i zakończone wyzwania wymagające rozmowy.
         </p>
       </header>
+      <SeasonThresholds/>
       <section className="sb-surface" style={{...surface,marginBottom:18}} aria-label="Zbiorcza aktywność klasy">
         <h2 style={{margin:"0 0 6px",fontSize:22}}>Klasa — ostatnie 7 dni</h2>
         <p style={{margin:"0 0 18px",color:"#607786",lineHeight:1.6,fontSize:13}}>
