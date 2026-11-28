@@ -93,6 +93,7 @@ export function nextExpedition(state:WorldState){
   return WORLD_SECTORS.find(s=>s.id!=="baza"&&!found.has(s.id))??null
 }
 export function worldEvents(state:WorldState):WorldEvent[]{
+  if(Date.parse(state.serverNow)<Date.parse("2026-12-02T08:30:00Z"))return []
   const now=Date.parse(state.serverNow)
   const weekly:WorldEvent[]=WORLD_TRANSMISSIONS
     .filter(e=>Date.parse(e.at)<=now)

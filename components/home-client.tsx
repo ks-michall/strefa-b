@@ -14,7 +14,6 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
   const [userLoaded,setUserLoaded]=useState(false)
   const [bio,setBio]=useState<BioBrief>({hasTrees:false,active:false,doneToday:false,habit:"",action:""})
   const [bioLoaded,setBioLoaded]=useState(false)
-  const [showWelcome,setShowWelcome]=useState(false)
   const [world,setWorld]=useState<WorldState|null>(null)
   const [worldUnread,setWorldUnread]=useState(0)
 
@@ -29,7 +28,7 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
         if(typeof me.name!=="string"||!me.name){setUserLoaded(true);return}
         setCurrentUser(me.name)
         setUserLoaded(true)
-        // Start the two independent class modules without blocking the welcome view.
+        // Start the two independent class modules without blocking the main view.
         void (async()=>{
           try{
             const r=await fetch("/api/bonsai",{cache:"no-store"})
@@ -47,8 +46,6 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
               const checked=Array.isArray(latest.checks)?latest.checks:[]
               setBio({hasTrees:true,active:!!current,
                 doneToday:checked.includes(today),habit:habit?.title||"Twoja uprawa",action:habit?.action||""})
-            }else if(me.name!=="ks. Michał"){
-              try{setShowWelcome(localStorage.getItem("sb-intro-seen:"+me.name)!=="1")}catch{}
             }
           }catch{/* Nie blokujemy strony głównej. */}
           finally{if(active)setBioLoaded(true)}
@@ -80,11 +77,6 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
     return()=>{active=false;window.clearInterval(timer)}
   },[currentUser])
 
-  function dismissWelcome(){
-    setShowWelcome(false)
-    try{localStorage.setItem("sb-intro-seen:"+currentUser,"1")}catch{}
-  }
-
   const available=world?worldEvents(world):[]
   const latestTransmission=available.find(event=>event.kind==="transmission")
   const expedition=world?nextExpedition(world):null
@@ -101,20 +93,10 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
       <header className="sb-world-home-top sb-module-heading">
         <div>
           <h1 className="sb-bio-title">Centrum operacyjne<span className="sb-green-dot">.</span></h1>
-          <p>Strefa B trwa. Jej przyszłość zależy od naszej codziennej pracy.</p>
+          <p>Świat zamilkł. Strefa B jest naszym jedynym znanym schronieniem.</p>
         </div>
       </header>
 
-      {showWelcome&&<section className="sb-world-welcome" aria-label="Szybki start w Strefie B">
-        <p className="sb-world-overline">PIERWSZA MISJA / 30 SEKUND</p>
-        <h2>Witaj w Strefie B. Zaczynamy?</h2>
-        <p>① Wybierz nawyk w Biostacji. ② Dostrzegaj dobro w Biuletynie.
-          ③ Wspólnie zbierajcie zasoby i odkrywajcie Bezdroża.</p>
-        <div className="sb-world-welcome-actions">
-          <Link href="/bonsai?start=1" onClick={dismissWelcome}>Wybierz pierwszy nawyk ↗</Link>
-          <button type="button" onClick={dismissWelcome}>Pomiń wprowadzenie</button>
-        </div>
-      </section>}
       {bioLoaded&&<section className="sb-world-daily" aria-label="Twoja misja na dziś">
         <div>
           <p className="sb-world-overline">TWÓJ DZISIEJSZY KROK</p>
@@ -140,7 +122,7 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
           <p>{latestTransmission?
             `Ostatnia transmisja: „${latestTransmission.title}”. Każde odkrycie może przybliżyć nas do prawdy o Wielkiej Ciszy.`:
             "Z radiostacji dociera sygnał. Odkrywaj otoczenie i poszerzaj Strefę B razem z klasą."}</p>
-          <Link className="sb-world-home-cta" href="/bezdroza">Otwórz mapę Bezdroży <span aria-hidden="true">↗</span></Link>
+          <Link className="sb-world-home-cta" href="/bezdroza">Otwórz Bezdroża <span aria-hidden="true">↗</span></Link>
           {worldUnread>0&&<Link href="/bezdroza#dziennik" className="sb-world-home-new">
             ✦ {worldUnread} {worldUnread===1?"nowy komunikat":"nowe komunikaty"} do odczytania
           </Link>}

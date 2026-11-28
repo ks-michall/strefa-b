@@ -55,12 +55,18 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  const introPending=user?.mode==="full"&&request.cookies.get("sb_first_story_pending")?.value==="1"
+  // The new storyline must be acknowledged once, including after a tab is closed.
+  if(introPending && pathname!=="/wprowadzenie" && !pathname.startsWith("/api/") &&
+     pathname!=="/login" && pathname!=="/ustaw-haslo" && !isPublicRoute)
+    return NextResponse.redirect(new URL("/wprowadzenie",request.url))
+
   if (user?.mode === "full" && pathname === "/ustaw-haslo") {
-    return NextResponse.redirect(new URL("/", request.url))
+    return NextResponse.redirect(new URL(introPending?"/wprowadzenie":"/", request.url))
   }
 
   if (user && pathname === "/login") {
-    return NextResponse.redirect(new URL(user.mode === "setup" ? "/ustaw-haslo" : "/", request.url))
+    return NextResponse.redirect(new URL(user.mode === "setup" ? "/ustaw-haslo" : introPending?"/wprowadzenie":"/", request.url))
   }
 
   return NextResponse.next()

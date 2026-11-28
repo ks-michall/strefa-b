@@ -40,7 +40,7 @@ function ModuleIcon({kind}:{kind:NavigationIcon}){
 
 export function QuickNav() {
   const path = usePathname()
-  if (path === "/login" || path === "/ustaw-haslo" || path.startsWith("/api/")) return null
+  if (path === "/login" || path === "/ustaw-haslo" || path === "/wprowadzenie" || path.startsWith("/api/")) return null
   return <nav className="sb-quicknav" aria-label="Główna nawigacja">
     {destinations.map(item => <Link key={item.href} href={item.href}
       className={`sb-quicknav-link${path === item.href ? " is-active" : ""}`}

@@ -228,11 +228,10 @@ export default function BonsaiPage() {
       const response=await fetch("/api/world",{cache:"no-store"})
       if(!response.ok)return
       const data=await response.json() as WorldState
-      const expedition=nextExpedition(data)
+      const expedition=Date.parse(data.serverNow)>=Date.parse("2026-12-02T08:30:00Z")?nextExpedition(data):null
       if(expedition)setImpact({food:data.food,morale:data.morale,
         targetFood:expedition.food,targetMorale:expedition.morale,name:expedition.name})
-      else setImpact({food:data.food,morale:data.morale,
-        targetFood:data.food,targetMorale:data.morale,name:"Wszystkie sektory odkryte"})
+      else setImpact(null)
     }catch{/* Nie utrudniamy potwierdzenia, jeśli mapa chwilowo nie odpowiada. */}
   }
 
