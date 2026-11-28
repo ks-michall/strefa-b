@@ -31,7 +31,8 @@ export async function POST(request: NextRequest) {
     if (typeof password !== "string" || password.length < 7 || password.length > 128 || password.trim().length < 7) {
       return NextResponse.json({ error: "Hasło powinno mieć od 7 do 128 znaków." }, { status: 400 })
     }
-    if (await getStoredCredential(session.name)) {
+    const existing = await getStoredCredential(session.name)
+    if (existing && existing.must_change_password !== true) {
       return NextResponse.json({ error: "Hasło zostało już zmienione. Zaloguj się ponownie." }, { status: 409 })
     }
     const check = await verifyLogin(session.name, password)
