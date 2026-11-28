@@ -93,7 +93,7 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
       <header className="sb-world-home-top sb-module-heading">
         <div>
           <h1 className="sb-bio-title">Centrum operacyjne<span className="sb-green-dot">.</span></h1>
-          <p>Po Wielkiej Ciszy Strefa B jest naszym schronieniem. Nie wiemy, czy ktoś jeszcze ocalał.</p>
+          <p>Świat zamilkł. Strefa B jest naszym jedynym znanym schronieniem.</p>
         </div>
       </header>
 
@@ -122,7 +122,7 @@ export default function HomeClient({teacherAccess}:{teacherAccess:boolean}){
           <p>{latestTransmission?
             `Ostatnia transmisja: „${latestTransmission.title}”. Każde odkrycie może przybliżyć nas do prawdy o Wielkiej Ciszy.`:
             "Z radiostacji dociera sygnał. Odkrywaj otoczenie i poszerzaj Strefę B razem z klasą."}</p>
-          <Link className="sb-world-home-cta" href="/bezdroza">Otwórz mapę Bezdroży <span aria-hidden="true">↗</span></Link>
+          <Link className="sb-world-home-cta" href="/bezdroza">Otwórz Bezdroża <span aria-hidden="true">↗</span></Link>
           {worldUnread>0&&<Link href="/bezdroza#dziennik" className="sb-world-home-new">
             ✦ {worldUnread} {worldUnread===1?"nowy komunikat":"nowe komunikaty"} do odczytania
           </Link>}
