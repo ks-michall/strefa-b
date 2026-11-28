@@ -10,7 +10,7 @@ import {SeasonThresholds} from "../../components/season-thresholds"
 
 type ClassStats={weeklyActive:number;returnedAfterBreak:number;completedCycles:number;finishedCycles:number;startedCycles:number}
 type Tree = { id: string; habitIndex: number; cue: string; started: string; checks: string[] }
-const pupils = sortedStudents.filter(name => name !== "ks. Michał")
+const pupils = sortedStudents.filter(name => name !== "ks. Michał" && name !== "Kacper")
 const surface: React.CSSProperties = {
   background: "white", borderRadius: 22, padding: 22,
   border: "1px solid #dce7ee", boxShadow: "0 8px 26px rgba(30,52,72,.04)",
