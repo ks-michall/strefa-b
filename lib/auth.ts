@@ -16,7 +16,7 @@ function credentials(): Record<string, string> | null {
 
 export function areCredentialsConfigured(): boolean {
   const entries = credentials()
-  return !!entries && students.every(s => typeof entries[s] === "string" && /^scrypt:[a-f0-9]{32}:[a-f0-9]{128}$/.test(entries[s]))
+  return !!entries && students.filter(s => s !== "Kacper").every(s => typeof entries[s] === "string" && /^scrypt:[a-f0-9]{32}:[a-f0-9]{128}$/.test(entries[s]))
 }
 
 export async function verifyLogin(name: string, password: string): Promise<{ valid: boolean; mustChangePassword: boolean }> {
@@ -30,7 +30,7 @@ export async function verifyLogin(name: string, password: string): Promise<{ val
   // already-replaced temporary password to become valid again.
   const updated = await getStoredCredential(account)
   if (updated) {
-    return { valid: await verifyPasswordHash(password, updated.password_hash), mustChangePassword: false }
+    return { valid: await verifyPasswordHash(password, updated.password_hash), mustChangePassword: updated.must_change_password === true }
   }
   return { valid: await verifyPasswordHash(password, entries?.[account]), mustChangePassword: true }
 }
