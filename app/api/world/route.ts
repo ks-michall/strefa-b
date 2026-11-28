@@ -30,7 +30,7 @@ export async function GET(){
     return NextResponse.json({
       food:typeof obj.food==="number"?Math.max(0,obj.food):0,
       morale:typeof obj.morale==="number"?Math.max(0,obj.morale):0,
-      unlocked,serverNow:typeof obj.serverNow==="string"?obj.serverNow:new Date().toISOString(),
+      unlocked:Date.now()<Date.parse("2026-12-02T08:30:00Z")?[]:unlocked,serverNow:typeof obj.serverNow==="string"?obj.serverNow:new Date().toISOString(),
     },{headers:{"Cache-Control":"private, no-store"}})
   }catch{
     return NextResponse.json({error:"Nie udało się pobrać świata Strefy B."},
